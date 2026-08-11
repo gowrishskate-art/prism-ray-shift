@@ -129,6 +129,67 @@ canvas { display: block; cursor: none; touch-action: none; }
 }
 #pause-btn.active { display: block; }
 #pause-btn:hover { background: rgba(40,20,80,0.7); }
+
+/* ─── TUTORIAL OVERLAY ─── */
+#tutorial-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 8; pointer-events: none; display: none;
+}
+#tutorial-overlay.active { display: block; }
+.tutorial-card {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(8,4,24,0.92);
+    border: 2px solid rgba(120,80,255,0.5);
+    border-radius: 20px;
+    padding: 28px 40px; text-align: center;
+    max-width: 460px;
+    box-shadow: 0 0 40px rgba(80,40,200,0.4);
+    backdrop-filter: blur(12px);
+    animation: tutFadeIn 0.4s ease;
+}
+@keyframes tutFadeIn {
+    from { opacity: 0; transform: translate(-50%,-50%) scale(0.8); }
+    to { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+}
+.tut-step-num {
+    font-size: 12px; color: #6a6aaf; letter-spacing: 3px;
+    text-transform: uppercase; margin-bottom: 10px;
+}
+.tut-title {
+    font-size: 24px; font-weight: 800; color: #fff;
+    margin-bottom: 12px;
+}
+.tut-desc {
+    font-size: 15px; color: #aaaacc; line-height: 1.6;
+    margin-bottom: 8px;
+}
+.tut-color-demo {
+    display: flex; gap: 16px; justify-content: center; margin: 16px 0;
+}
+.tut-color-chip {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.tut-chip-dot {
+    width: 32px; height: 32px; border-radius: 50%;
+    animation: tutPulse 1.5s ease-in-out infinite;
+}
+@keyframes tutPulse {
+    0%,100% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.15); opacity: 1; }
+}
+.tut-chip-lbl { font-size: 11px; color: #888; text-transform: uppercase; }
+.tut-progress {
+    display: flex; gap: 6px; justify-content: center; margin-top: 16px;
+}
+.tut-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(100,80,160,0.3);
+    transition: all 0.3s;
+}
+.tut-dot.done { background: #2bff7e; }
+.tut-dot.current { background: #fff; box-shadow: 0 0 8px #fff; width: 24px; border-radius: 4px; }
+
 </style>
 </head>
 <body>
@@ -142,6 +203,12 @@ canvas { display: block; cursor: none; touch-action: none; }
 </div>
 <div id="combo-display"></div>
 <button id="pause-btn">II</button>
+
+
+<!-- TUTORIAL OVERLAY -->
+<div id="tutorial-overlay">
+    <div class="tutorial-card" id="tut-card"></div>
+</div>
 
 <!-- TITLE SCREEN -->
 <div id="title-screen" class="screen active">
@@ -781,6 +848,7 @@ function killEnemy(idx, color, isBossKill) {
 
     game.kills++;
     game.enemiesKilledThisWave++;
+    if (game.tutorialActive && !game.firstKillDone) game.firstKillDone = true;
 
     // Combo
     game.combo++;
@@ -996,6 +1064,7 @@ function activateMegaMode() {
 // WAVE SYSTEM
 // ═══════════════════════════════════════════════════════════════
 function updateWaves(dt) {
+    if (game.tutorialActive) return;
     game.spawnTimer -= dt;
     game.bossTimer -= dt;
     game.gemTimer -= dt;
@@ -1152,8 +1221,17 @@ function gameLoop(timestamp) {
 
     updateBeam(dt);
     updateCrystal(dt);
-    updateWaves(dt);
-    updateEnemies(dt);
+
+    // Tutorial overrides wave spawning during tutorial
+    if (game.tutorialActive) {
+        updateTutorialLogic(dt);
+        // During tutorial, only update enemies (no new wave spawns)
+        updateEnemies(dt);
+    } else {
+        updateWaves(dt);
+        updateEnemies(dt);
+    }
+
     computeRays();
     checkRayCollisions();
     updateGems(dt);
@@ -1162,6 +1240,7 @@ function gameLoop(timestamp) {
     updateEffects(dt);
 
     render(dt);
+    drawTutorialGuides();
     updateHUD();
 }
 
@@ -1227,18 +1306,30 @@ function startGame() {
     game.time = 0; game.shake = 0; game.flashAlpha = 0;
     game.paused = false;
 
+    // Tutorial reset
+    game.tutorialActive = true;
+    game.tutorialStep = 0;
+    game.tutorialTimer = 0;
+    game.tutorialEnemySpawned = false;
+    game.firstKillDone = false;
+    game.mouseMoved = false;
+    game.beamEntryCount = 0;
+
     enemies = []; particles = []; gems = []; floatingTexts = [];
 
     crystal.x = W / 2; crystal.y = H / 2;
     mouse.x = W / 2; mouse.y = H / 2;
     mouse.prevX = mouse.x; mouse.prevY = mouse.y;
-    beam.y = H / 2; beam.dir = 1;
+    beam.y = H * 0.35; beam.dir = 1;
 
-    showScreen('game');
+    // Hide title screen (no game-screen exists - canvas is always visible)
+    document.getElementById('title-screen').classList.remove('active');
     document.getElementById('hud').classList.add('active');
     document.getElementById('pause-btn').classList.add('active');
     document.getElementById('combo-display').classList.remove('active');
+    document.getElementById('tutorial-overlay').classList.add('active');
     updateHUD();
+    updateTutorial();
 }
 
 function endGame() {
@@ -1255,9 +1346,12 @@ function endGame() {
 
 function goToTitle() {
     game.state = 'title';
-    showScreen('title');
+    document.getElementById('title-screen').classList.add('active');
+    document.getElementById('gameover-screen').classList.remove('active');
     document.getElementById('hud').classList.remove('active');
     document.getElementById('pause-btn').classList.remove('active');
+    document.getElementById('tutorial-overlay').classList.remove('active');
+    document.getElementById('combo-display').classList.remove('active');
 }
 
 function showInstructions() {
@@ -1270,6 +1364,213 @@ function togglePause() {
     game.paused = !game.paused;
     document.getElementById('pause-btn').textContent = game.paused ? '▶' : 'II';
 }
+
+
+// ═══════════════════════════════════════════════════════════════
+// TUTORIAL SYSTEM
+// ═══════════════════════════════════════════════════════════════
+const TUT_STEPS = [
+    {
+        num: 'Step 1 of 4',
+        title: 'Move Your Crystal',
+        desc: 'Your <strong style="color:#aabbff">Crystal Prism</strong> follows your mouse or finger.<br>Try moving it around the screen now.',
+        showColors: false,
+    },
+    {
+        num: 'Step 2 of 4',
+        title: 'Enter the White Beam',
+        desc: 'A bright <strong style="color:#fff">white laser beam</strong> sweeps across the screen.<br>Move your crystal <strong style="color:#fff">INTO the beam</strong> to split it into colored light.',
+        showColors: false,
+    },
+    {
+        num: 'Step 3 of 4',
+        title: 'Aim Your Colored Rays',
+        desc: 'Inside the beam, your crystal splits light into 3 rays.<br><strong style="color:#ff1845">Red</strong> ray → hits <strong style="color:#ff1845">Red</strong> enemies<br><strong style="color:#18ff45">Green</strong> ray → hits <strong style="color:#18ff45">Green</strong> enemies<br><strong style="color:#1895ff">Blue</strong> ray → hits <strong style="color:#1895ff">Blue</strong> enemies<br>Move left/right to tilt the rays!',
+        showColors: true,
+    },
+    {
+        num: 'Step 4 of 4',
+        title: 'Destroy a Shadow Creature!',
+        desc: 'A shadow creature is approaching.<br>Aim your matching-colored ray at it to vaporize it!<br><br><strong style="color:#ffd700">Tip: Tilt your crystal by moving left/right to aim.</strong>',
+        showColors: false,
+    },
+];
+
+function updateTutorial() {
+    const overlay = document.getElementById('tutorial-overlay');
+    if (!game.tutorialActive) {
+        overlay.classList.remove('active');
+        return;
+    }
+    overlay.classList.add('active');
+    const step = TUT_STEPS[game.tutorialStep];
+    if (!step) {
+        endTutorial();
+        return;
+    }
+
+    const card = document.getElementById('tut-card');
+    let html = '<div style="position:absolute;top:10px;right:16px;font-size:12px;color:#666;cursor:pointer;text-decoration:underline" onclick="skipTutorial()">Skip</div>';
+    html += '<div class="tut-step-num">' + step.num + '</div>';
+    html += '<div class="tut-title">' + step.title + '</div>';
+    html += '<div class="tut-desc">' + step.desc + '</div>';
+
+    if (step.showColors) {
+        html += '<div class="tut-color-demo">';
+        html += '<div class="tut-color-chip"><div class="tut-chip-dot" style="background:#ff1845;box-shadow:0 0 12px #ff1845"></div><div class="tut-chip-lbl">Red</div></div>';
+        html += '<div class="tut-color-chip"><div class="tut-chip-dot" style="background:#18ff45;box-shadow:0 0 12px #18ff45"></div><div class="tut-chip-lbl">Green</div></div>';
+        html += '<div class="tut-color-chip"><div class="tut-chip-dot" style="background:#1895ff;box-shadow:0 0 12px #1895ff"></div><div class="tut-chip-lbl">Blue</div></div>';
+        html += '</div>';
+    }
+
+    // Progress dots
+    html += '<div class="tut-progress">';
+    for (var i = 0; i < 4; i++) {
+        var cls = i < game.tutorialStep ? 'done' : (i === game.tutorialStep ? 'current' : '');
+        html += '<div class="tut-dot ' + cls + '"></div>';
+    }
+    html += '</div>';
+
+    card.innerHTML = html;
+}
+
+function updateTutorialLogic(dt) {
+    if (!game.tutorialActive) return;
+    game.tutorialTimer += dt;
+
+    if (game.tutorialStep === 0) {
+        // Step 1: wait for mouse movement
+        const md = Math.hypot(mouse.x - mouse.prevX, mouse.y - mouse.prevY);
+        if (md > 2) game.mouseMoved = true;
+        if (game.mouseMoved && game.tutorialTimer > 2) {
+            game.tutorialStep = 1;
+            game.tutorialTimer = 0;
+            updateTutorial();
+        }
+    } else if (game.tutorialStep === 1) {
+        // Step 2: wait for crystal entering beam
+        if (crystal.inBeam) {
+            game.beamEntryCount++;
+            if (game.beamEntryCount > 30) { // ~0.5s in beam
+                game.tutorialStep = 2;
+                game.tutorialTimer = 0;
+                updateTutorial();
+            }
+        } else {
+            game.beamEntryCount = Math.max(0, game.beamEntryCount - 1);
+        }
+    } else if (game.tutorialStep === 2) {
+        // Step 3: show ray info for 4 seconds
+        if (game.tutorialTimer > 4.5) {
+            game.tutorialStep = 3;
+            game.tutorialTimer = 0;
+            // Spawn a practice enemy in ray path
+            spawnTutorialEnemy();
+            updateTutorial();
+        }
+    } else if (game.tutorialStep === 3) {
+        // Step 4: wait for first kill
+        if (game.firstKillDone) {
+            game.tutorialStep = 4;
+            game.tutorialTimer = 0;
+            endTutorial();
+        }
+        // Keep spawning tutorial enemies if none exist
+        if (!game.tutorialEnemySpawned || enemies.length === 0) {
+            if (game.tutorialTimer > 1 && enemies.length === 0) {
+                spawnTutorialEnemy();
+            }
+        }
+    }
+}
+
+function spawnTutorialEnemy() {
+    // Spawn enemy below crystal so it walks into the ray fan
+    const colorIdx = Math.floor(Math.random() * 3);
+    const ang = Math.PI * 0.5 + crystal.tilt + (0) * 0.38; // center ray angle
+    const dist = 280;
+    enemies.push({
+        x: crystal.x + (Math.random() - 0.5) * 200,
+        y: crystal.y + dist,
+        vx: 0, vy: 0,
+        size: 22, color: colorIdx, isBoss: false,
+        rotation: 0, wobble: Math.random() * Math.PI * 2,
+        speed: 25, hp: 1,
+        isTutorial: true,
+    });
+    game.tutorialEnemySpawned = true;
+}
+
+function skipTutorial() {
+    game.tutorialStep = 4;
+    endTutorial();
+    // Clear tutorial enemies
+    enemies = enemies.filter(e => !e.isTutorial);
+}
+
+function endTutorial() {
+    game.tutorialActive = false;
+    document.getElementById('tutorial-overlay').classList.remove('active');
+    addFloatingText(W/2, H/2 - 40, 'GO!', '#2bff7e');
+    game.flashAlpha = 0.2;
+}
+
+function drawTutorialGuides() {
+    if (!game.tutorialActive) return;
+
+    ctx.save();
+
+    if (game.tutorialStep === 0) {
+        // Draw a pulsing circle around the crystal to show it's the player
+        const r = crystal.size * 2.5 + Math.sin(game.time * 4) * 5;
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 6]);
+        ctx.beginPath();
+        ctx.arc(crystal.x, crystal.y, r, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    if (game.tutorialStep === 1 || game.tutorialStep === 0) {
+        // Draw arrow pointing toward beam
+        const beamY = beam.y;
+        const arrowY = beamY > crystal.y ? beamY - 50 : beamY + 50;
+        const dir = beamY > crystal.y ? 1 : -1;
+        ctx.fillStyle = 'rgba(255,255,255,' + (0.5 + 0.3 * Math.sin(game.time * 5)) + ')';
+        ctx.font = 'bold 14px Segoe UI, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('← MOVE HERE', crystal.x, beamY - dir * 20);
+
+        // Pulsing highlight on beam line
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([10, 8]);
+        ctx.beginPath();
+        ctx.moveTo(crystal.x, crystal.y);
+        ctx.lineTo(crystal.x, beamY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    if (game.tutorialStep === 3) {
+        // Draw "HIT THIS!" arrow on tutorial enemies
+        for (const e of enemies) {
+            if (!e.isTutorial) continue;
+            const c = RAY_COLORS[e.color];
+            ctx.fillStyle = c.hex;
+            ctx.font = 'bold 12px Segoe UI, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = c.hex;
+            ctx.shadowBlur = 8;
+            ctx.fillText('↑ HIT WITH ' + c.name + ' RAY', e.x, e.y - e.size - 12);
+            ctx.shadowBlur = 0;
+        }
+    }
+
+    ctx.restore();
+}
+
 
 // ═══════════════════════════════════════════════════════════════
 // INIT
