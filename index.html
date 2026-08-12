@@ -333,13 +333,15 @@ const game = {
 };
 
 // ─── ENTITIES ───
-const crystal = { x: 0, y: 0, rotation: 0, tilt: 0, tiltVel: 0, size: 26, inBeam: false, glowPhase: 0, aimAngle: Math.PI * 0.5, targetAim: Math.PI * 0.5 };
+const crystal = { x: 0, y: 0, rotation: 0, tilt: 0, tiltVel: 0, size: 26, inBeam: false, glowPhase: 0, aimAngle: -Math.PI / 2 };
 const beam = { y: 0, thickness: 14, dir: 1, speed: 35, baseSpeed: 35, intensity: 1 };
 let enemies = [], particles = [], gems = [], stars = [], floatingTexts = [];
 let activeRays = []; // computed each frame
 
 // ─── INPUT ───
 const mouse = { x: 0, y: 0, prevX: 0, prevY: 0, vx: 0, active: false };
+const keys = {};
+let inputMode = 'mouse'; // 'mouse' or 'keyboard' — determines aim behavior
 
 // ─── AUDIO ───
 let audioCtx = null, masterGain = null;
@@ -470,46 +472,42 @@ function drawCrystal() {
     ctx.fillStyle = auraGrad;
     ctx.beginPath(); ctx.arc(0, 0, auraR, 0, Math.PI * 2); ctx.fill();
 
-    ctx.rotate(crystal.rotation);
+    // Rotate to aim direction — pointy edge points in aim direction
+    // aimAngle=0 → right, so rotate by aimAngle
+    ctx.rotate(crystal.aimAngle);
 
-    // Diamond / hexagonal prism shape
-    const facets = 6;
+    // ─── TRIANGLE shape: one pointy edge pointing RIGHT (+X) ───
+    // Tip points right, base is on the left
     ctx.beginPath();
-    for (let i = 0; i < facets; i++) {
-        const a = (i / facets) * Math.PI * 2 - Math.PI / 2;
-        const r = s * (0.85 + 0.15 * (i % 2));
-        const px = Math.cos(a) * r, py = Math.sin(a) * r;
-        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-    }
+    ctx.moveTo(s * 1.4, 0);              // tip (right)
+    ctx.lineTo(-s * 0.8, -s * 0.9);      // bottom-left
+    ctx.lineTo(-s * 0.5, 0);              // back center indent
+    ctx.lineTo(-s * 0.8, s * 0.9);        // top-left
     ctx.closePath();
 
     // Glass fill
-    const glassGrad = ctx.createRadialGradient(-s*0.3, -s*0.3, 0, 0, 0, s);
-    glassGrad.addColorStop(0, 'rgba(220,240,255,0.5)');
+    const glassGrad = ctx.createLinearGradient(-s, 0, s * 1.4, 0);
+    glassGrad.addColorStop(0, 'rgba(80,100,200,0.2)');
     glassGrad.addColorStop(0.5, 'rgba(140,180,255,0.3)');
-    glassGrad.addColorStop(1, 'rgba(80,100,200,0.2)');
+    glassGrad.addColorStop(1, 'rgba(220,240,255,0.5)');
     ctx.fillStyle = glassGrad;
     ctx.fill();
 
     // Edge glow
-    ctx.strokeStyle = crystal.inBeam ? 'rgba(255,255,255,0.9)' : 'rgba(160,200,255,0.6)';
+    ctx.strokeStyle = crystal.inBeam ? 'rgba(255,255,255,0.9)' : 'rgba(160,200,255,0.7)';
     ctx.lineWidth = 2;
     ctx.shadowColor = '#80a0ff';
     ctx.shadowBlur = crystal.inBeam ? 25 : 12;
     ctx.stroke();
     ctx.shadowBlur = 0;
 
-    // Inner facet lines
-    ctx.strokeStyle = 'rgba(200,220,255,0.25)';
+    // Inner line from center to tip (shows aim direction clearly)
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
     ctx.lineWidth = 1;
-    for (let i = 0; i < facets; i++) {
-        const a = (i / facets) * Math.PI * 2 - Math.PI / 2;
-        const r = s * (0.85 + 0.15 * (i % 2));
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
-        ctx.stroke();
-    }
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(s * 1.2, 0);
+    ctx.stroke();
 
     // Bright center
     ctx.fillStyle = crystal.inBeam ? 'rgba(255,255,255,0.9)' : 'rgba(200,220,255,0.5)';
@@ -591,11 +589,9 @@ function computeRays() {
             });
         }
     } else {
-        // 3-beam RGB split — always shoot downward (away from beam)
-        // Determined by which side of beam the crystal is on
-        const belowBeam = crystal.y > beam.y;
-        const baseAngle = belowBeam ? Math.PI * 0.5 : -Math.PI * 0.5;
-        const spread = 0.35;
+        // 3-beam RGB split — fan out in direction the pointy edge points
+        const baseAngle = crystal.aimAngle;
+        const spread = 0.30;
         for (let i = 0; i < 3; i++) {
             const angle = baseAngle + (i - 1) * spread;
             activeRays.push({
@@ -1404,8 +1400,8 @@ function startGame() {
     enemies = []; particles = []; gems = []; floatingTexts = [];
 
     crystal.x = W / 2; crystal.y = H / 2;
-    crystal.aimAngle = Math.PI * 0.5; // start aiming down
-    crystal.targetAim = Math.PI * 0.5;
+    crystal.aimAngle = -Math.PI / 2; // start aiming up
+    crystal.rotation = -Math.PI / 2;
     mouse.x = W / 2; mouse.y = H / 2;
     mouse.prevX = mouse.x; mouse.prevY = mouse.y;
     beam.y = H * 0.35; beam.dir = 1;
@@ -1462,7 +1458,7 @@ const TUT_STEPS = [
     {
         num: 'Step 1 of 4',
         title: 'Move Your Crystal',
-        desc: 'Your <strong style="color:#aabbff">Crystal Prism</strong> follows your mouse or finger.<br>Try moving it around the screen now.',
+        desc: '<strong style="color:#aabbff">On laptop/desktop:</strong> Use <strong>WASD</strong> or <strong>Arrow Keys</strong> to move.<br><strong style="color:#aabbff">On phone/tablet:</strong> Drag with your finger.<br>The pointy edge shows where beams will fire!',
         showColors: false,
     },
     {
@@ -1718,11 +1714,23 @@ function init() {
     addTouchClick('playagain-btn', startGame);
     addTouchClick('menu-btn', goToTitle);
 
-    // Keyboard
+    // Keyboard — WASD + arrows for movement, Escape/P for pause
     window.addEventListener('keydown', e => {
-        if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') togglePause();
-        if (e.key === ' ') initAudio();
+        const k = e.key.toLowerCase();
+        keys[k] = true;
+        // Prevent page scroll on arrow keys + space
+        if (['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) {
+            e.preventDefault();
+        }
+        if (k === 'escape' || k === 'p') togglePause();
+        if (k === ' ') initAudio();
     });
+    window.addEventListener('keyup', e => {
+        keys[e.key.toLowerCase()] = false;
+    });
+
+    // Switch to mouse mode when mouse moves
+    window.addEventListener('mousemove', () => { inputMode = 'mouse'; });
 
     // Pause button - works on both click and touch
     const pauseBtn = document.getElementById('pause-btn');
