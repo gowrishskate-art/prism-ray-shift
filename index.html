@@ -101,6 +101,7 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
 .hud-val { font-size: 22px; color: #fff; }
 #hud-score .hud-val { color: #ffd700; }
 #hud-wave .hud-val { color: #2b9eff; }
+#hud-time .hud-val { color: #ffaa00; }
 #lives-icons { display: flex; gap: 4px; padding-top: 4px; }
 .life-icon { width: 14px; height: 14px; border-radius: 50%;
     background: radial-gradient(circle, #ff6699, #ff2b5e);
@@ -341,6 +342,7 @@ button {
     <div class="hud-box" id="hud-score"><div class="hud-label">Score</div><div class="hud-val">0</div></div>
     <div class="hud-box" id="hud-wave"><div class="hud-label">Wave</div><div class="hud-val">1</div></div>
     <div class="hud-box" id="hud-lives"><div class="hud-label">Lives</div><div id="lives-icons"></div></div>
+    <div class="hud-box" id="hud-time"><div class="hud-label">Time</div><div class="hud-val">0:00</div></div>
 </div>
 <div id="combo-display"></div>
 <button id="pause-btn">II</button>
@@ -457,6 +459,7 @@ const game = {
     megaKillsNeeded: 20,   // countdown to next mega
     paused: false,
     time: 0,
+    playTime: 0, // total seconds played this game
     shake: 0, shakeX: 0, shakeY: 0,
     flashAlpha: 0,
     enemiesThisWave: 0, enemiesKilledThisWave: 0,
@@ -1444,6 +1447,7 @@ function gameLoop(timestamp) {
     }
 
     game.time += dt;
+    game.playTime += dt;
 
     updateBeam(dt);
     updateCrystal(dt);
@@ -1494,6 +1498,12 @@ function renderTitleBg(dt) {
 function updateHUD() {
     document.querySelector('#hud-score .hud-val').textContent = game.score.toLocaleString();
     document.querySelector('#hud-wave .hud-val').textContent = game.wave;
+
+    // Timer: format as M:SS
+    const mins = Math.floor(game.playTime / 60);
+    const secs = Math.floor(game.playTime % 60);
+    document.querySelector('#hud-time .hud-val').textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
+
     const livesDiv = document.getElementById('lives-icons');
     livesDiv.innerHTML = '';
     for (let i = 0; i < game.lives; i++) {
@@ -1530,7 +1540,7 @@ function startGame() {
     game.spawnTimer = 1; game.bossTimer = 20;
     game.megaMode = false; game.megaTimer = 0;
     game.megaKillsNeeded = game.megaKillThreshold;
-    game.time = 0; game.shake = 0; game.flashAlpha = 0;
+    game.time = 0; game.playTime = 0; game.shake = 0; game.flashAlpha = 0;
     game.paused = false;
 
     // Tutorial reset
