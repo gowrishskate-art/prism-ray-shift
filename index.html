@@ -152,6 +152,68 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
 .dir-right { top: 56px; left: 112px; }
 .dir-down  { top: 112px; left: 56px; }
 
+/* ─── SHOP SCREEN ─── */
+#shop-screen {
+    background: radial-gradient(ellipse at 50% 30%, #0a0828 0%, #050018 50%, #030010 100%);
+    overflow-y: auto; padding: 30px 20px;
+}
+.shop-title {
+    font-size: clamp(36px, 7vw, 60px); font-weight: 900;
+    background: linear-gradient(90deg, #ffd700, #ffaa00, #ffd700);
+    background-size: 200% 100%;
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 3s linear infinite;
+    text-align: center; margin-bottom: 6px; text-transform: uppercase;
+}
+.shop-points {
+    text-align: center; font-size: clamp(20px, 4vw, 32px);
+    color: #ffd700; font-weight: 700; margin-bottom: 30px;
+}
+.shop-points-label {
+    font-size: 12px; color: #8888bb; text-transform: uppercase;
+    letter-spacing: 2px; margin-bottom: 4px;
+}
+.shop-grid {
+    display: flex; flex-direction: column; gap: 20px;
+    max-width: 520px; margin: 0 auto; width: 100%;
+}
+.shop-card {
+    background: rgba(12,8,30,0.85); border: 2px solid rgba(120,80,255,0.25);
+    border-radius: 18px; padding: 24px; display: flex;
+    align-items: center; gap: 20px; position: relative; overflow: hidden;
+    transition: border-color 0.3s;
+}
+.shop-card.owned { border-color: rgba(43,255,126,0.5); }
+.shop-card.owned::after {
+    content: 'OWNED'; position: absolute; top: 10px; right: 14px;
+    font-size: 11px; color: #2bff7e; font-weight: 700; letter-spacing: 1px;
+}
+.shop-card.locked { opacity: 0.5; }
+.shop-icon {
+    width: 64px; height: 64px; border-radius: 14px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; font-weight: 900;
+}
+.shop-info { flex: 1; }
+.shop-name { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+.shop-desc { font-size: 13px; color: #9999bb; line-height: 1.5; }
+.shop-buy {
+    padding: 12px 20px; font-size: 15px; font-weight: 700;
+    border: 2px solid rgba(255,215,0,0.4); border-radius: 30px;
+    background: rgba(60,40,10,0.5); color: #ffd700; cursor: pointer;
+    white-space: nowrap; touch-action: manipulation;
+    transition: all 0.2s; flex-shrink: 0;
+}
+.shop-buy:hover { background: rgba(80,60,10,0.7); border-color: rgba(255,215,0,0.7); }
+.shop-buy.affordable {
+    background: linear-gradient(135deg, #b8860b, #ffd700);
+    color: #000; border-color: #ffd700;
+    box-shadow: 0 0 15px rgba(255,215,0,0.3);
+}
+.shop-buy.affordable:hover { box-shadow: 0 0 25px rgba(255,215,0,0.6); }
+.shop-buy.disabled { opacity: 0.4; cursor: not-allowed; }
+
 /* ─── TUTORIAL OVERLAY ─── */
 #tutorial-overlay {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -303,6 +365,7 @@ button {
     <div class="title-sub">Split Light ✦ Destroy Shadow</div>
     <button class="btn primary" id="play-btn">Play</button>
     <button class="btn" id="how-btn">How to Play</button>
+    <button class="btn" id="shop-btn-title">Shop</button>
     <div class="instructions" id="instr-text">
         Move your mouse to drag the <strong>Crystal Prism</strong> into the white laser beam.<br>
         The beam splits into <strong style="color:#ff3344">Red</strong>, <strong style="color:#33ff66">Green</strong>, and <strong style="color:#3399ff">Blue</strong> rays.<br>
@@ -323,7 +386,34 @@ button {
         <div class="go-stat"><div class="go-stat-val" id="final-combo">0</div><div class="go-stat-lbl">Max Combo</div></div>
     </div>
     <button class="btn primary" id="playagain-btn">Play Again</button>
+    <button class="btn" id="shop-btn-gameover">Shop</button>
     <button class="btn" id="menu-btn">Menu</button>
+</div>
+
+<!-- SHOP SCREEN -->
+<div id="shop-screen" class="screen">
+    <div class="shop-title">Shop</div>
+    <div class="shop-points-label">Total Points Earned</div>
+    <div class="shop-points" id="shop-points">0</div>
+    <div class="shop-grid">
+        <div class="shop-card" id="card-4beam">
+            <div class="shop-icon" style="background:rgba(187,24,255,0.2);color:#bb18ff">+1</div>
+            <div class="shop-info">
+                <div class="shop-name">Quadruple Beams</div>
+                <div class="shop-desc">Upgrade from 3 beams to 4 beams.<br>The 4th beam is purple and can hit purple-tagged shadows.</div>
+            </div>
+            <button class="shop-buy" id="buy-4beam">100,000</button>
+        </div>
+        <div class="shop-card" id="card-double">
+            <div class="shop-icon" style="background:rgba(255,215,0,0.2);color:#ffd700">x2</div>
+            <div class="shop-info">
+                <div class="shop-name">Double Points</div>
+                <div class="shop-desc">Every shadow kill gives <strong>250 points</strong> instead of 100.</div>
+            </div>
+            <button class="shop-buy" id="buy-double">250,000</button>
+        </div>
+    </div>
+    <button class="btn" id="shop-back-btn" style="margin-top: 30px;">Back</button>
 </div>
 
 <script>
@@ -336,11 +426,22 @@ const RAY_COLORS = [
     { hex: '#ff1845', rgb: '255,24,69', name: 'R' },   // Red
     { hex: '#18ff45', rgb: '24,255,69', name: 'G' },   // Green
     { hex: '#1895ff', rgb: '24,149,255', name: 'B' },   // Blue
+    { hex: '#bb18ff', rgb: '187,24,255', name: 'P' },   // Purple (4th beam upgrade)
 ];
 const MEGA_COLORS = [
     '#ff1845', '#ff8800', '#ffee00', '#18ff45', '#1895ff', '#bb18ff'
 ];
 const MAX_RAY_LEN = 2000;
+
+// ─── PERSISTENT SHOP DATA ───
+const SHOP_DATA = {
+    totalPoints: parseInt(localStorage.getItem('ss_totalPoints') || '0', 10),
+    owned: JSON.parse(localStorage.getItem('ss_owned') || '[]'),
+};
+const UPGRADES = {
+    fourBeam:   { id: 'fourBeam',   cost: 100000, name: 'Quadruple Beams' },
+    doublePts:  { id: 'doublePts',  cost: 250000, name: 'Double Points' },
+};
 
 // ─── CANVAS ───
 let canvas, ctx, W, H, DPR;
@@ -628,11 +729,14 @@ function computeRays() {
             });
         }
     } else {
-        // 3-beam RGB split — fan out in direction the pointy edge points
+        // RGB split — 3 beams normally, 4 with upgrade
+        const hasFourBeam = SHOP_DATA.owned.indexOf('fourBeam') >= 0;
+        const numBeams = hasFourBeam ? 4 : 3;
         const baseAngle = crystal.aimAngle;
-        const spread = 0.30;
-        for (let i = 0; i < 3; i++) {
-            const angle = baseAngle + (i - 1) * spread;
+        const spread = hasFourBeam ? 0.26 : 0.30;
+        const offset = hasFourBeam ? 1.5 : 1;
+        for (let i = 0; i < numBeams; i++) {
+            const angle = baseAngle + (i - offset) * spread;
             activeRays.push({
                 ox: crystal.x, oy: crystal.y,
                 dx: Math.cos(angle), dy: Math.sin(angle),
@@ -715,7 +819,8 @@ function spawnEnemy(isBoss) {
             speed: 22 + game.wave * 1.5,
         });
     } else {
-        const colorIdx = Math.floor(Math.random() * 3);
+        const hasFourBeam = SHOP_DATA.owned.indexOf('fourBeam') >= 0;
+        const colorIdx = Math.floor(Math.random() * (hasFourBeam ? 4 : 3));
         enemies.push({
             x, y, vx: 0, vy: 0,
             size: 20 + Math.random() * 8,
@@ -962,7 +1067,8 @@ function killEnemy(idx, color, isBossKill) {
     if (game.combo > game.maxCombo) game.maxCombo = game.combo;
 
     // Score
-    const baseScore = isBossKill ? 500 : 100;
+    const hasDouble = SHOP_DATA.owned.indexOf('doublePts') >= 0;
+    const baseScore = isBossKill ? (hasDouble ? 1250 : 500) : (hasDouble ? 250 : 100);
     const comboMult = Math.min(1 + game.combo * 0.1, 5);
     const earned = Math.floor(baseScore * comboMult);
     game.score += earned;
@@ -1459,6 +1565,10 @@ function startGame() {
 
 function endGame() {
     game.state = 'gameover';
+    // Add this game's score to total points (persistent)
+    SHOP_DATA.totalPoints += game.score;
+    localStorage.setItem('ss_totalPoints', SHOP_DATA.totalPoints.toString());
+
     document.getElementById('final-score').textContent = game.score.toLocaleString();
     document.getElementById('final-wave').textContent = game.wave;
     document.getElementById('final-kills').textContent = game.kills;
@@ -1468,6 +1578,63 @@ function endGame() {
     document.getElementById('pause-btn').classList.remove('active');
     document.getElementById('dir-controls').classList.remove('active');
     document.getElementById('combo-display').classList.remove('active');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SHOP
+// ═══════════════════════════════════════════════════════════════
+function openShop() {
+    game.state = 'shop';
+    showScreen('shop');
+    renderShop();
+}
+
+function renderShop() {
+    document.getElementById('shop-points').textContent = SHOP_DATA.totalPoints.toLocaleString();
+
+    const upgrades = [
+        { id: 'fourBeam',  cardId: 'card-4beam',  btnId: 'buy-4beam',  cost: 100000 },
+        { id: 'doublePts', cardId: 'card-double', btnId: 'buy-double', cost: 250000 },
+    ];
+
+    for (const u of upgrades) {
+        const owned = SHOP_DATA.owned.indexOf(u.id) >= 0;
+        const card = document.getElementById(u.cardId);
+        const btn = document.getElementById(u.btnId);
+
+        if (owned) {
+            card.classList.add('owned');
+            card.classList.remove('locked');
+            btn.textContent = 'Owned';
+            btn.classList.add('disabled');
+            btn.classList.remove('affordable');
+        } else {
+            card.classList.remove('owned');
+            btn.textContent = u.cost.toLocaleString();
+            if (SHOP_DATA.totalPoints >= u.cost) {
+                card.classList.remove('locked');
+                btn.classList.add('affordable');
+                btn.classList.remove('disabled');
+            } else {
+                card.classList.add('locked');
+                btn.classList.add('disabled');
+                btn.classList.remove('affordable');
+            }
+        }
+    }
+}
+
+function buyUpgrade(upgradeId) {
+    const upgrade = UPGRADES[upgradeId];
+    if (!upgrade) return;
+    if (SHOP_DATA.owned.indexOf(upgradeId) >= 0) return;
+    if (SHOP_DATA.totalPoints < upgrade.cost) return;
+
+    SHOP_DATA.totalPoints -= upgrade.cost;
+    SHOP_DATA.owned.push(upgradeId);
+    localStorage.setItem('ss_totalPoints', SHOP_DATA.totalPoints.toString());
+    localStorage.setItem('ss_owned', JSON.stringify(SHOP_DATA.owned));
+    renderShop();
 }
 
 function goToTitle() {
@@ -1795,6 +1962,11 @@ function init() {
     addTouchClick('pause-btn', togglePause);
     addTouchClick('playagain-btn', startGame);
     addTouchClick('menu-btn', goToTitle);
+    addTouchClick('shop-btn-title', openShop);
+    addTouchClick('shop-btn-gameover', openShop);
+    addTouchClick('shop-back-btn', goToTitle);
+    addTouchClick('buy-4beam', function() { buyUpgrade('fourBeam'); });
+    addTouchClick('buy-double', function() { buyUpgrade('doublePts'); });
 
     // Keyboard — WASD + arrows for movement, Escape/P for pause
     window.addEventListener('keydown', e => {
