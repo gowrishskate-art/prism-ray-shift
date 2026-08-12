@@ -426,24 +426,53 @@ function drawStars(dt) {
 // CRYSTAL PRISM
 // ═══════════════════════════════════════════════════════════════
 function updateCrystal(dt) {
-    // Smooth follow mouse — orb follows cursor, nothing else
-    const lerp = 0.22;
-    crystal.x += (mouse.x - crystal.x) * lerp;
-    crystal.y += (mouse.y - crystal.y) * lerp;
     crystal.glowPhase += dt * 3;
 
-    // Rotation follows mouse movement direction — move in an arc to rotate
-    const mdx = mouse.x - mouse.prevX;
-    const mdy = mouse.y - mouse.prevY;
-    const moveDist = Math.hypot(mdx, mdy);
-    if (moveDist > 1) {
-        const moveAngle = Math.atan2(mdy, mdx);
-        // Smoothly rotate toward movement direction
-        let diff = moveAngle - crystal.rotation;
+    // ─── KEYBOARD MOVEMENT (WASD + Arrows) ───
+    let kx = 0, ky = 0;
+    if (keys['arrowleft'] || keys['a']) kx -= 1;
+    if (keys['arrowright'] || keys['d']) kx += 1;
+    if (keys['arrowup'] || keys['w']) ky -= 1;
+    if (keys['arrowdown'] || keys['s']) ky += 1;
+
+    if (kx !== 0 || ky !== 0) {
+        inputMode = 'keyboard';
+        const len = Math.hypot(kx, ky);
+        kx /= len; ky /= len;
+        crystal.x += kx * 420 * dt;
+        crystal.y += ky * 420 * dt;
+
+        // Aim direction = movement direction
+        const aimAngle = Math.atan2(ky, kx);
+        let diff = aimAngle - crystal.aimAngle;
         while (diff > Math.PI) diff -= Math.PI * 2;
         while (diff < -Math.PI) diff += Math.PI * 2;
-        crystal.rotation += diff * 0.15;
+        crystal.aimAngle += diff * 0.25;
+        crystal.rotation = crystal.aimAngle;
     }
+
+    // ─── MOUSE / TOUCH MOVEMENT ───
+    if (inputMode === 'mouse') {
+        const lerp = 0.22;
+        crystal.x += (mouse.x - crystal.x) * lerp;
+        crystal.y += (mouse.y - crystal.y) * lerp;
+
+        // Aim direction = finger/mouse movement direction
+        const mdx = mouse.x - mouse.prevX;
+        const mdy = mouse.y - mouse.prevY;
+        if (Math.hypot(mdx, mdy) > 1) {
+            const aimAngle = Math.atan2(mdy, mdx);
+            let diff = aimAngle - crystal.aimAngle;
+            while (diff > Math.PI) diff -= Math.PI * 2;
+            while (diff < -Math.PI) diff += Math.PI * 2;
+            crystal.aimAngle += diff * 0.15;
+            crystal.rotation = crystal.aimAngle;
+        }
+    }
+
+    // Clamp to screen
+    crystal.x = Math.max(crystal.size, Math.min(W - crystal.size, crystal.x));
+    crystal.y = Math.max(crystal.size, Math.min(H - crystal.size, crystal.y));
 
     // Check beam interception
     const beamHalf = beam.thickness * 0.5 + 4;
