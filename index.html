@@ -292,8 +292,8 @@ button {
         <div class="go-stat"><div class="go-stat-val" id="final-kills">0</div><div class="go-stat-lbl">Kills</div></div>
         <div class="go-stat"><div class="go-stat-val" id="final-combo">0</div><div class="go-stat-lbl">Max Combo</div></div>
     </div>
-    <button class="btn primary" onclick="startGame()">Play Again</button>
-    <button class="btn" onclick="goToTitle()">Menu</button>
+    <button class="btn primary" id="playagain-btn">Play Again</button>
+    <button class="btn" id="menu-btn">Menu</button>
 </div>
 
 <script>
@@ -1375,8 +1375,9 @@ function startGame() {
     mouse.prevX = mouse.x; mouse.prevY = mouse.y;
     beam.y = H * 0.35; beam.dir = 1;
 
-    // Hide title screen (no game-screen exists - canvas is always visible)
+    // Hide ALL screens (title + gameover)
     document.getElementById('title-screen').classList.remove('active');
+    document.getElementById('gameover-screen').classList.remove('active');
     document.getElementById('hud').classList.add('active');
     document.getElementById('pause-btn').classList.add('active');
     document.getElementById('combo-display').classList.remove('active');
@@ -1679,6 +1680,8 @@ function init() {
     addTouchClick('play-btn', startGame);
     addTouchClick('how-btn', showInstructions);
     addTouchClick('pause-btn', togglePause);
+    addTouchClick('playagain-btn', startGame);
+    addTouchClick('menu-btn', goToTitle);
 
     // Keyboard
     window.addEventListener('keydown', e => {
