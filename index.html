@@ -366,34 +366,11 @@ function drawStars(dt) {
 // CRYSTAL PRISM
 // ═══════════════════════════════════════════════════════════════
 function updateCrystal(dt) {
-    // Smooth follow mouse
+    // Smooth follow mouse — orb follows cursor, nothing else
     const lerp = 0.22;
     crystal.x += (mouse.x - crystal.x) * lerp;
     crystal.y += (mouse.y - crystal.y) * lerp;
     crystal.glowPhase += dt * 3;
-
-    // Aim angle: based on mouse movement direction (full 360° control)
-    // Track mouse velocity to determine aim direction
-    const mdx = mouse.x - mouse.prevX;
-    const mdy = mouse.y - mouse.prevY;
-    const moveDist = Math.hypot(mdx, mdy);
-
-    if (moveDist > 0.5) {
-        // Mouse is moving — aim in direction of movement
-        const moveAngle = Math.atan2(mdy, mdx);
-        // Smoothly interpolate aim toward movement direction
-        crystal.targetAim = moveAngle;
-    }
-    // If mouse stops, keep last aim direction (don't reset)
-
-    // Smoothly rotate current aim toward target aim
-    if (crystal.targetAim !== undefined) {
-        let diff = crystal.targetAim - crystal.aimAngle;
-        // Normalize angle difference to [-PI, PI]
-        while (diff > Math.PI) diff -= Math.PI * 2;
-        while (diff < -Math.PI) diff += Math.PI * 2;
-        crystal.aimAngle += diff * 0.15;
-    }
 
     // Rotation (continuous spin for visual flair)
     crystal.rotation += dt * 0.8;
@@ -471,23 +448,6 @@ function drawCrystal() {
     ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI * 2); ctx.fill();
 
     ctx.restore();
-
-    // Aim indicator arrow (drawn OUTSIDE the rotation so it points in aim direction)
-    if (crystal.inBeam) {
-        ctx.save();
-        ctx.translate(crystal.x, crystal.y);
-        const aimX = Math.cos(crystal.aimAngle);
-        const aimY = Math.sin(crystal.aimAngle);
-        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(aimX * crystal.size * 2, aimY * crystal.size * 2);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.restore();
-    }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -563,9 +523,11 @@ function computeRays() {
             });
         }
     } else {
-        // 3-beam RGB split — fan in aim direction (full 360°)
-        const baseAngle = crystal.aimAngle;
-        const spread = 0.35; // ~20 degrees between rays
+        // 3-beam RGB split — always shoot downward (away from beam)
+        // Determined by which side of beam the crystal is on
+        const belowBeam = crystal.y > beam.y;
+        const baseAngle = belowBeam ? Math.PI * 0.5 : -Math.PI * 0.5;
+        const spread = 0.35;
         for (let i = 0; i < 3; i++) {
             const angle = baseAngle + (i - 1) * spread;
             activeRays.push({
