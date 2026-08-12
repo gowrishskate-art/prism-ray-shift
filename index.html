@@ -130,6 +130,28 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
 #pause-btn.active { display: block; }
 #pause-btn:hover { background: rgba(40,20,80,0.7); }
 
+/* ─── DIRECTION BUTTONS (for touch devices) ─── */
+#dir-controls {
+    position: fixed; bottom: 16px; left: 16px; z-index: 7;
+    display: none;
+}
+#dir-controls.active { display: block; }
+.dir-btn {
+    position: absolute;
+    width: 52px; height: 52px; border-radius: 50%;
+    background: rgba(8,4,20,0.6); border: 1px solid rgba(120,80,200,0.3);
+    color: #ccccee; font-size: 22px; cursor: pointer;
+    backdrop-filter: blur(6px); touch-action: manipulation;
+    display: flex; align-items: center; justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none; -webkit-user-select: none;
+}
+.dir-btn:active { background: rgba(80,40,160,0.7); }
+.dir-up    { top: 0;   left: 56px; }
+.dir-left  { top: 56px; left: 0;   }
+.dir-right { top: 56px; left: 112px; }
+.dir-down  { top: 112px; left: 56px; }
+
 /* ─── TUTORIAL OVERLAY ─── */
 #tutorial-overlay {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -260,6 +282,14 @@ button {
 </div>
 <div id="combo-display"></div>
 <button id="pause-btn">II</button>
+
+<!-- DIRECTION BUTTONS (touch devices) -->
+<div id="dir-controls">
+    <div class="dir-btn dir-up" id="dir-up">▲</div>
+    <div class="dir-btn dir-left" id="dir-left">◀</div>
+    <div class="dir-btn dir-right" id="dir-right">▶</div>
+    <div class="dir-btn dir-down" id="dir-down">▼</div>
+</div>
 
 
 <!-- TUTORIAL OVERLAY -->
@@ -445,22 +475,10 @@ function updateCrystal(dt) {
         crystal.rotation = crystal.aimAngle;
     }
 
-    // ─── MOUSE / TOUCH: moves crystal position AND rotates direction ───
+    // ─── MOUSE / TOUCH: moves crystal position only (does NOT change direction) ───
     const lerp = 0.22;
     crystal.x += (mouse.x - crystal.x) * lerp;
     crystal.y += (mouse.y - crystal.y) * lerp;
-
-    // Aim direction follows finger/mouse movement
-    const mdx = mouse.x - mouse.prevX;
-    const mdy = mouse.y - mouse.prevY;
-    if (Math.hypot(mdx, mdy) > 1) {
-        const aimAngle = Math.atan2(mdy, mdx);
-        let diff = aimAngle - crystal.aimAngle;
-        while (diff > Math.PI) diff -= Math.PI * 2;
-        while (diff < -Math.PI) diff += Math.PI * 2;
-        crystal.aimAngle += diff * 0.15;
-        crystal.rotation = crystal.aimAngle;
-    }
 
     // Clamp to screen
     crystal.x = Math.max(crystal.size, Math.min(W - crystal.size, crystal.x));
@@ -1432,6 +1450,7 @@ function startGame() {
     document.getElementById('gameover-screen').classList.remove('active');
     document.getElementById('hud').classList.add('active');
     document.getElementById('pause-btn').classList.add('active');
+    document.getElementById('dir-controls').classList.add('active');
     document.getElementById('combo-display').classList.remove('active');
     document.getElementById('tutorial-overlay').classList.add('active');
     updateHUD();
@@ -1447,6 +1466,7 @@ function endGame() {
     showScreen('gameover');
     document.getElementById('hud').classList.remove('active');
     document.getElementById('pause-btn').classList.remove('active');
+    document.getElementById('dir-controls').classList.remove('active');
     document.getElementById('combo-display').classList.remove('active');
 }
 
@@ -1456,6 +1476,7 @@ function goToTitle() {
     document.getElementById('gameover-screen').classList.remove('active');
     document.getElementById('hud').classList.remove('active');
     document.getElementById('pause-btn').classList.remove('active');
+    document.getElementById('dir-controls').classList.remove('active');
     document.getElementById('tutorial-overlay').classList.remove('active');
     document.getElementById('combo-display').classList.remove('active');
 }
@@ -1479,7 +1500,7 @@ const TUT_STEPS = [
     {
         num: 'Step 1 of 4',
         title: 'Move Your Crystal',
-        desc: '<strong style="color:#aabbff">On laptop/desktop:</strong> Use <strong>WASD</strong> or <strong>Arrow Keys</strong> to move.<br><strong style="color:#aabbff">On phone/tablet:</strong> Drag with your finger.<br>The pointy edge shows where beams will fire!',
+        desc: '<strong style="color:#aabbff">Move:</strong> Drag with your finger / mouse.<br><strong style="color:#aabbff">Aim beams:</strong> Press <strong>WASD</strong>/<strong>Arrows</strong> on keyboard, or use the <strong>◀ ▲ ▶ ▼</strong> buttons (bottom-left on touch).<br>Direction stays fixed until you press again!',
         showColors: false,
     },
     {
@@ -1750,13 +1771,32 @@ function init() {
         keys[e.key.toLowerCase()] = false;
     });
 
-    // Switch to mouse mode when mouse moves
-    window.addEventListener('mousemove', () => { inputMode = 'mouse'; });
+    // Direction buttons for touch devices — simulate keyboard keys
+    function setupDirBtn(id, keyName) {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        btn.addEventListener('touchstart', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            keys[keyName] = true;
+        }, { passive: false });
+        btn.addEventListener('touchend', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            keys[keyName] = false;
+        }, { passive: false });
+        // Also work with mouse (for testing)
+        btn.addEventListener('mousedown', e => { e.stopPropagation(); keys[keyName] = true; });
+        btn.addEventListener('mouseup', e => { e.stopPropagation(); keys[keyName] = false; });
+        btn.addEventListener('mouseleave', () => { keys[keyName] = false; });
+    }
+    setupDirBtn('dir-up', 'arrowup');
+    setupDirBtn('dir-down', 'arrowdown');
+    setupDirBtn('dir-left', 'arrowleft');
+    setupDirBtn('dir-right', 'arrowright');
 
-    // Pause button - works on both click and touch
-    const pauseBtn = document.getElementById('pause-btn');
-    pauseBtn.addEventListener('click', togglePause);
-    pauseBtn.addEventListener('touchend', e => { e.preventDefault(); togglePause(); }, { passive: false });
+    // Pause button
+    addTouchClick('pause-btn', togglePause);
 
     // Start loop
     requestAnimationFrame(gameLoop);
