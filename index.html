@@ -191,6 +191,62 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
 .tut-dot.done { background: #2bff7e; }
 .tut-dot.current { background: #fff; box-shadow: 0 0 8px #fff; width: 24px; border-radius: 4px; }
 
+
+/* ─── MOBILE FIXES ─── */
+@media (max-width: 768px) {
+    .btn {
+        padding: 18px 40px;
+        font-size: 20px;
+    }
+    .title-logo {
+        font-size: clamp(32px, 10vw, 60px);
+    }
+    .tutorial-card {
+        padding: 24px 24px;
+        max-width: 90vw;
+    }
+    .tut-desc {
+        font-size: 16px;
+    }
+    .tut-color-demo {
+        gap: 12px;
+    }
+    .tut-chip-dot {
+        width: 28px;
+        height: 28px;
+    }
+    #hud {
+        padding: 8px 12px;
+    }
+    .hud-box {
+        padding: 6px 12px;
+    }
+    .hud-val {
+        font-size: 18px;
+    }
+    #combo-display {
+        font-size: 40px;
+    }
+    #pause-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+}
+
+/* Prevent iOS double-tap zoom on buttons */
+button {
+    touch-action: manipulation;
+}
+
+/* Ensure canvas fills screen on all devices */
+@media (orientation: portrait) {
+    canvas { height: 100vh; width: 100vw; }
+}
+@media (orientation: landscape) {
+    canvas { height: 100vh; width: 100vw; }
+}
+
 </style>
 </head>
 <body>
@@ -215,8 +271,8 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
 <div id="title-screen" class="screen active">
     <div class="title-logo">Spectrum Slice</div>
     <div class="title-sub">Split Light ✦ Destroy Shadow</div>
-    <button class="btn primary" onclick="startGame()">Play</button>
-    <button class="btn" onclick="showInstructions()">How to Play</button>
+    <button class="btn primary" id="play-btn">Play</button>
+    <button class="btn" id="how-btn">How to Play</button>
     <div class="instructions" id="instr-text">
         Move your mouse to drag the <strong>Crystal Prism</strong> into the white laser beam.<br>
         The beam splits into <strong style="color:#ff3344">Red</strong>, <strong style="color:#33ff66">Green</strong>, and <strong style="color:#3399ff">Blue</strong> rays.<br>
@@ -1594,18 +1650,35 @@ function init() {
     window.addEventListener('mousedown', () => { mouse.down = true; initAudio(); });
     window.addEventListener('mouseup', () => { mouse.down = false; });
 
-    // Touch
+    // Touch - canvas movement
     window.addEventListener('touchstart', e => {
-        e.preventDefault();
-        const t = e.touches[0];
-        mouse.x = t.clientX; mouse.y = t.clientY; mouse.active = true;
-        initAudio();
+        // Only handle canvas movement if touching canvas area
+        if (e.target === canvas || e.target === document.body || e.target === document.documentElement) {
+            e.preventDefault();
+            const t = e.touches[0];
+            mouse.x = t.clientX; mouse.y = t.clientY; mouse.active = true;
+            initAudio();
+        }
     }, { passive: false });
     window.addEventListener('touchmove', e => {
-        e.preventDefault();
-        const t = e.touches[0];
-        mouse.x = t.clientX; mouse.y = t.clientY;
+        if (e.target === canvas || e.target === document.body || e.target === document.documentElement) {
+            e.preventDefault();
+            const t = e.touches[0];
+            mouse.x = t.clientX; mouse.y = t.clientY;
+        }
     }, { passive: false });
+
+    // Touch - buttons (prevent double-tap zoom issues)
+    function addTouchClick(id, handler) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('click', handler);
+            el.addEventListener('touchend', e => { e.preventDefault(); handler(); }, { passive: false });
+        }
+    }
+    addTouchClick('play-btn', startGame);
+    addTouchClick('how-btn', showInstructions);
+    addTouchClick('pause-btn', togglePause);
 
     // Keyboard
     window.addEventListener('keydown', e => {
@@ -1613,8 +1686,10 @@ function init() {
         if (e.key === ' ') initAudio();
     });
 
-    // Pause button
-    document.getElementById('pause-btn').addEventListener('click', togglePause);
+    // Pause button - works on both click and touch
+    const pauseBtn = document.getElementById('pause-btn');
+    pauseBtn.addEventListener('click', togglePause);
+    pauseBtn.addEventListener('touchend', e => { e.preventDefault(); togglePause(); }, { passive: false });
 
     // Start loop
     requestAnimationFrame(gameLoop);
