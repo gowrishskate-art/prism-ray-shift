@@ -40,7 +40,11 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
 @keyframes shimmer { from { background-position: 0% 50%; } to { background-position: 300% 50%; } }
 .title-sub {
     font-size: clamp(14px, 3vw, 20px); color: #8888bb;
-    letter-spacing: 4px; text-transform: uppercase; margin-bottom: 50px;
+    letter-spacing: 4px; text-transform: uppercase; margin-bottom: 12px;
+}
+#title-time-played {
+    font-size: 14px; color: #ffaa00; margin-bottom: 30px;
+    font-weight: 600; letter-spacing: 1px;
 }
 .btn {
     padding: 16px 48px; font-size: 22px; font-weight: 700;
@@ -365,6 +369,7 @@ button {
 <div id="title-screen" class="screen active">
     <div class="title-logo">Spectrum Slice</div>
     <div class="title-sub">Split Light ✦ Destroy Shadow</div>
+    <div id="title-time-played"></div>
     <button class="btn primary" id="play-btn">Play</button>
     <button class="btn" id="how-btn">How to Play</button>
     <button class="btn" id="shop-btn-title">Shop</button>
@@ -440,6 +445,21 @@ const SHOP_DATA = {
     totalPoints: parseInt(localStorage.getItem('ss_totalPoints') || '0', 10),
     owned: JSON.parse(localStorage.getItem('ss_owned') || '[]'),
 };
+const TOTAL_TIME_PLAYED = parseInt(localStorage.getItem('ss_totalTime') || '0', 10); // seconds
+
+function formatTime(seconds) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    if (h > 0) return h + 'h ' + m + 'm';
+    if (m > 0) return m + 'm ' + s + 's';
+    return s + 's';
+}
+
+function updateTitleTime() {
+    const el = document.getElementById('title-time-played');
+    if (el) el.textContent = '⏱ Total Time Played: ' + formatTime(TOTAL_TIME_PLAYED);
+}
 const UPGRADES = {
     fourBeam:   { id: 'fourBeam',   cost: 100000, name: 'Quadruple Beams' },
     doublePts:  { id: 'doublePts',  cost: 250000, name: 'Double Points' },
@@ -1578,6 +1598,9 @@ function endGame() {
     // Add this game's score to total points (persistent)
     SHOP_DATA.totalPoints += game.score;
     localStorage.setItem('ss_totalPoints', SHOP_DATA.totalPoints.toString());
+    // Save total time played
+    const newTotal = TOTAL_TIME_PLAYED + Math.floor(game.playTime);
+    localStorage.setItem('ss_totalTime', newTotal.toString());
 
     document.getElementById('final-score').textContent = game.score.toLocaleString();
     document.getElementById('final-wave').textContent = game.wave;
@@ -1656,6 +1679,10 @@ function goToTitle() {
     document.getElementById('dir-controls').classList.remove('active');
     document.getElementById('tutorial-overlay').classList.remove('active');
     document.getElementById('combo-display').classList.remove('active');
+    // Refresh total time played (value may have changed after a game)
+    const savedTime = parseInt(localStorage.getItem('ss_totalTime') || '0', 10);
+    const tpEl = document.getElementById('title-time-played');
+    if (tpEl) tpEl.textContent = '⏱ Total Time Played: ' + formatTime(savedTime);
 }
 
 function showInstructions() {
@@ -2019,6 +2046,9 @@ function init() {
 
     // Pause button
     addTouchClick('pause-btn', togglePause);
+
+    // Show total time played on title screen
+    updateTitleTime();
 
     // Start loop
     requestAnimationFrame(gameLoop);
