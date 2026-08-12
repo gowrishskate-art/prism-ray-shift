@@ -322,6 +322,8 @@ const game = {
     combo: 0, comboTimer: 0, maxCombo: 0,
     waveTimer: 0, spawnTimer: 0, bossTimer: 0, gemTimer: 8,
     megaMode: false, megaTimer: 0,
+    megaKillThreshold: 20,  // mega mode triggers every 20 kills
+    megaKillsNeeded: 20,   // countdown to next mega
     paused: false,
     time: 0,
     shake: 0, shakeX: 0, shakeY: 0,
@@ -901,6 +903,14 @@ function killEnemy(idx, color, isBossKill) {
     game.enemiesKilledThisWave++;
     if (game.tutorialActive && !game.firstKillDone) game.firstKillDone = true;
 
+    // Count toward mega mode
+    if (!game.megaMode) {
+        game.megaKillsNeeded--;
+        if (game.megaKillsNeeded <= 0) {
+            activateMegaMode();
+        }
+    }
+
     // Combo
     game.combo++;
     game.comboTimer = 2.5;
@@ -1107,8 +1117,11 @@ function drawGems() {
 function activateMegaMode() {
     game.megaMode = true;
     game.megaTimer = 6;
+    game.megaKillsNeeded = game.megaKillThreshold; // reset for next time
     sfxMega();
     game.flashAlpha = 0.3;
+    addFloatingText(W/2, H/2 - 40, 'MEGA BEAM!', '#ffd700');
+    createExplosion(crystal.x, crystal.y, '#ffd700', 30);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1145,11 +1158,7 @@ function updateWaves(dt) {
         addFloatingText(W/2, 80, '⚠ WHITE BOSS ⚠', '#ffffff');
     }
 
-    // Gems
-    if (game.gemTimer <= 0 && gems.length === 0) {
-        spawnGem();
-        game.gemTimer = 12 + Math.random() * 8;
-    }
+    // Gems removed — mega mode triggers on kills now
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1235,7 +1244,7 @@ function render(dt) {
 
     ctx.restore();
 
-    // Mega mode border glow
+    // Mega mode border glow + kill countdown
     if (game.megaMode) {
         ctx.save();
         const megaA = Math.min(1, game.megaTimer / 2) * (0.5 + 0.5 * Math.sin(game.time * 8));
@@ -1245,6 +1254,21 @@ function render(dt) {
         // Timer bar
         ctx.fillStyle = `rgba(255,215,0,0.7)`;
         ctx.fillRect(0, 0, W * (game.megaTimer / 6), 4);
+        ctx.restore();
+    } else {
+        // Kill countdown to mega mode
+        ctx.save();
+        const progress = 1 - (game.megaKillsNeeded / game.megaKillThreshold);
+        // Progress bar at top
+        ctx.fillStyle = 'rgba(255,215,0,0.15)';
+        ctx.fillRect(0, 0, W, 3);
+        ctx.fillStyle = `rgba(255,215,0,${0.5 + progress * 0.3})`;
+        ctx.fillRect(0, 0, W * progress, 3);
+        // Text
+        ctx.font = 'bold 12px Segoe UI, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillStyle = `rgba(255,215,0,${0.4 + progress * 0.4})`;
+        ctx.fillText(`MEGA in ${game.megaKillsNeeded} kills`, 16, 18);
         ctx.restore();
     }
 }
@@ -1352,8 +1376,9 @@ function startGame() {
     game.score = 0; game.wave = 1; game.kills = 0; game.lives = 3;
     game.combo = 0; game.maxCombo = 0; game.comboTimer = 0;
     game.waveEnemyCount = 8; game.enemiesKilledThisWave = 0;
-    game.spawnTimer = 1; game.bossTimer = 20; game.gemTimer = 10;
+    game.spawnTimer = 1; game.bossTimer = 20;
     game.megaMode = false; game.megaTimer = 0;
+    game.megaKillsNeeded = game.megaKillThreshold;
     game.time = 0; game.shake = 0; game.flashAlpha = 0;
     game.paused = false;
 
