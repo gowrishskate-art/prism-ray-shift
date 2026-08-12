@@ -275,7 +275,7 @@ const game = {
 };
 
 // ─── ENTITIES ───
-const crystal = { x: 0, y: 0, rotation: 0, tilt: 0, tiltVel: 0, size: 26, inBeam: false, glowPhase: 0 };
+const crystal = { x: 0, y: 0, rotation: 0, tilt: 0, tiltVel: 0, size: 26, inBeam: false, glowPhase: 0, aimAngle: Math.PI * 0.5, targetAim: Math.PI * 0.5 };
 const beam = { y: 0, thickness: 14, dir: 1, speed: 35, baseSpeed: 35, intensity: 1 };
 let enemies = [], particles = [], gems = [], stars = [], floatingTexts = [];
 let activeRays = []; // computed each frame
@@ -372,13 +372,28 @@ function updateCrystal(dt) {
     crystal.y += (mouse.y - crystal.y) * lerp;
     crystal.glowPhase += dt * 3;
 
-    // Tilt based on horizontal mouse velocity
-    const dx = mouse.x - mouse.prevX;
-    crystal.tiltVel += dx * 0.004;
-    crystal.tiltVel *= 0.88;
-    crystal.tilt += crystal.tiltVel * dt * 60;
-    crystal.tilt *= 0.96;
-    crystal.tilt = Math.max(-0.7, Math.min(0.7, crystal.tilt));
+    // Aim angle: based on mouse movement direction (full 360° control)
+    // Track mouse velocity to determine aim direction
+    const mdx = mouse.x - mouse.prevX;
+    const mdy = mouse.y - mouse.prevY;
+    const moveDist = Math.hypot(mdx, mdy);
+
+    if (moveDist > 0.5) {
+        // Mouse is moving — aim in direction of movement
+        const moveAngle = Math.atan2(mdy, mdx);
+        // Smoothly interpolate aim toward movement direction
+        crystal.targetAim = moveAngle;
+    }
+    // If mouse stops, keep last aim direction (don't reset)
+
+    // Smoothly rotate current aim toward target aim
+    if (crystal.targetAim !== undefined) {
+        let diff = crystal.targetAim - crystal.aimAngle;
+        // Normalize angle difference to [-PI, PI]
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        crystal.aimAngle += diff * 0.15;
+    }
 
     // Rotation (continuous spin for visual flair)
     crystal.rotation += dt * 0.8;
@@ -456,6 +471,23 @@ function drawCrystal() {
     ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI * 2); ctx.fill();
 
     ctx.restore();
+
+    // Aim indicator arrow (drawn OUTSIDE the rotation so it points in aim direction)
+    if (crystal.inBeam) {
+        ctx.save();
+        ctx.translate(crystal.x, crystal.y);
+        const aimX = Math.cos(crystal.aimAngle);
+        const aimY = Math.sin(crystal.aimAngle);
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(aimX * crystal.size * 2, aimY * crystal.size * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -531,9 +563,9 @@ function computeRays() {
             });
         }
     } else {
-        // 3-beam RGB split — fan downward, tilted by crystal tilt
-        const baseAngle = Math.PI * 0.5 + crystal.tilt; // straight down + tilt
-        const spread = 0.38; // ~22 degrees between rays
+        // 3-beam RGB split — fan in aim direction (full 360°)
+        const baseAngle = crystal.aimAngle;
+        const spread = 0.35; // ~20 degrees between rays
         for (let i = 0; i < 3; i++) {
             const angle = baseAngle + (i - 1) * spread;
             activeRays.push({
@@ -1319,6 +1351,8 @@ function startGame() {
     enemies = []; particles = []; gems = []; floatingTexts = [];
 
     crystal.x = W / 2; crystal.y = H / 2;
+    crystal.aimAngle = Math.PI * 0.5; // start aiming down
+    crystal.targetAim = Math.PI * 0.5;
     mouse.x = W / 2; mouse.y = H / 2;
     mouse.prevX = mouse.x; mouse.prevY = mouse.y;
     beam.y = H * 0.35; beam.dir = 1;
