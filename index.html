@@ -1500,7 +1500,7 @@ const TUT_STEPS = [
     {
         num: 'Step 1 of 4',
         title: 'Move Your Crystal',
-        desc: '<strong style="color:#aabbff">Move:</strong> Drag with your finger / mouse.<br><strong style="color:#aabbff">Aim beams:</strong> Press <strong>WASD</strong>/<strong>Arrows</strong> on keyboard, or use the <strong>◀ ▲ ▶ ▼</strong> buttons (bottom-left on touch).<br>Direction stays fixed until you press again!',
+        desc: '<strong style="color:#aabbff">Move:</strong> Drag with <strong>1 finger</strong> (touch) or mouse.<br><strong style="color:#aabbff">Aim beams:</strong><br>• Keyboard: <strong>WASD</strong> or <strong>Arrow Keys</strong><br>• Touch: swipe with <strong>2 fingers</strong> in any direction<br>• Or use <strong>◀ ▲ ▶ ▼</strong> buttons (bottom-left)<br>Direction stays fixed until you steer again!',
         showColors: false,
     },
     {
@@ -1724,23 +1724,63 @@ function init() {
     window.addEventListener('mousedown', () => { mouse.down = true; initAudio(); });
     window.addEventListener('mouseup', () => { mouse.down = false; });
 
-    // Touch - canvas movement
+    // Touch - 1 finger = move crystal, 2 fingers = steer direction
+    let twoFingerPrev = null; // {x, y} midpoint of 2 fingers previous frame
+
     window.addEventListener('touchstart', e => {
-        // Only handle canvas movement if touching canvas area
         if (e.target === canvas || e.target === document.body || e.target === document.documentElement) {
             e.preventDefault();
-            const t = e.touches[0];
-            mouse.x = t.clientX; mouse.y = t.clientY; mouse.active = true;
             initAudio();
+            if (e.touches.length >= 2) {
+                // Two fingers down — start steering
+                const mid = getTouchMidpoint(e);
+                twoFingerPrev = mid;
+            } else {
+                // One finger — move crystal
+                const t = e.touches[0];
+                mouse.x = t.clientX; mouse.y = t.clientY; mouse.active = true;
+            }
         }
     }, { passive: false });
+
     window.addEventListener('touchmove', e => {
         if (e.target === canvas || e.target === document.body || e.target === document.documentElement) {
             e.preventDefault();
-            const t = e.touches[0];
-            mouse.x = t.clientX; mouse.y = t.clientY;
+            if (e.touches.length >= 2 && twoFingerPrev) {
+                // Two fingers moving — steer the aim direction
+                const mid = getTouchMidpoint(e);
+                const dx = mid.x - twoFingerPrev.x;
+                const dy = mid.y - twoFingerPrev.y;
+                if (Math.hypot(dx, dy) > 2) {
+                    const aimAngle = Math.atan2(dy, dx);
+                    let diff = aimAngle - crystal.aimAngle;
+                    while (diff > Math.PI) diff -= Math.PI * 2;
+                    while (diff < -Math.PI) diff += Math.PI * 2;
+                    crystal.aimAngle += diff * 0.15;
+                    crystal.rotation = crystal.aimAngle;
+                }
+                twoFingerPrev = mid;
+            } else if (e.touches.length === 1) {
+                // One finger — move crystal
+                const t = e.touches[0];
+                mouse.x = t.clientX; mouse.y = t.clientY;
+                twoFingerPrev = null;
+            }
         }
     }, { passive: false });
+
+    window.addEventListener('touchend', e => {
+        if (e.touches.length < 2) twoFingerPrev = null;
+        if (e.touches.length === 1) {
+            mouse.x = e.touches[0].clientX;
+            mouse.y = e.touches[0].clientY;
+        }
+    }, { passive: false });
+
+    function getTouchMidpoint(e) {
+        const t1 = e.touches[0], t2 = e.touches[1];
+        return { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
+    }
 
     // Touch - buttons (prevent double-tap zoom issues)
     function addTouchClick(id, handler) {
