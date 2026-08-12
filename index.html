@@ -430,8 +430,18 @@ function updateCrystal(dt) {
     crystal.y += (mouse.y - crystal.y) * lerp;
     crystal.glowPhase += dt * 3;
 
-    // Rotation (continuous spin for visual flair)
-    crystal.rotation += dt * 0.8;
+    // Rotation follows mouse movement direction — move in an arc to rotate
+    const mdx = mouse.x - mouse.prevX;
+    const mdy = mouse.y - mouse.prevY;
+    const moveDist = Math.hypot(mdx, mdy);
+    if (moveDist > 1) {
+        const moveAngle = Math.atan2(mdy, mdx);
+        // Smoothly rotate toward movement direction
+        let diff = moveAngle - crystal.rotation;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        crystal.rotation += diff * 0.15;
+    }
 
     // Check beam interception
     const beamHalf = beam.thickness * 0.5 + 4;
