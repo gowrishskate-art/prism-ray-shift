@@ -1581,9 +1581,10 @@ function startGame() {
     mouse.prevX = mouse.x; mouse.prevY = mouse.y;
     beam.y = H * 0.35; beam.dir = 1;
 
-    // Hide ALL screens (title + gameover)
+    // Hide ALL screens (title + gameover + shop)
     document.getElementById('title-screen').classList.remove('active');
     document.getElementById('gameover-screen').classList.remove('active');
+    document.getElementById('shop-screen').classList.remove('active');
     document.getElementById('hud').classList.add('active');
     document.getElementById('pause-btn').classList.add('active');
     document.getElementById('dir-controls').classList.add('active');
@@ -1672,8 +1673,10 @@ function buyUpgrade(upgradeId) {
 
 function goToTitle() {
     game.state = 'title';
+    // Hide ALL screens, then show title
     document.getElementById('title-screen').classList.add('active');
     document.getElementById('gameover-screen').classList.remove('active');
+    document.getElementById('shop-screen').classList.remove('active');
     document.getElementById('hud').classList.remove('active');
     document.getElementById('pause-btn').classList.remove('active');
     document.getElementById('dir-controls').classList.remove('active');
