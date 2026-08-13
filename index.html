@@ -502,8 +502,6 @@ button {
     <div id="title-music-bar" class="title-music-bar"></div>
     <button class="btn primary" id="play-btn">Play</button>
     <button class="btn" id="how-btn">How to Play</button>
-    <button class="btn" id="shop-btn-title">Shop</button>
-    <button class="btn" id="leaderboard-btn-title">Leaderboard</button>
     <button class="btn" id="settings-btn-title">Settings</button>
     <button class="btn" id="exit-btn-title">Exit</button>
     <div class="instructions" id="instr-text">
@@ -526,8 +524,7 @@ button {
         <div class="go-stat"><div class="go-stat-val" id="final-combo">0</div><div class="go-stat-lbl">Max Combo</div></div>
     </div>
     <button class="btn primary" id="playagain-btn">Play Again</button>
-    <button class="btn" id="shop-btn-gameover">Shop</button>
-    <button class="btn" id="lb-btn-gameover">Leaderboard</button>
+    <button class="btn" id="settings-btn-gameover">Settings</button>
     <button class="btn" id="menu-btn">Menu</button>
 </div>
 
@@ -2670,17 +2667,14 @@ function init() {
     addTouchClick('pause-btn', togglePause);
     addTouchClick('playagain-btn', startGame);
     addTouchClick('menu-btn', goToTitle);
-    addTouchClick('shop-btn-title', openShop);
-    addTouchClick('leaderboard-btn-title', openLeaderboard);
-    addTouchClick('lb-back-btn', goToTitle);
-    addTouchClick('shop-btn-gameover', openShop);
-    addTouchClick('lb-btn-gameover', openLeaderboard);
     addTouchClick('settings-btn-title', openSettings);
+    addTouchClick('settings-btn-gameover', openSettings);
     addTouchClick('settings-save-btn', saveSettingsFromUI);
     addTouchClick('settings-shop-btn', openShop);
     addTouchClick('settings-lb-btn', openLeaderboard);
     addTouchClick('settings-back-btn', goToTitle);
     addTouchClick('shop-back-btn', goToTitle);
+    addTouchClick('lb-back-btn', goToTitle);
     addTouchClick('buy-4beam', function() { buyUpgrade('fourBeam'); });
     addTouchClick('buy-double', function() { buyUpgrade('doublePts'); });
     addTouchClick('exit-btn-title', function() {
