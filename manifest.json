@@ -1,0 +1,18 @@
+{
+    "name": "Spectrum Slice",
+    "short_name": "Spectrum Slice",
+    "description": "Split light, destroy shadow creatures",
+    "start_url": "./",
+    "display": "fullscreen",
+    "orientation": "any",
+    "background_color": "#030014",
+    "theme_color": "#030014",
+    "icons": [
+        {
+            "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%23030014'/%3E%3Cpolygon points='256,80 432,376 80,376' fill='none' stroke='%2380a0ff' stroke-width='24'/%3E%3Cpolygon points='256,140 372,340 140,340' fill='rgba(140,180,255,0.3)'/%3E%3Cline x1='256' y1='256' x2='256' y2='80' stroke='%23fff' stroke-width='8'/%3E%3Ccircle cx='256' cy='256' r='20' fill='%23fff'/%3E%3C/svg%3E",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}
