@@ -689,31 +689,107 @@ function sfxSplit() { playTone(600, 0.04, 'sine', 0.05, 900); }
 // ═══════════════════════════════════════════════════════════════
 // BACKGROUND MUSIC SYSTEM — 10 Procedural Songs
 // ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// BACKGROUND MUSIC SYSTEM — 10 Unique Songs
+// Each song has its OWN melody, bass, and rhythm pattern
+// ═══════════════════════════════════════════════════════════════
+
+// Notes are semitone offsets from the song's base frequency
+// Each song has unique: melody array, bass array, harmony, rhythm, waveform
+
 const MUSIC_TRACKS = [
-    { name: 'Cosmic Drift',   scale: [0,2,4,7,9],    base: 220, tempo: 0.5, wave: 'sine',     mood: 'ambient' },
-    { name: 'Neon Pulse',     scale: [0,3,5,7,10],   base: 196, tempo: 0.35, wave: 'triangle', mood: 'energetic' },
-    { name: 'Starlight Dream',scale: [0,2,3,5,7,10], base: 261, tempo: 0.6, wave: 'sine',     mood: 'calm' },
-    { name: 'Crystal Echo',   scale: [0,2,4,5,7,9],  base: 233, tempo: 0.45, wave: 'triangle', mood: 'mystical' },
-    { name: 'Deep Space',     scale: [0,2,3,5,7,8],  base: 165, tempo: 0.7, wave: 'sine',     mood: 'dark' },
-    { name: 'Aurora Borealis',scale: [0,2,4,7,9,11], base: 247, tempo: 0.4, wave: 'sine',     mood: 'uplifting' },
-    { name: 'Synthwave Sunset',scale:[0,3,5,6,7,10], base: 174, tempo: 0.38,wave: 'sawtooth', mood: 'retro' },
-    { name: 'Lunar Tide',     scale: [0,2,4,5,7,9],  base: 207, tempo: 0.55, wave: 'sine',     mood: 'flowing' },
-    { name: 'Prism Dance',    scale: [0,2,4,7,9],    base: 277, tempo: 0.3, wave: 'triangle', mood: 'playful' },
-    { name: 'Void Whisper',   scale: [0,1,3,5,7,8],  base: 147, tempo: 0.65, wave: 'sine',     mood: 'eerie' },
+    {
+        name: 'Cosmic Drift', base: 220, tempo: 0.5, wave: 'sine',
+        // Slow ascending arpeggios
+        melody: [0, 7, 12, 19, 12, 7, 0, 7, 4, 11, 16, 23, 16, 11, 4, 11],
+        bass: [0, 0, 0, 0, -5, -5, -5, -5],
+        harmony: [12, 16, 7, 11],
+        rhythm: [1, 1, 1, 1, 1, 1, 1, 0.5, 1, 1, 1, 1, 1, 1, 1, 0.5],
+    },
+    {
+        name: 'Neon Pulse', base: 196, tempo: 0.3, wave: 'square',
+        // Fast driving bass-heavy pattern
+        melody: [0, 3, 7, 10, 12, 10, 7, 3, 5, 8, 12, 15, 12, 8, 5, 8],
+        bass: [0, 0, 0, 5, 5, 5, 5, 3],
+        harmony: [7, 10, 12, 15],
+        rhythm: [0.5, 0.5, 0.5, 0.5, 1, 0.5, 0.5, 1, 0.5, 0.5, 0.5, 0.5, 1, 0.5, 0.5, 1],
+    },
+    {
+        name: 'Starlight Dream', base: 261, tempo: 0.55, wave: 'sine',
+        // Gentle lullaby waltz feel (3/4)
+        melody: [0, 4, 7, 12, 9, 7, 4, 0, 2, 5, 9, 12, 7, 5, 2, 0],
+        bass: [0, 0, 0, -3, -3, -3, 2, 2],
+        harmony: [7, 12, 4, 9],
+        rhythm: [1.5, 0.5, 1, 1.5, 0.5, 1, 1.5, 0.5, 1.5, 0.5, 1, 1.5, 0.5, 1, 1.5, 0.5],
+    },
+    {
+        name: 'Crystal Echo', base: 233, tempo: 0.4, wave: 'triangle',
+        // Pentatonic flowing pattern with jumps
+        melody: [0, 7, 12, 7, 4, 12, 19, 12, 9, 16, 21, 16, 7, 14, 19, 14],
+        bass: [0, 0, 5, 5, 7, 7, 5, 5],
+        harmony: [12, 19, 16, 21],
+        rhythm: [0.75, 0.75, 0.75, 0.75, 1, 0.5, 1, 0.5, 0.75, 0.75, 0.75, 0.75, 1, 0.5, 1, 0.5],
+    },
+    {
+        name: 'Deep Space', base: 165, tempo: 0.65, wave: 'sine',
+        // Minor key slow drone with sparse melody
+        melody: [0, 0, 3, 0, 7, 0, 5, 0, 0, 0, 8, 0, 7, 0, 3, 0],
+        bass: [-12, -12, -12, -12, -12, -12, -12, -12],
+        harmony: [12, 15, 19, 17],
+        rhythm: [1, 0.5, 0.5, 1, 1, 0.5, 0.5, 1, 1, 0.5, 0.5, 1, 1, 0.5, 0.5, 1],
+    },
+    {
+        name: 'Aurora Borealis', base: 247, tempo: 0.42, wave: 'sine',
+        // Ascending bright major pattern
+        melody: [0, 4, 7, 11, 7, 4, 0, 4, 5, 9, 12, 16, 12, 9, 5, 9],
+        bass: [0, 0, 5, 5, 7, 7, 9, 9],
+        harmony: [7, 11, 4, 9],
+        rhythm: [0.5, 0.5, 1, 0.5, 0.5, 1, 0.5, 0.5, 0.5, 0.5, 1, 0.5, 0.5, 1, 0.5, 0.5],
+    },
+    {
+        name: 'Synthwave Sunset', base: 174, tempo: 0.38, wave: 'sawtooth',
+        // Retro 80s arpeggio pattern
+        melody: [0, 7, 12, 7, 3, 10, 15, 10, 5, 12, 17, 12, 7, 14, 19, 14],
+        bass: [0, 0, 0, 0, 3, 3, 3, 3],
+        harmony: [12, 15, 17, 19],
+        rhythm: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+    },
+    {
+        name: 'Lunar Tide', base: 207, tempo: 0.5, wave: 'sine',
+        // Flowing waves — long sustained notes
+        melody: [0, 0, 4, 4, 7, 7, 5, 5, 0, 0, 5, 5, 9, 9, 7, 7],
+        bass: [0, 0, -3, -3, 2, 2, -1, -1],
+        harmony: [7, 4, 9, 5],
+        rhythm: [1.5, 0.5, 1.5, 0.5, 1.5, 0.5, 1.5, 0.5, 1.5, 0.5, 1.5, 0.5, 1.5, 0.5, 1.5, 0.5],
+    },
+    {
+        name: 'Prism Dance', base: 277, tempo: 0.28, wave: 'triangle',
+        // Fast playful bouncy pattern
+        melody: [0, 4, 7, 4, 0, 4, 7, 12, 9, 5, 2, 5, 9, 5, 2, 0],
+        bass: [0, 5, 7, 5, 0, 5, 7, 5],
+        harmony: [7, 12, 4, 9],
+        rhythm: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 1],
+    },
+    {
+        name: 'Void Whisper', base: 147, tempo: 0.6, wave: 'sine',
+        // Dark eerie minor pattern
+        melody: [0, 1, 0, 3, 0, 5, 0, 7, 0, 1, 0, 8, 0, 7, 0, 5],
+        bass: [-12, -12, -11, -11, -10, -10, -9, -9],
+        harmony: [3, 5, 7, 8],
+        rhythm: [0.5, 0.5, 1, 0.5, 0.5, 1, 0.5, 0.5, 0.5, 0.5, 1, 0.5, 0.5, 1, 0.5, 0.5],
+    },
 ];
 
-// Convert scale degree to frequency
 function noteFreq(baseFreq, semitones) {
     return baseFreq * Math.pow(2, semitones / 12);
 }
 
 let musicState = {
-    currentTrack: -1,    // -1 = none
+    currentTrack: -1,
     isPlaying: false,
     scheduler: null,
     nextNoteTime: 0,
     noteIndex: 0,
-    bassIndex: 0,
     musicGain: null,
 };
 
@@ -725,15 +801,12 @@ function startMusic(trackIdx) {
 
     musicState.currentTrack = trackIdx;
     musicState.isPlaying = true;
-
-    // Separate gain for music (lower volume)
     musicState.musicGain = audioCtx.createGain();
     musicState.musicGain.gain.value = 0.45;
     musicState.musicGain.connect(masterGain);
 
     musicState.nextNoteTime = audioCtx.currentTime + 0.1;
     musicState.noteIndex = 0;
-    musicState.bassIndex = 0;
     musicScheduler();
 }
 
@@ -757,45 +830,65 @@ function musicScheduler() {
 
     const aheadTime = 0.2;
     while (musicState.nextNoteTime < audioCtx.currentTime + aheadTime) {
-        playMusicNote(track, musicState.nextNoteTime);
-        musicState.nextNoteTime += track.tempo;
+        playMusicNote(track, musicState.nextNoteTime, musicState.noteIndex);
+        // Each note has its own duration from the rhythm array
+        const rhythm = track.rhythm;
+        const dur = rhythm[musicState.noteIndex % rhythm.length];
+        musicState.nextNoteTime += dur * track.tempo;
+        musicState.noteIndex++;
     }
     musicState.scheduler = setTimeout(musicScheduler, 100);
 }
 
-function playMusicNote(track, time) {
+function playMusicNote(track, time, idx) {
     if (!audioCtx || !musicState.musicGain) return;
-    const scale = track.scale;
-    const len = scale.length;
 
-    // Melody — gentle random walk through the scale
-    const melodyOffset = scale[musicState.noteIndex % len];
-    const melodyOctave = (musicState.noteIndex % 7 < 4) ? 12 : 24;
-    const melodyFreq = noteFreq(track.base, melodyOffset + melodyOctave);
-    playMusicOsc(melodyFreq, time, track.tempo * 0.9, track.wave, 0.5);
+    const melody = track.melody;
+    const bass = track.bass;
+    const harmony = track.harmony;
+    const rhythm = track.rhythm;
+    const mi = idx % melody.length;
+    const bi = idx % bass.length;
+    const hi = idx % harmony.length;
+    const ri = idx % rhythm.length;
+    const noteDur = rhythm[ri] * track.tempo;
 
-    // Harmony — every other note, a third above
-    if (musicState.noteIndex % 2 === 0) {
-        const harmIdx = (musicState.noteIndex + 2) % len;
-        const harmFreq = noteFreq(track.base, scale[harmIdx] + melodyOctave);
-        playMusicOsc(harmFreq, time, track.tempo * 0.7, track.wave, 0.25);
+    // ─── Melody ───
+    const melodyFreq = noteFreq(track.base, melody[mi]);
+    playMusicOsc(melodyFreq, time, noteDur * 0.9, track.wave, 0.5);
+
+    // ─── Harmony — every 2nd note ───
+    if (idx % 2 === 0) {
+        const harmFreq = noteFreq(track.base, harmony[hi]);
+        playMusicOsc(harmFreq, time, noteDur * 0.8, track.wave, 0.3);
     }
 
-    // Bass — root note every 4 beats
-    if (musicState.noteIndex % 4 === 0) {
-        const bassFreq = noteFreq(track.base, 0);
-        playMusicOsc(bassFreq, time, track.tempo * 3.5, 'sine', 0.6);
-        // Soft second bass note halfway through
-        playMusicOsc(noteFreq(track.base, scale[2] - 12), time + track.tempo * 2, track.tempo * 1.5, 'sine', 0.3);
+    // ─── Bass — every 4th note ───
+    if (idx % 4 === 0 || idx % 4 === 2) {
+        const bassFreq = noteFreq(track.base, bass[bi]);
+        playMusicOsc(bassFreq, time, noteDur * 2.5, 'sine', 0.7);
     }
 
-    // Sparkle — high note every 8 beats
-    if (musicState.noteIndex % 8 === 4) {
-        const sparkleFreq = noteFreq(track.base, scale[musicState.noteIndex % len] + 36);
-        playMusicOsc(sparkleFreq, time, track.tempo * 0.5, 'sine', 0.15);
+    // ─── Sparkle — high accent every 8th note ───
+    if (idx % 8 === 4) {
+        const sparkleFreq = noteFreq(track.base, melody[mi] + 24);
+        playMusicOsc(sparkleFreq, time, noteDur * 0.4, 'sine', 0.2);
     }
+}
 
-    musicState.noteIndex++;
+function playMusicOsc(freq, startTime, duration, waveType, vol) {
+    if (!audioCtx || !musicState.musicGain) return;
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = waveType || 'sine';
+    osc.frequency.setValueAtTime(freq, startTime);
+    g.gain.setValueAtTime(0, startTime);
+    g.gain.linearRampToValueAtTime(vol * 0.5, startTime + 0.04);
+    g.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+    osc.connect(g);
+    g.connect(musicState.musicGain);
+    osc.start(startTime);
+    osc.stop(startTime + duration + 0.1);
 }
 
 function playMusicOsc(freq, startTime, duration, waveType, vol) {
