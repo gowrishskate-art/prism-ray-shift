@@ -385,6 +385,7 @@ button {
     <button class="btn primary" id="play-btn">Play</button>
     <button class="btn" id="how-btn">How to Play</button>
     <button class="btn" id="shop-btn-title">Shop</button>
+    <button class="btn" id="exit-btn-title">Exit</button>
     <div class="instructions" id="instr-text">
         Move your mouse to drag the <strong>Crystal Prism</strong> into the white laser beam.<br>
         The beam splits into <strong style="color:#ff3344">Red</strong>, <strong style="color:#33ff66">Green</strong>, and <strong style="color:#3399ff">Blue</strong> rays.<br>
@@ -2034,6 +2035,11 @@ function init() {
     addTouchClick('shop-back-btn', goToTitle);
     addTouchClick('buy-4beam', function() { buyUpgrade('fourBeam'); });
     addTouchClick('buy-double', function() { buyUpgrade('doublePts'); });
+    addTouchClick('exit-btn-title', function() {
+        // Try to close the tab; if blocked, go to a blank page
+        window.close();
+        window.location.href = 'about:blank';
+    });
 
     // Keyboard — WASD + arrows for movement, Escape/P for pause
     window.addEventListener('keydown', e => {
