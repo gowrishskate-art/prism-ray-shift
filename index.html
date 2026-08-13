@@ -169,6 +169,10 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
 .dir-down  { top: 112px; left: 56px; }
 
 /* ─── SHOP SCREEN ─── */
+#leaderboard-screen {
+    background: radial-gradient(ellipse at 50% 30%, #0a0828 0%, #050018 50%, #030010 100%);
+    overflow-y: auto; padding: 30px 20px;
+}
 #shop-screen {
     background: radial-gradient(ellipse at 50% 30%, #0a0828 0%, #050018 50%, #030010 100%);
     overflow-y: auto; padding: 30px 20px;
@@ -229,6 +233,33 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
 }
 .shop-buy.affordable:hover { box-shadow: 0 0 25px rgba(255,215,0,0.6); }
 .shop-buy.disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ─── LEADERBOARD ─── */
+.lb-best-label {
+    text-align: center; font-size: 12px; color: #8888bb;
+    text-transform: uppercase; letter-spacing: 2px; margin-top: 20px;
+}
+.lb-best-score {
+    text-align: center; font-size: clamp(36px, 7vw, 56px);
+    color: #ffd700; font-weight: 900; margin-bottom: 20px;
+    text-shadow: 0 0 20px rgba(255,215,0,0.4);
+}
+.lb-history-label {
+    text-align: center; font-size: 13px; color: #8888bb;
+    text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px;
+}
+.lb-list { max-width: 400px; margin: 0 auto; width: 100%; }
+.lb-row {
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(12,8,30,0.7); border: 1px solid rgba(120,80,255,0.2);
+    border-radius: 10px; padding: 12px 18px; margin-bottom: 8px;
+}
+.lb-rank { font-size: 16px; font-weight: 700; color: #8888bb; width: 30px; }
+.lb-score-val { font-size: 18px; font-weight: 700; color: #ffd700; }
+.lb-wave-val { font-size: 13px; color: #2b9eff; }
+.lb-row.top1 { border-color: rgba(255,215,0,0.5); box-shadow: 0 0 12px rgba(255,215,0,0.1); }
+.lb-row.top1 .lb-rank { color: #ffd700; }
+.lb-empty { text-align: center; color: #555577; font-size: 14px; padding: 20px; }
 
 /* ─── TUTORIAL OVERLAY ─── */
 #tutorial-overlay {
@@ -385,6 +416,7 @@ button {
     <button class="btn primary" id="play-btn">Play</button>
     <button class="btn" id="how-btn">How to Play</button>
     <button class="btn" id="shop-btn-title">Shop</button>
+    <button class="btn" id="leaderboard-btn-title">Leaderboard</button>
     <button class="btn" id="exit-btn-title">Exit</button>
     <div class="instructions" id="instr-text">
         Move your mouse to drag the <strong>Crystal Prism</strong> into the white laser beam.<br>
@@ -407,6 +439,7 @@ button {
     </div>
     <button class="btn primary" id="playagain-btn">Play Again</button>
     <button class="btn" id="shop-btn-gameover">Shop</button>
+    <button class="btn" id="lb-btn-gameover">Leaderboard</button>
     <button class="btn" id="menu-btn">Menu</button>
 </div>
 
@@ -434,6 +467,16 @@ button {
         </div>
     </div>
     <button class="btn" id="shop-back-btn" style="margin-top: 30px;">Back</button>
+</div>
+
+<!-- LEADERBOARD SCREEN -->
+<div id="leaderboard-screen" class="screen">
+    <div class="shop-title">Leaderboard</div>
+    <div class="lb-best-label">Your Best Score</div>
+    <div class="lb-best-score" id="lb-best-score">0</div>
+    <div class="lb-history-label">Recent High Scores</div>
+    <div id="lb-list" class="lb-list"></div>
+    <button class="btn" id="lb-back-btn" style="margin-top: 30px;">Back</button>
 </div>
 
 <script>
@@ -477,6 +520,47 @@ const UPGRADES = {
     fourBeam:   { id: 'fourBeam',   cost: 100000, name: 'Quadruple Beams' },
     doublePts:  { id: 'doublePts',  cost: 250000, name: 'Double Points' },
 };
+
+// ─── LEADERBOARD DATA (persistent) ───
+let HIGH_SCORES = JSON.parse(localStorage.getItem('ss_highscores') || '[]');
+function saveHighScores() {
+    HIGH_SCORES.sort(function(a, b) { return b.score - a.score; });
+    HIGH_SCORES = HIGH_SCORES.slice(0, 10); // keep top 10
+    localStorage.setItem('ss_highscores', JSON.stringify(HIGH_SCORES));
+}
+function addHighScore(score, wave) {
+    if (score <= 0) return;
+    HIGH_SCORES.push({ score: score, wave: wave, date: Date.now() });
+    saveHighScores();
+}
+function getBestScore() {
+    return HIGH_SCORES.length > 0 ? HIGH_SCORES[0].score : 0;
+}
+
+function renderLeaderboard() {
+    document.getElementById('lb-best-score').textContent = getBestScore().toLocaleString();
+    var list = document.getElementById('lb-list');
+    list.innerHTML = '';
+    if (HIGH_SCORES.length === 0) {
+        list.innerHTML = '<div class="lb-empty">No scores yet — play a game!</div>';
+        return;
+    }
+    for (var i = 0; i < HIGH_SCORES.length; i++) {
+        var hs = HIGH_SCORES[i];
+        var row = document.createElement('div');
+        row.className = 'lb-row' + (i === 0 ? ' top1' : '');
+        row.innerHTML = '<span class="lb-rank">#' + (i + 1) + '</span>' +
+                        '<span class="lb-score-val">' + hs.score.toLocaleString() + '</span>' +
+                        '<span class="lb-wave-val">Wave ' + hs.wave + '</span>';
+        list.appendChild(row);
+    }
+}
+
+function openLeaderboard() {
+    game.state = 'leaderboard';
+    showScreen('leaderboard');
+    renderLeaderboard();
+}
 
 // ─── CANVAS ───
 let canvas, ctx, W, H, DPR;
@@ -1598,6 +1682,7 @@ function startGame() {
     document.getElementById('title-screen').classList.remove('active');
     document.getElementById('gameover-screen').classList.remove('active');
     document.getElementById('shop-screen').classList.remove('active');
+    document.getElementById('leaderboard-screen').classList.remove('active');
     document.getElementById('hud').classList.add('active');
     document.getElementById('pause-btn').classList.add('active');
     document.getElementById('exit-btn').classList.add('active');
@@ -1616,6 +1701,8 @@ function endGame() {
     // Save total time played
     const newTotal = TOTAL_TIME_PLAYED + Math.floor(game.playTime);
     localStorage.setItem('ss_totalTime', newTotal.toString());
+    // Add to leaderboard
+    addHighScore(game.score, game.wave);
 
     document.getElementById('final-score').textContent = game.score.toLocaleString();
     document.getElementById('final-wave').textContent = game.wave;
@@ -1692,6 +1779,7 @@ function goToTitle() {
     document.getElementById('title-screen').classList.add('active');
     document.getElementById('gameover-screen').classList.remove('active');
     document.getElementById('shop-screen').classList.remove('active');
+    document.getElementById('leaderboard-screen').classList.remove('active');
     document.getElementById('hud').classList.remove('active');
     document.getElementById('pause-btn').classList.remove('active');
     document.getElementById('exit-btn').classList.remove('active');
@@ -1722,6 +1810,7 @@ function exitGame() {
     localStorage.setItem('ss_totalPoints', SHOP_DATA.totalPoints.toString());
     const newTotal = TOTAL_TIME_PLAYED + Math.floor(game.playTime);
     localStorage.setItem('ss_totalTime', newTotal.toString());
+    addHighScore(game.score, game.wave);
     game.score = 0;
     game.playTime = 0;
     goToTitle();
@@ -2031,7 +2120,10 @@ function init() {
     addTouchClick('playagain-btn', startGame);
     addTouchClick('menu-btn', goToTitle);
     addTouchClick('shop-btn-title', openShop);
+    addTouchClick('leaderboard-btn-title', openLeaderboard);
+    addTouchClick('lb-back-btn', goToTitle);
     addTouchClick('shop-btn-gameover', openShop);
+    addTouchClick('lb-btn-gameover', openLeaderboard);
     addTouchClick('shop-back-btn', goToTitle);
     addTouchClick('buy-4beam', function() { buyUpgrade('fourBeam'); });
     addTouchClick('buy-double', function() { buyUpgrade('doublePts'); });
