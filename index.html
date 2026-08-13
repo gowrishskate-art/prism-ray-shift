@@ -151,6 +151,18 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
 #exit-btn.active { display: flex; }
 #exit-btn:hover { background: rgba(100,20,40,0.7); }
 
+.title-music-label {
+    font-size: 13px; color: #8888bb; text-transform: uppercase;
+    letter-spacing: 2px; margin-bottom: 10px; margin-top: 8px;
+}
+.title-music-bar {
+    display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+    max-width: 480px; margin-bottom: 24px;
+}
+.title-music-bar .music-btn {
+    font-size: 12px; padding: 6px 12px;
+}
+
 /* ─── MUSIC SELECTOR ─── */
 #music-bar {
     position: fixed; top: 0; left: 50%; transform: translateX(-50%);
@@ -447,6 +459,8 @@ button {
     <div class="title-logo">Spectrum Slice</div>
     <div class="title-sub">Split Light ✦ Destroy Shadow</div>
     <div id="title-time-played"></div>
+    <div class="title-music-label">🎵 Choose Your Music:</div>
+    <div id="title-music-bar" class="title-music-bar"></div>
     <button class="btn primary" id="play-btn">Play</button>
     <button class="btn" id="how-btn">How to Play</button>
     <button class="btn" id="shop-btn-title">Shop</button>
@@ -639,7 +653,7 @@ function initAudio() {
     try {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         masterGain = audioCtx.createGain();
-        masterGain.gain.value = 0.35;
+        masterGain.gain.value = 0.5;
         masterGain.connect(audioCtx.destination);
     } catch(e) {}
 }
@@ -714,7 +728,7 @@ function startMusic(trackIdx) {
 
     // Separate gain for music (lower volume)
     musicState.musicGain = audioCtx.createGain();
-    musicState.musicGain.gain.value = 0.12;
+    musicState.musicGain.gain.value = 0.45;
     musicState.musicGain.connect(masterGain);
 
     musicState.nextNoteTime = audioCtx.currentTime + 0.1;
@@ -792,7 +806,7 @@ function playMusicOsc(freq, startTime, duration, waveType, vol) {
     osc.frequency.setValueAtTime(freq, startTime);
     // Soft attack and release for pleasant sound
     g.gain.setValueAtTime(0, startTime);
-    g.gain.linearRampToValueAtTime(vol * 0.15, startTime + 0.05);
+    g.gain.linearRampToValueAtTime(vol * 0.5, startTime + 0.05);
     g.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
     osc.connect(g);
     g.connect(musicState.musicGain);
@@ -1824,7 +1838,7 @@ function startGame() {
     game.paused = false;
 
     // Tutorial reset
-    game.tutorialActive = true;
+    game.tutorialActive = false;
     game.tutorialStep = 0;
     game.tutorialTimer = 0;
     game.tutorialEnemySpawned = false;
@@ -2240,10 +2254,66 @@ function selectMusic(trackIdx) {
 function showMusicBar() {
     buildMusicBar();
     document.getElementById('music-bar').classList.add('active');
+    // Start with the song selected on title screen
+    if (titleSelectedTrack >= 0) {
+        selectMusic(titleSelectedTrack);
+    }
 }
 
 function hideMusicBar() {
     document.getElementById('music-bar').classList.remove('active');
+}
+
+
+// Track which song was selected on title screen
+let titleSelectedTrack = -1; // -1 = none
+
+function buildTitleMusicBar() {
+    const bar = document.getElementById('title-music-bar');
+    if (!bar) return;
+    bar.innerHTML = '';
+
+    // "None" button
+    const noneBtn = document.createElement('div');
+    noneBtn.className = 'music-btn playing';
+    noneBtn.textContent = '🔇 None';
+    noneBtn.id = 'title-music-none';
+    noneBtn.addEventListener('click', function() { selectTitleMusic(-1); });
+    noneBtn.addEventListener('touchend', function(e) { e.preventDefault(); selectTitleMusic(-1); }, { passive: false });
+    bar.appendChild(noneBtn);
+
+    // 10 song buttons
+    for (var i = 0; i < MUSIC_TRACKS.length; i++) {
+        (function(idx) {
+            var btn = document.createElement('div');
+            btn.className = 'music-btn';
+            btn.textContent = '♪ ' + MUSIC_TRACKS[idx].name;
+            btn.id = 'title-music-' + idx;
+            btn.addEventListener('click', function() { selectTitleMusic(idx); });
+            btn.addEventListener('touchend', function(e) { e.preventDefault(); selectTitleMusic(idx); }, { passive: false });
+            bar.appendChild(btn);
+        })(i);
+    }
+}
+
+function selectTitleMusic(trackIdx) {
+    titleSelectedTrack = trackIdx;
+    // Update button styles
+    var buttons = document.querySelectorAll('#title-music-bar .music-btn');
+    for (var i = 0; i < buttons.length; i++) buttons[i].classList.remove('playing');
+    if (trackIdx === -1) {
+        document.getElementById('title-music-none').classList.add('playing');
+    } else {
+        var btn = document.getElementById('title-music-' + trackIdx);
+        if (btn) btn.classList.add('playing');
+    }
+    // Preview the song immediately
+    initAudio();
+    if (trackIdx >= 0) {
+        startMusic(trackIdx);
+    } else {
+        stopMusic();
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2401,6 +2471,7 @@ function init() {
 
     // Show total time played on title screen
     updateTitleTime();
+    buildTitleMusicBar();
 
     // Start loop
     requestAnimationFrame(gameLoop);
