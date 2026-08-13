@@ -1864,7 +1864,11 @@ function startGame() {
     document.getElementById('pause-btn').classList.add('active');
     document.getElementById('exit-btn').classList.add('active');
     document.getElementById('dir-controls').classList.add('active');
-    showMusicBar();
+    document.getElementById('music-bar').classList.remove('active');
+    // Start the song selected on title screen (no bar shown during gameplay)
+    if (titleSelectedTrack >= 0) {
+        startMusic(titleSelectedTrack);
+    }
     document.getElementById('combo-display').classList.remove('active');
     document.getElementById('tutorial-overlay').classList.add('active');
     updateHUD();
