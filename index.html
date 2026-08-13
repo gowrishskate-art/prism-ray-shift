@@ -603,6 +603,8 @@ button {
     </div>
 
     <button class="btn primary" id="settings-save-btn">Save</button>
+    <button class="btn" id="settings-shop-btn">Shop</button>
+    <button class="btn" id="settings-lb-btn">Leaderboard</button>
     <button class="btn" id="settings-back-btn">Back</button>
 </div>
 
@@ -2675,6 +2677,8 @@ function init() {
     addTouchClick('lb-btn-gameover', openLeaderboard);
     addTouchClick('settings-btn-title', openSettings);
     addTouchClick('settings-save-btn', saveSettingsFromUI);
+    addTouchClick('settings-shop-btn', openShop);
+    addTouchClick('settings-lb-btn', openLeaderboard);
     addTouchClick('settings-back-btn', goToTitle);
     addTouchClick('shop-back-btn', goToTitle);
     addTouchClick('buy-4beam', function() { buyUpgrade('fourBeam'); });
