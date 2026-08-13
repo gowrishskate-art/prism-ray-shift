@@ -135,6 +135,17 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
 #pause-btn.active { display: block; }
 #pause-btn:hover { background: rgba(40,20,80,0.7); }
 
+#exit-btn {
+    position: fixed; bottom: 16px; right: 70px; z-index: 5;
+    width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(60,8,20,0.6); border: 1px solid rgba(255,60,80,0.3);
+    color: #ff6688; font-size: 18px; cursor: pointer; display: none;
+    backdrop-filter: blur(6px); touch-action: manipulation;
+    align-items: center; justify-content: center;
+}
+#exit-btn.active { display: flex; }
+#exit-btn:hover { background: rgba(100,20,40,0.7); }
+
 /* ─── DIRECTION BUTTONS (for touch devices) ─── */
 #dir-controls {
     position: fixed; bottom: 16px; left: 16px; z-index: 7;
@@ -350,6 +361,7 @@ button {
 </div>
 <div id="combo-display"></div>
 <button id="pause-btn">II</button>
+<button id="exit-btn">✕</button>
 
 <!-- DIRECTION BUTTONS (touch devices) -->
 <div id="dir-controls">
@@ -1587,6 +1599,7 @@ function startGame() {
     document.getElementById('shop-screen').classList.remove('active');
     document.getElementById('hud').classList.add('active');
     document.getElementById('pause-btn').classList.add('active');
+    document.getElementById('exit-btn').classList.add('active');
     document.getElementById('dir-controls').classList.add('active');
     document.getElementById('combo-display').classList.remove('active');
     document.getElementById('tutorial-overlay').classList.add('active');
@@ -1610,6 +1623,7 @@ function endGame() {
     showScreen('gameover');
     document.getElementById('hud').classList.remove('active');
     document.getElementById('pause-btn').classList.remove('active');
+    document.getElementById('exit-btn').classList.remove('active');
     document.getElementById('dir-controls').classList.remove('active');
     document.getElementById('combo-display').classList.remove('active');
 }
@@ -1679,6 +1693,7 @@ function goToTitle() {
     document.getElementById('shop-screen').classList.remove('active');
     document.getElementById('hud').classList.remove('active');
     document.getElementById('pause-btn').classList.remove('active');
+    document.getElementById('exit-btn').classList.remove('active');
     document.getElementById('dir-controls').classList.remove('active');
     document.getElementById('tutorial-overlay').classList.remove('active');
     document.getElementById('combo-display').classList.remove('active');
@@ -1697,6 +1712,18 @@ function togglePause() {
     if (game.state !== 'playing') return;
     game.paused = !game.paused;
     document.getElementById('pause-btn').textContent = game.paused ? '▶' : 'II';
+}
+
+function exitGame() {
+    if (game.state !== 'playing') return;
+    // Save points + time before leaving
+    SHOP_DATA.totalPoints += game.score;
+    localStorage.setItem('ss_totalPoints', SHOP_DATA.totalPoints.toString());
+    const newTotal = TOTAL_TIME_PLAYED + Math.floor(game.playTime);
+    localStorage.setItem('ss_totalTime', newTotal.toString());
+    game.score = 0;
+    game.playTime = 0;
+    goToTitle();
 }
 
 
@@ -2047,8 +2074,9 @@ function init() {
     setupDirBtn('dir-left', 'arrowleft');
     setupDirBtn('dir-right', 'arrowright');
 
-    // Pause button
+    // Pause + Exit buttons
     addTouchClick('pause-btn', togglePause);
+    addTouchClick('exit-btn', exitGame);
 
     // Show total time played on title screen
     updateTitleTime();
