@@ -111,6 +111,7 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
 #hud-score .hud-val { color: #ffd700; }
 #hud-wave .hud-val { color: #2b9eff; }
 #hud-time .hud-val { color: #ffaa00; }
+#hud-coins .hud-val { color: #ffd700; }
 #lives-icons { display: flex; gap: 4px; padding-top: 4px; }
 .life-icon { width: 14px; height: 14px; border-radius: 50%;
     background: radial-gradient(circle, #ff6699, #ff2b5e);
@@ -469,6 +470,7 @@ button {
     <div class="hud-box" id="hud-wave"><div class="hud-label">Wave</div><div class="hud-val">1</div></div>
     <div class="hud-box" id="hud-lives"><div class="hud-label">Lives</div><div id="lives-icons"></div></div>
     <div class="hud-box" id="hud-time"><div class="hud-label">Time</div><div class="hud-val">0:00</div></div>
+    <div class="hud-box" id="hud-coins"><div class="hud-label">Coins</div><div class="hud-val">0</div></div>
 </div>
 <div id="combo-display"></div>
 <button id="pause-btn">II</button>
@@ -2164,6 +2166,7 @@ function updateHUD() {
     const mins = Math.floor(game.playTime / 60);
     const secs = Math.floor(game.playTime % 60);
     document.querySelector('#hud-time .hud-val').textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
+    document.querySelector('#hud-coins .hud-val').textContent = game.coins;
 
     const livesDiv = document.getElementById('lives-icons');
     livesDiv.innerHTML = '';
