@@ -785,10 +785,6 @@ const game = {
     flashAlpha: 0,
     enemiesThisWave: 0, enemiesKilledThisWave: 0,
     waveEnemyCount: 8,
-    slowMo: 0,           // slow-mo timer
-    powerUps: [],        // active power-up drops on field
-    comboBarPulse: 0,    // visual pulse for combo
-    intensity: 0,        // visual intensity 0-1 scales with wave
 };
 
 // ─── ENTITIES ───
@@ -1601,7 +1597,6 @@ function killEnemy(idx, color, isBossKill) {
 
     game.kills++;
     game.enemiesKilledThisWave++;
-    maybeDropPowerUp(e.x, e.y);
     if (game.tutorialActive && !game.firstKillDone) game.firstKillDone = true;
 
     // Count toward mega mode
@@ -1620,7 +1615,7 @@ function killEnemy(idx, color, isBossKill) {
     // Score
     const hasDouble = SHOP_DATA.owned.indexOf('doublePts') >= 0;
     const baseScore = isBossKill ? (hasDouble ? 1250 : 500) : (hasDouble ? 250 : 100);
-    const comboMult = Math.min(1 + game.combo * 0.15, 8);
+    const comboMult = Math.min(1 + game.combo * 0.1, 5);
     const earned = Math.floor(baseScore * comboMult);
     game.score += earned;
 
@@ -1877,113 +1872,6 @@ function updateWaves(dt) {
 // ═══════════════════════════════════════════════════════════════
 // POWER-UP DROPS
 // ═══════════════════════════════════════════════════════════════
-const POWERUP_TYPES = [
-    { type: 'health',  color: '#ff2b5e', icon: '+', label: '+1 LIFE' },
-    { type: 'slowmo',  color: '#2bffff', icon: '~', label: 'SLOW-MO' },
-    { type: 'bomb',    color: '#ffd700', icon: '*', label: 'SCORE BOMB' },
-];
-
-function maybeDropPowerUp(x, y) {
-    // 8% chance per kill
-    if (Math.random() > 0.08) return;
-    const typeIdx = Math.floor(Math.random() * POWERUP_TYPES.length);
-    const p = POWERUP_TYPES[typeIdx];
-    game.powerUps.push({
-        x: x, y: y, vx: (Math.random()-0.5)*40, vy: (Math.random()-0.5)*40,
-        type: p.type, color: p.color, icon: p.icon, label: p.label,
-        size: 14, life: 6, wobble: 0,
-    });
-}
-
-function updatePowerUps(dt) {
-    for (let i = game.powerUps.length - 1; i >= 0; i--) {
-        const p = game.powerUps[i];
-        p.wobble += dt * 4;
-        p.x += p.vx * dt;
-        p.y += p.vy * dt;
-        p.vx *= 0.95; p.vy *= 0.95;
-        p.life -= dt;
-
-        // Collect when crystal touches
-        const d = Math.hypot(crystal.x - p.x, crystal.y - p.y);
-        if (d < p.size + crystal.size * 0.6) {
-            activatePowerUp(p);
-            game.powerUps.splice(i, 1);
-            continue;
-        }
-        if (p.life <= 0) game.powerUps.splice(i, 1);
-    }
-}
-
-function activatePowerUp(p) {
-    if (p.type === 'health') {
-        game.lives = Math.min(game.lives + 1, 5);
-        sfxGem();
-        addFloatingText(crystal.x, crystal.y - 30, '+1 LIFE', '#ff2b5e');
-        createExplosion(p.x, p.y, '#ff2b5e', 20);
-    } else if (p.type === 'slowmo') {
-        game.slowMo = 4;
-        sfxGem();
-        addFloatingText(crystal.x, crystal.y - 30, 'SLOW-MO!', '#2bffff');
-        createExplosion(p.x, p.y, '#2bffff', 20);
-    } else if (p.type === 'bomb') {
-        // Score bomb: +500 and clear nearest 5 enemies
-        game.score += 500;
-        addFloatingText(crystal.x, crystal.y - 30, '+500 SCORE BOMB!', '#ffd700');
-        createExplosion(crystal.x, crystal.y, '#ffd700', 40);
-        game.shake = 15;
-        game.flashAlpha = 0.3;
-        // Destroy up to 5 nearest enemies
-        const sorted = enemies.filter(e => !e.isBoss).sort((a,b) =>
-            Math.hypot(a.x-crystal.x, a.y-crystal.y) - Math.hypot(b.x-crystal.x, b.y-crystal.y)
-        );
-        for (let i = 0; i < Math.min(5, sorted.length); i++) {
-            createExplosion(sorted[i].x, sorted[i].y, '#ffd700', 25);
-            game.kills++;
-            game.enemiesKilledThisWave++;
-            const idx = enemies.indexOf(sorted[i]);
-            if (idx >= 0) enemies.splice(idx, 1);
-        }
-        sfxMega();
-    }
-    updateHUD();
-}
-
-function drawPowerUps() {
-    for (const p of game.powerUps) {
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        const pulse = 1 + Math.sin(p.wobble) * 0.2;
-        // Glow
-        const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, p.size * 3 * pulse);
-        grad.addColorStop(0, p.color + '60');
-        grad.addColorStop(1, p.color + '00');
-        ctx.fillStyle = grad;
-        ctx.beginPath(); ctx.arc(0, 0, p.size * 3 * pulse, 0, Math.PI * 2); ctx.fill();
-        // Circle
-        ctx.fillStyle = p.color;
-        ctx.shadowColor = p.color;
-        ctx.shadowBlur = 12;
-        ctx.beginPath(); ctx.arc(0, 0, p.size * pulse, 0, Math.PI * 2); ctx.fill();
-        ctx.shadowBlur = 0;
-        // Icon
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 14px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(p.icon, 0, 1);
-        // Life ring
-        if (p.life < 3) {
-            ctx.strokeStyle = 'rgba(255,100,100,' + (p.life/3) + ')';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(0, 0, p.size * 1.5, 0, Math.PI * 2 * (p.life/6));
-            ctx.stroke();
-        }
-        ctx.restore();
-    }
-}
-
 // ═══════════════════════════════════════════════════════════════
 // SCREEN EFFECTS
 // ═══════════════════════════════════════════════════════════════
@@ -2039,7 +1927,6 @@ function render(dt) {
     drawStars(dt);
 
     // Gems
-    drawPowerUps();
     drawGems();
 
     // Beam
@@ -2068,47 +1955,6 @@ function render(dt) {
 
     ctx.restore();
 
-
-    // Slow-mo visual tint
-    if (game.slowMo > 0) {
-        ctx.save();
-        const slowA = Math.min(1, game.slowMo / 2) * 0.15;
-        ctx.fillStyle = 'rgba(43,255,255,' + slowA + ')';
-        ctx.fillRect(0, 0, W, H);
-        // Slow-mo border
-        const slowBorder = (0.5 + 0.5 * Math.sin(game.time * 6));
-        ctx.strokeStyle = 'rgba(43,255,255,' + slowBorder * 0.4 + ')';
-        ctx.lineWidth = 4;
-        ctx.strokeRect(2, 2, W-4, H-4);
-        ctx.restore();
-    }
-
-    // Combo meter (bottom of screen)
-    if (game.combo >= 2 && game.comboTimer > 0) {
-        ctx.save();
-        const barW = 200;
-        const barH = 6;
-        const barX = (W - barW) / 2;
-        const barY = H - 30;
-        // Background
-        ctx.fillStyle = 'rgba(20,10,40,0.6)';
-        ctx.fillRect(barX - 4, barY - 4, barW + 8, barH + 8);
-        // Fill
-        const comboColors = ['#888888', '#ff8800', '#ffee00', '#18ff45', '#1895ff', '#bb18ff', '#ff1845', '#ffd700'];
-        const cIdx = Math.min(game.combo - 2, comboColors.length - 1);
-        ctx.fillStyle = comboColors[cIdx];
-        ctx.shadowColor = comboColors[cIdx];
-        ctx.shadowBlur = 8;
-        const fillW = barW * Math.min(game.comboTimer / 2.5, 1);
-        ctx.fillRect(barX, barY, fillW, barH);
-        ctx.shadowBlur = 0;
-        // Combo text
-        ctx.font = 'bold 14px Segoe UI, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = comboColors[cIdx];
-        ctx.fillText(game.combo + 'x COMBO', W/2, barY - 8);
-        ctx.restore();
-    }
 
     // Mega mode border glow + kill countdown
     if (game.megaMode) {
@@ -2155,33 +2001,24 @@ function gameLoop(timestamp) {
         return;
     }
 
-    // Apply slow-mo
-    let gameDt = dt;
-    if (game.slowMo > 0) {
-        gameDt = dt * 0.4; // 60% slower
-        game.slowMo -= dt;
-        if (game.slowMo < 0) game.slowMo = 0;
-    }
-
-    game.time += gameDt;
+    game.time += dt;
     game.playTime += dt;
 
-    updateBeam(gameDt);
+    updateBeam(dt);
     updateCrystal(dt); // crystal always responsive, even in slow-mo
 
     // Tutorial overrides wave spawning during tutorial
     if (game.tutorialActive) {
         updateTutorialLogic(dt);
-        updateEnemies(gameDt);
+        updateEnemies(dt);
     } else {
-        updateWaves(gameDt);
-        updateEnemies(gameDt);
+        updateWaves(dt);
+        updateEnemies(dt);
     }
 
     computeRays();
     checkRayCollisions();
-    updatePowerUps(gameDt);
-    updateGems(gameDt);
+    updateGems(dt);
     updateParticles(dt);
     updateFloatingTexts(dt);
     updateEffects(dt);
