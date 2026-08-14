@@ -550,6 +550,30 @@ button {
             </div>
             <button class="shop-buy" id="buy-double">250,000</button>
         </div>
+        <div class="shop-card" id="card-shadow5">
+            <div class="shop-icon" style="background:rgba(43,158,255,0.2);color:#2b9eff">5</div>
+            <div class="shop-info"><div class="shop-name">Slow: 5 Shadows / 10s</div>
+            <div class="shop-desc">Fewer shadows. Easier but slower.</div></div>
+            <button class="shop-buy" id="buy-shadow5">50 coins</button>
+        </div>
+        <div class="shop-card" id="card-shadow10">
+            <div class="shop-icon" style="background:rgba(43,255,126,0.2);color:#2bff7e">10</div>
+            <div class="shop-info"><div class="shop-name">Normal: 10 Shadows / 10s</div>
+            <div class="shop-desc">Default rate. Balanced.</div></div>
+            <button class="shop-buy" id="buy-shadow10">20 coins</button>
+        </div>
+        <div class="shop-card" id="card-shadow20">
+            <div class="shop-icon" style="background:rgba(255,136,0,0.2);color:#ff8800">20</div>
+            <div class="shop-info"><div class="shop-name">Fast: 20 Shadows / 10s</div>
+            <div class="shop-desc">More shadows. More action!</div></div>
+            <button class="shop-buy" id="buy-shadow20">20 coins</button>
+        </div>
+        <div class="shop-card" id="card-shadow30">
+            <div class="shop-icon" style="background:rgba(255,24,69,0.2);color:#ff1845">30</div>
+            <div class="shop-info"><div class="shop-name">Insane: 30 Shadows / 10s</div>
+            <div class="shop-desc">Maximum chaos!</div></div>
+            <button class="shop-buy" id="buy-shadow30">30 coins</button>
+        </div>
     </div>
     <button class="btn" id="shop-back-btn" style="margin-top: 30px;">Back</button>
 </div>
@@ -785,6 +809,11 @@ const game = {
     flashAlpha: 0,
     enemiesThisWave: 0, enemiesKilledThisWave: 0,
     waveEnemyCount: 8,
+    coins: parseInt(localStorage.getItem('ss_coins') || '0', 10),
+    coinKillCount: 0,     // kills since last coin drop (every 30)
+    coinEntities: [],     // coins floating on field
+    shadowRate: 10,       // shadows per 10 seconds (configurable via shop)
+    shadowSpawnAccum: 0,  // accumulator for timed spawning
 };
 
 // ─── ENTITIES ───
@@ -1597,6 +1626,7 @@ function killEnemy(idx, color, isBossKill) {
 
     game.kills++;
     game.enemiesKilledThisWave++;
+    maybeDropCoin(e.x, e.y);
     if (game.tutorialActive && !game.firstKillDone) game.firstKillDone = true;
 
     // Count toward mega mode
@@ -1826,9 +1856,7 @@ function activateMegaMode() {
 // ═══════════════════════════════════════════════════════════════
 function updateWaves(dt) {
     if (game.tutorialActive) return;
-    game.spawnTimer -= dt;
     game.bossTimer -= dt;
-    game.gemTimer -= dt;
 
     if (game.enemiesKilledThisWave >= game.waveEnemyCount && enemies.length === 0) {
         // Next wave
@@ -1836,13 +1864,11 @@ function updateWaves(dt) {
         game.enemiesKilledThisWave = 0;
         game.waveEnemyCount = 5 + Math.floor(game.wave * 1.5);
         sfxWave();
-        // Dramatic wave announcement
-        const waveText = game.wave % 5 === 0 ? '🔥 WAVE ' + game.wave + ' 🔥' : 'WAVE ' + game.wave;
+        const waveText = game.wave % 5 === 0 ? '\u{1F525} WAVE ' + game.wave : 'WAVE ' + game.wave;
         const waveColor = game.wave % 5 === 0 ? '#ff8800' : '#2b9eff';
         addFloatingText(W/2, H/2, waveText, waveColor);
         game.flashAlpha = 0.15;
         game.shake = Math.max(game.shake, 5);
-        // Heal 1 life every 5 waves
         if (game.wave % 5 === 0 && game.lives < 5) {
             game.lives++;
             addFloatingText(W/2, H/2 + 40, '+1 LIFE BONUS!', '#ff2b5e');
@@ -1850,11 +1876,13 @@ function updateWaves(dt) {
         updateHUD();
     }
 
-    // Spawn regular enemies
-    if (game.spawnTimer <= 0 && enemies.filter(e => !e.isBoss).length < 6 + game.wave) {
-        if (game.enemiesKilledThisWave + enemies.length < game.waveEnemyCount) {
+    // Spawn shadows at configurable rate (shadowRate per 10 seconds)
+    game.shadowSpawnAccum += dt;
+    const spawnInterval = 10 / game.shadowRate;
+    while (game.shadowSpawnAccum >= spawnInterval) {
+        game.shadowSpawnAccum -= spawnInterval;
+        if (enemies.filter(e => !e.isBoss).length < 20) {
             spawnEnemy(false);
-            game.spawnTimer = Math.max(0.5, 2.5 - game.wave * 0.1);
         }
     }
 
@@ -1862,16 +1890,93 @@ function updateWaves(dt) {
     if (game.bossTimer <= 0 && game.wave % 3 === 0 && enemies.filter(e => e.isBoss).length === 0) {
         spawnEnemy(true);
         game.bossTimer = 25;
-        addFloatingText(W/2, 80, '⚠ WHITE BOSS ⚠', '#ffffff');
+        addFloatingText(W/2, 80, 'WHITE BOSS', '#ffffff');
     }
-
-    // Gems removed — mega mode triggers on kills now
 }
 
 
 // ═══════════════════════════════════════════════════════════════
 // POWER-UP DROPS
 // ═══════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════
+// COIN SYSTEM
+// ═══════════════════════════════════════════════════════════════
+function maybeDropCoin(x, y) {
+    game.coinKillCount++;
+    if (game.coinKillCount >= 30) {
+        game.coinKillCount = 0;
+        game.coinEntities.push({
+            x: x, y: y,
+            vx: (Math.random() - 0.5) * 30,
+            vy: (Math.random() - 0.5) * 30,
+            size: 15, life: 10, wobble: 0,
+            value: 1,
+        });
+    }
+}
+
+function updateCoins(dt) {
+    for (let i = game.coinEntities.length - 1; i >= 0; i--) {
+        const c = game.coinEntities[i];
+        c.wobble += dt * 3;
+        c.x += c.vx * dt;
+        c.y += c.vy * dt;
+        c.vx *= 0.93; c.vy *= 0.93;
+        c.life -= dt;
+
+        // Collect
+        const d = Math.hypot(crystal.x - c.x, crystal.y - c.y);
+        if (d < c.size + crystal.size * 0.6) {
+            game.coins += c.value;
+            localStorage.setItem('ss_coins', game.coins.toString());
+            sfxGem();
+            createExplosion(c.x, c.y, '#ffd700', 15);
+            addFloatingText(c.x, c.y - 15, '+1 🪙', '#ffd700');
+            game.coinEntities.splice(i, 1);
+            continue;
+        }
+        if (c.life <= 0) {
+            game.coinEntities.splice(i, 1);
+        }
+    }
+}
+
+function drawCoins() {
+    for (const c of game.coinEntities) {
+        ctx.save();
+        ctx.translate(c.x, c.y);
+        const pulse = 1 + Math.sin(c.wobble * 2) * 0.15;
+        // Glow
+        const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, c.size * 3 * pulse);
+        grad.addColorStop(0, 'rgba(255,215,0,0.35)');
+        grad.addColorStop(1, 'rgba(255,215,0,0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath(); ctx.arc(0, 0, c.size * 3 * pulse, 0, Math.PI * 2); ctx.fill();
+        // Coin circle
+        ctx.fillStyle = '#ffd700';
+        ctx.shadowColor = '#ffd700';
+        ctx.shadowBlur = 12;
+        ctx.beginPath(); ctx.arc(0, 0, c.size * pulse, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+        // $ symbol
+        ctx.fillStyle = '#8B6914';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('$', 0, 1);
+        // Life ring (turns red when running out)
+        if (c.life < 4) {
+            ctx.strokeStyle = 'rgba(255,80,80,' + (c.life / 4) + ')';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, 0, c.size * 1.6, 0, Math.PI * 2 * (c.life / 10));
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+}
+
 // ═══════════════════════════════════════════════════════════════
 // SCREEN EFFECTS
 // ═══════════════════════════════════════════════════════════════
@@ -1927,6 +2032,7 @@ function render(dt) {
     drawStars(dt);
 
     // Gems
+    drawCoins();
     drawGems();
 
     // Beam
@@ -2018,6 +2124,7 @@ function gameLoop(timestamp) {
 
     computeRays();
     checkRayCollisions();
+    updateCoins(dt);
     updateGems(dt);
     updateParticles(dt);
     updateFloatingTexts(dt);
@@ -2092,6 +2199,9 @@ function startGame() {
     game.combo = 0; game.maxCombo = 0; game.comboTimer = 0;
     game.waveEnemyCount = 6; game.enemiesKilledThisWave = 0;
     game.spawnTimer = 1; game.bossTimer = 20;
+    game.coinKillCount = 0;
+    game.coinEntities = [];
+    game.shadowSpawnAccum = 0;
     game.megaMode = false; game.megaTimer = 0;
     game.megaKillsNeeded = game.megaKillThreshold;
     game.time = 0; game.playTime = 0; game.shake = 0; game.flashAlpha = 0;
@@ -2164,6 +2274,25 @@ function endGame() {
 // ═══════════════════════════════════════════════════════════════
 // SHOP
 // ═══════════════════════════════════════════════════════════════
+// Shadow rate costs
+const SHADOW_RATES = { 5: 50, 10: 20, 20: 20, 30: 30 };
+
+function buyShadowRate(rate) {
+    var cost = SHADOW_RATES[rate];
+    if (game.coins < cost) return;
+    if (game.shadowRate === rate) return;
+    game.coins -= cost;
+    localStorage.setItem('ss_coins', game.coins.toString());
+    game.shadowRate = rate;
+    localStorage.setItem('ss_shadowRate', rate.toString());
+    renderShop();
+}
+
+function getOwnedShadowRate() {
+    return parseInt(localStorage.getItem('ss_shadowRate') || '10', 10);
+}
+game.shadowRate = getOwnedShadowRate();
+
 function openShop() {
     game.state = 'shop';
     showScreen('shop');
@@ -2201,6 +2330,28 @@ function renderShop() {
                 btn.classList.add('disabled');
                 btn.classList.remove('affordable');
             }
+        }
+    }
+
+    // Show coins in shop
+    var coinDisplay = document.getElementById('shop-coins');
+    if (coinDisplay) coinDisplay.textContent = game.coins + ' coins';
+
+    // Shadow rate cards
+    var rates = [{r:5,c:50,id:'shadow5'},{r:10,c:20,id:'shadow10'},{r:20,c:20,id:'shadow20'},{r:30,c:30,id:'shadow30'}];
+    for (var i = 0; i < rates.length; i++) {
+        var rup = rates[i];
+        var card = document.getElementById('card-' + rup.id);
+        var btn = document.getElementById('buy-' + rup.id);
+        if (!card || !btn) continue;
+        if (game.shadowRate === rup.r) {
+            card.classList.add('owned'); card.classList.remove('locked');
+            btn.textContent = 'Active'; btn.classList.add('disabled'); btn.classList.remove('affordable');
+        } else {
+            card.classList.remove('owned');
+            btn.textContent = rup.c + ' coins';
+            if (game.coins >= rup.c) { card.classList.remove('locked'); btn.classList.add('affordable'); btn.classList.remove('disabled'); }
+            else { card.classList.add('locked'); btn.classList.add('disabled'); btn.classList.remove('affordable'); }
         }
     }
 }
@@ -2688,6 +2839,10 @@ function init() {
     addTouchClick('lb-back-btn', goToTitle);
     addTouchClick('buy-4beam', function() { buyUpgrade('fourBeam'); });
     addTouchClick('buy-double', function() { buyUpgrade('doublePts'); });
+    addTouchClick('buy-shadow5', function() { buyShadowRate(5); });
+    addTouchClick('buy-shadow10', function() { buyShadowRate(10); });
+    addTouchClick('buy-shadow20', function() { buyShadowRate(20); });
+    addTouchClick('buy-shadow30', function() { buyShadowRate(30); });
     addTouchClick('exit-btn-title', function() {
         // Try to close the tab; if blocked, go to a blank page
         window.close();
