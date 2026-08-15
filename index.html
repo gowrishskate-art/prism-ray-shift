@@ -2347,8 +2347,14 @@ function renderShop() {
     var coinDisplay = document.getElementById('shop-coins');
     if (coinDisplay) coinDisplay.textContent = game.coins + ' coins';
 
-    // Shadow rate cards
-    var rates = [{r:5,c:50,id:'shadow5'},{r:10,c:20,id:'shadow10'},{r:20,c:20,id:'shadow20'},{r:30,c:30,id:'shadow30'}];
+    // Shadow rate cards - use SHADOW_RATES constant
+    var rates = [];
+    for (var rate in SHADOW_RATES) {
+        if (SHADOW_RATES.hasOwnProperty(rate)) {
+            rates.push({ r: parseInt(rate), c: SHADOW_RATES[rate], id: 'shadow' + rate });
+        }
+    }
+    rates.sort(function(a, b) { return a.r - b.r; });
     for (var i = 0; i < rates.length; i++) {
         var rup = rates[i];
         var card = document.getElementById('card-' + rup.id);
