@@ -827,7 +827,8 @@ let activeRays = []; // computed each frame
 // ─── INPUT ───
 const mouse = { x: 0, y: 0, prevX: 0, prevY: 0, vx: 0, active: false };
 const keys = {};
-let inputMode = 'mouse'; // 'mouse' or 'keyboard' — determines aim behavior
+let inputMode = 'mouse';
+let touchSteering = false; // true while 2-finger steering — freezes crystal position
 
 // ─── AUDIO ───
 let audioCtx = null, masterGain = null;
@@ -2769,11 +2770,16 @@ function init() {
             e.preventDefault();
             initAudio();
             if (e.touches.length >= 2) {
-                // Two fingers down — start steering
+                // Two fingers down — start steering, freeze crystal position
+                touchSteering = true;
                 const mid = getTouchMidpoint(e);
                 twoFingerPrev = mid;
+                // Pin crystal so it doesn't chase finger positions
+                mouse.x = crystal.x;
+                mouse.y = crystal.y;
             } else {
                 // One finger — move crystal
+                touchSteering = false;
                 const t = e.touches[0];
                 mouse.x = t.clientX; mouse.y = t.clientY; mouse.active = true;
             }
@@ -2784,21 +2790,26 @@ function init() {
         if (e.target === canvas || e.target === document.body || e.target === document.documentElement) {
             e.preventDefault();
             if (e.touches.length >= 2 && twoFingerPrev) {
-                // Two fingers moving — steer the aim direction
+                // Two fingers moving — steer the aim direction strongly
                 const mid = getTouchMidpoint(e);
                 const dx = mid.x - twoFingerPrev.x;
                 const dy = mid.y - twoFingerPrev.y;
-                if (Math.hypot(dx, dy) > 2) {
+                if (Math.hypot(dx, dy) > 3) {
                     const aimAngle = Math.atan2(dy, dx);
                     let diff = aimAngle - crystal.aimAngle;
                     while (diff > Math.PI) diff -= Math.PI * 2;
                     while (diff < -Math.PI) diff += Math.PI * 2;
-                    crystal.aimAngle += diff * 0.15;
+                    // Strong turn: swipe direction becomes beam direction
+                    crystal.aimAngle += diff * 0.5;
                     crystal.rotation = crystal.aimAngle;
+                    // Keep crystal frozen in place during steering
+                    mouse.x = crystal.x;
+                    mouse.y = crystal.y;
                 }
                 twoFingerPrev = mid;
             } else if (e.touches.length === 1) {
                 // One finger — move crystal
+                touchSteering = false;
                 const t = e.touches[0];
                 mouse.x = t.clientX; mouse.y = t.clientY;
                 twoFingerPrev = null;
@@ -2807,7 +2818,10 @@ function init() {
     }, { passive: false });
 
     window.addEventListener('touchend', e => {
-        if (e.touches.length < 2) twoFingerPrev = null;
+        if (e.touches.length < 2) {
+            twoFingerPrev = null;
+            touchSteering = false;
+        }
         if (e.touches.length === 1) {
             mouse.x = e.touches[0].clientX;
             mouse.y = e.touches[0].clientY;
