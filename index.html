@@ -252,6 +252,11 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
     content: 'OWNED'; position: absolute; top: 10px; right: 14px;
     font-size: 11px; color: #2bff7e; font-weight: 700; letter-spacing: 1px;
 }
+.shop-card.active-rate { border-color: rgba(43,158,255,0.6); }
+.shop-card.active-rate::after {
+    content: 'ACTIVE'; position: absolute; top: 10px; right: 14px;
+    font-size: 11px; color: #2b9eff; font-weight: 700; letter-spacing: 1px;
+}
 .shop-card.locked { opacity: 0.5; }
 .shop-icon {
     width: 64px; height: 64px; border-radius: 14px; flex-shrink: 0;
@@ -2349,10 +2354,10 @@ function renderShop() {
         var btn = document.getElementById('buy-' + rup.id);
         if (!card || !btn) continue;
         if (game.shadowRate === rup.r) {
-            card.classList.add('owned'); card.classList.remove('locked');
+            card.classList.add('active-rate'); card.classList.remove('owned'); card.classList.remove('locked');
             btn.textContent = 'Active'; btn.classList.add('disabled'); btn.classList.remove('affordable');
         } else {
-            card.classList.remove('owned');
+            card.classList.remove('owned'); card.classList.remove('active-rate');
             btn.textContent = rup.c + ' coins';
             if (game.coins >= rup.c) { card.classList.remove('locked'); btn.classList.add('affordable'); btn.classList.remove('disabled'); }
             else { card.classList.add('locked'); btn.classList.add('disabled'); btn.classList.remove('affordable'); }
