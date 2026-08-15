@@ -569,17 +569,17 @@ button {
             <div class="shop-desc">Default rate. Balanced.</div></div>
             <button class="shop-buy" id="buy-shadow10">20 coins</button>
         </div>
-        <div class="shop-card" id="card-shadow20">
-            <div class="shop-icon" style="background:rgba(255,136,0,0.2);color:#ff8800">20</div>
-            <div class="shop-info"><div class="shop-name">Fast: 20 Shadows / 10s</div>
-            <div class="shop-desc">More shadows. More action!</div></div>
-            <button class="shop-buy" id="buy-shadow20">20 coins</button>
+        <div class="shop-card" id="card-shadow15">
+            <div class="shop-icon" style="background:rgba(255,136,0,0.2);color:#ff8800">15</div>
+            <div class="shop-info"><div class="shop-name">Fast: 15 Shadows / 10s</div>
+            <div class="shop-desc">More shadows. Faster action!</div></div>
+            <button class="shop-buy" id="buy-shadow15">20 coins</button>
         </div>
-        <div class="shop-card" id="card-shadow30">
-            <div class="shop-icon" style="background:rgba(255,24,69,0.2);color:#ff1845">30</div>
-            <div class="shop-info"><div class="shop-name">Insane: 30 Shadows / 10s</div>
+        <div class="shop-card" id="card-shadow20">
+            <div class="shop-icon" style="background:rgba(255,24,69,0.2);color:#ff1845">20</div>
+            <div class="shop-info"><div class="shop-name">Insane: 20 Shadows / 10s</div>
             <div class="shop-desc">Maximum chaos!</div></div>
-            <button class="shop-buy" id="buy-shadow30">30 coins</button>
+            <button class="shop-buy" id="buy-shadow20">30 coins</button>
         </div>
     </div>
     <button class="btn" id="shop-back-btn" style="margin-top: 30px;">Back</button>
@@ -637,7 +637,7 @@ button {
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════
 // SPECTRUM SLICE — Complete Game Engine
 // ═══════════════════════════════════════════════════════════════
 
@@ -799,6 +799,42 @@ function openLeaderboard() {
 
 // ─── CANVAS ───
 let canvas, ctx, W, H, DPR;
+
+// ═══════════════════════════════════════════════════════════════
+// GLOW SPRITE CACHE — replaces expensive shadowBlur with stamps
+// ═══════════════════════════════════════════════════════════════
+const glowCache = {};
+function getGlowSprite(color, size) {
+    const key = color + '_' + size;
+    if (glowCache[key]) return glowCache[key];
+    const cv = document.createElement('canvas');
+    cv.width = size * 2; cv.height = size * 2;
+    const cx = cv.getContext('2d');
+    const grad = cx.createRadialGradient(size, size, 0, size, size, size);
+    grad.addColorStop(0, color);
+    grad.addColorStop(1, 'transparent');
+    // hex -> rgba with alpha fade
+    let c0 = color, c1 = color;
+    if (color[0] === '#') {
+        const r = parseInt(color.substr(1,2),16), g = parseInt(color.substr(3,2),16), b = parseInt(color.substr(5,2),16);
+        c0 = 'rgba(' + r + ',' + g + ',' + b + ',0.9)';
+        c1 = 'rgba(' + r + ',' + g + ',' + b + ',0)';
+    }
+    const g2 = cx.createRadialGradient(size, size, 0, size, size, size);
+    g2.addColorStop(0, c0);
+    g2.addColorStop(1, c1);
+    cx.fillStyle = g2;
+    cx.fillRect(0, 0, size * 2, size * 2);
+    glowCache[key] = cv;
+    return cv;
+}
+function stampGlow(x, y, color, size, alpha) {
+    const sprite = getGlowSprite(color, 32);
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(sprite, x - size, y - size, size * 2, size * 2);
+    ctx.globalAlpha = 1;
+}
+
 
 // ─── GAME STATE ───
 const game = {
@@ -1119,21 +1155,27 @@ function initStars() {
     }
 }
 
-function drawStars(dt) {
+let starLayer = null;
+function buildStarLayer() {
+    // Pre-render all stars to one offscreen canvas (drawn once)
+    starLayer = document.createElement('canvas');
+    starLayer.width = W; starLayer.height = H;
+    const sc = starLayer.getContext('2d');
     for (const s of stars) {
-        s.twinkle += dt * s.twinkleSpeed;
-        const a = s.brightness * (0.4 + 0.6 * (0.5 + 0.5 * Math.sin(s.twinkle)));
-        ctx.fillStyle = `rgba(180,200,255,${a})`;
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-        ctx.fill();
+        sc.fillStyle = 'rgba(180,200,255,' + s.brightness + ')';
+        sc.beginPath();
+        sc.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        sc.fill();
         if (s.layer >= 2) {
-            ctx.fillStyle = `rgba(120,150,255,${a*0.3})`;
-            ctx.beginPath();
-            ctx.arc(s.x, s.y, s.size * 2.5, 0, Math.PI * 2);
-            ctx.fill();
+            sc.fillStyle = 'rgba(120,150,255,' + (s.brightness * 0.3) + ')';
+            sc.beginPath();
+            sc.arc(s.x, s.y, s.size * 2.5, 0, Math.PI * 2);
+            sc.fill();
         }
     }
+}
+function drawStars(dt) {
+    if (starLayer) ctx.drawImage(starLayer, 0, 0);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1183,17 +1225,7 @@ function drawCrystal() {
 
     // Outer aura
     const auraR = s * 2.8 + Math.sin(crystal.glowPhase) * 4;
-    const auraGrad = ctx.createRadialGradient(0, 0, s * 0.5, 0, 0, auraR);
-    if (crystal.inBeam) {
-        auraGrad.addColorStop(0, 'rgba(255,255,255,0.35)');
-        auraGrad.addColorStop(0.4, 'rgba(180,200,255,0.15)');
-        auraGrad.addColorStop(1, 'rgba(100,120,255,0)');
-    } else {
-        auraGrad.addColorStop(0, 'rgba(150,180,255,0.2)');
-        auraGrad.addColorStop(1, 'rgba(80,100,200,0)');
-    }
-    ctx.fillStyle = auraGrad;
-    ctx.beginPath(); ctx.arc(0, 0, auraR, 0, Math.PI * 2); ctx.fill();
+    stampGlow(0, 0, crystal.inBeam ? '#ffffff' : '#96b4ff', auraR, crystal.inBeam ? 0.25 : 0.18);
 
     // Rotate to aim direction — pointy edge points in aim direction
     // aimAngle=0 → right, so rotate by aimAngle
@@ -1217,12 +1249,10 @@ function drawCrystal() {
     ctx.fill();
 
     // Edge glow
+    stampGlow(0, 0, SETTINGS.crystalColor, s * (crystal.inBeam ? 2.4 : 1.6), crystal.inBeam ? 0.5 : 0.3);
     ctx.strokeStyle = crystal.inBeam ? 'rgba(255,255,255,0.9)' : 'rgba(160,200,255,0.7)';
     ctx.lineWidth = 2;
-    ctx.shadowColor = '#80a0ff';
-    ctx.shadowBlur = crystal.inBeam ? 25 : 12;
     ctx.stroke();
-    ctx.shadowBlur = 0;
 
     // Inner line from center to tip (shows aim direction clearly)
     ctx.strokeStyle = 'rgba(255,255,255,0.3)';
@@ -1472,13 +1502,8 @@ function drawShadowCreature(e) {
     const s = e.size;
     const c = RAY_COLORS[e.color];
 
-    // Outer glow
-    const glowR = s * 2;
-    const grad = ctx.createRadialGradient(0, 0, s * 0.3, 0, 0, glowR);
-    grad.addColorStop(0, `rgba(${c.rgb},0.3)`);
-    grad.addColorStop(1, `rgba(${c.rgb},0)`);
-    ctx.fillStyle = grad;
-    ctx.beginPath(); ctx.arc(0, 0, glowR, 0, Math.PI * 2); ctx.fill();
+    // Outer glow (cached sprite — no per-frame gradient)
+    stampGlow(0, 0, c.hex, s * 2, 0.35);
 
     // Shadow body — jagged blob
     ctx.beginPath();
@@ -1495,36 +1520,29 @@ function drawShadowCreature(e) {
     ctx.fillStyle = 'rgba(8,4,16,0.92)';
     ctx.fill();
 
-    // Neon border
+    // Neon border (double-stroke fake glow — no shadowBlur)
     ctx.strokeStyle = c.hex;
     ctx.lineWidth = 2.5;
-    ctx.shadowColor = c.hex;
-    ctx.shadowBlur = 12;
+    ctx.globalAlpha = 0.45;
+    ctx.lineWidth = 6;
     ctx.stroke();
-    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
 
     // Inner dark core with glowing eyes
     ctx.fillStyle = c.hex;
-    ctx.shadowColor = c.hex;
-    ctx.shadowBlur = 6;
     ctx.beginPath();
     ctx.arc(-s*0.2, -s*0.1, 2.5, 0, Math.PI*2);
     ctx.arc(s*0.2, -s*0.1, 2.5, 0, Math.PI*2);
     ctx.fill();
-    ctx.shadowBlur = 0;
 }
 
 function drawBoss(e) {
     const s = e.size;
 
-    // Pulsing aura
-    const pulseR = s * 2.5 + Math.sin(e.wobble * 2) * 8;
-    const grad = ctx.createRadialGradient(0, 0, s * 0.5, 0, 0, pulseR);
-    grad.addColorStop(0, 'rgba(255,255,255,0.15)');
-    grad.addColorStop(0.5, 'rgba(200,200,255,0.08)');
-    grad.addColorStop(1, 'rgba(100,100,200,0)');
-    ctx.fillStyle = grad;
-    ctx.beginPath(); ctx.arc(0, 0, pulseR, 0, Math.PI * 2); ctx.fill();
+    // Pulsing aura (cached sprite)
+    stampGlow(0, 0, '#c8c8ff', s * 2.5 + Math.sin(e.wobble * 2) * 8, 0.2);
 
     // Shadow body — larger jagged blob
     ctx.beginPath();
@@ -1541,11 +1559,12 @@ function drawBoss(e) {
 
     // White border (indicates needs all 3 colors)
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 3;
-    ctx.shadowColor = '#ffffff';
-    ctx.shadowBlur = 20;
+    ctx.globalAlpha = 0.4;
+    ctx.lineWidth = 8;
     ctx.stroke();
-    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
+    ctx.lineWidth = 3;
+    ctx.stroke();
 
     // HP indicator — 3 colored dots that light up when hit by matching ray
     for (let i = 0; i < 3; i++) {
@@ -1553,22 +1572,19 @@ function drawBoss(e) {
         const dx = Math.cos(a) * s * 0.45, dy = Math.sin(a) * s * 0.45;
         const hit = [e.hitR, e.hitG, e.hitB][i];
         const lit = hit > 0.3;
+        if (lit) stampGlow(dx, dy, RAY_COLORS[i].hex, 10, 0.7);
         ctx.fillStyle = lit ? RAY_COLORS[i].hex : `rgba(${RAY_COLORS[i].rgb},0.2)`;
-        if (lit) { ctx.shadowColor = RAY_COLORS[i].hex; ctx.shadowBlur = 10; }
         ctx.beginPath();
         ctx.arc(dx, dy, 5, 0, Math.PI * 2);
         ctx.fill();
-        ctx.shadowBlur = 0;
     }
 
     // Center eye
+    stampGlow(0, 0, '#ffffff', 14, 0.6);
     ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = '#ffffff';
-    ctx.shadowBlur = 15;
     ctx.beginPath();
     ctx.arc(0, 0, 8, 0, Math.PI * 2);
     ctx.fill();
-    ctx.shadowBlur = 0;
     ctx.fillStyle = '#330044';
     ctx.beginPath();
     ctx.arc(0, 0, 4, 0, Math.PI * 2);
@@ -1728,10 +1744,10 @@ function drawParticles() {
     ctx.globalCompositeOperation = 'lighter';
     for (const p of particles) {
         const a = Math.max(0, p.life / p.maxLife);
+        // glow via sprite (cheap) + solid core
+        stampGlow(p.x, p.y, p.color, p.size * 2.5, a * 0.5);
         ctx.globalAlpha = a;
         ctx.fillStyle = p.color;
-        ctx.shadowColor = p.color;
-        ctx.shadowBlur = 8;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size * a, 0, Math.PI * 2);
         ctx.fill();
@@ -1766,8 +1782,6 @@ function drawFloatingTexts() {
         const a = Math.min(1, t.life / 0.5);
         ctx.globalAlpha = a;
         ctx.fillStyle = t.color;
-        ctx.shadowColor = t.color;
-        ctx.shadowBlur = 8;
         ctx.fillText(t.text, t.x, t.y);
     }
     ctx.globalAlpha = 1;
@@ -1814,11 +1828,7 @@ function drawGems() {
 
         // Glow
         const pulse = 1 + Math.sin(g.wobble * 2) * 0.15;
-        const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, g.size * 3 * pulse);
-        grad.addColorStop(0, 'rgba(255,215,0,0.4)');
-        grad.addColorStop(1, 'rgba(255,215,0,0)');
-        ctx.fillStyle = grad;
-        ctx.beginPath(); ctx.arc(0, 0, g.size * 3 * pulse, 0, Math.PI * 2); ctx.fill();
+        stampGlow(0, 0, '#ffd700', g.size * 3 * pulse, 0.4);
 
         // Diamond shape
         ctx.beginPath();
@@ -1831,8 +1841,6 @@ function drawGems() {
         ctx.fill();
         ctx.strokeStyle = '#ffd700';
         ctx.lineWidth = 2;
-        ctx.shadowColor = '#ffd700';
-        ctx.shadowBlur = 15;
         ctx.stroke();
 
         // Life indicator ring
@@ -1956,17 +1964,9 @@ function drawCoins() {
         ctx.translate(c.x, c.y);
         const pulse = 1 + Math.sin(c.wobble * 2) * 0.15;
         // Glow
-        const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, c.size * 3 * pulse);
-        grad.addColorStop(0, 'rgba(255,215,0,0.35)');
-        grad.addColorStop(1, 'rgba(255,215,0,0)');
-        ctx.fillStyle = grad;
-        ctx.beginPath(); ctx.arc(0, 0, c.size * 3 * pulse, 0, Math.PI * 2); ctx.fill();
-        // Coin circle
+        stampGlow(0, 0, '#ffd700', c.size * 3 * pulse, 0.4);
         ctx.fillStyle = '#ffd700';
-        ctx.shadowColor = '#ffd700';
-        ctx.shadowBlur = 12;
         ctx.beginPath(); ctx.arc(0, 0, c.size * pulse, 0, Math.PI * 2); ctx.fill();
-        ctx.shadowBlur = 0;
         // $ symbol
         ctx.fillStyle = '#8B6914';
         ctx.font = 'bold 14px sans-serif';
@@ -2284,7 +2284,7 @@ function endGame() {
 // SHOP
 // ═══════════════════════════════════════════════════════════════
 // Shadow rate costs
-const SHADOW_RATES = { 5: 50, 10: 20, 20: 20, 30: 30 };
+const SHADOW_RATES = { 5: 50, 10: 10, 15: 20, 20: 20 };
 
 function buyShadowRate(rate) {
     var cost = SHADOW_RATES[rate];
@@ -2297,10 +2297,11 @@ function buyShadowRate(rate) {
     renderShop();
 }
 
-function getOwnedShadowRate() {
+function getOwnedShadowRate() { return 4; // always 4 per 10s
     return parseInt(localStorage.getItem('ss_shadowRate') || '10', 10);
 }
-game.shadowRate = getOwnedShadowRate();
+game.shadowRate = 4; // 4 shadows per 10 seconds default
+    // default fallback already 10
 
 function openShop() {
     game.state = 'shop';
@@ -2620,10 +2621,7 @@ function drawTutorialGuides() {
             ctx.fillStyle = c.hex;
             ctx.font = 'bold 12px Segoe UI, sans-serif';
             ctx.textAlign = 'center';
-            ctx.shadowColor = c.hex;
-            ctx.shadowBlur = 8;
             ctx.fillText('↑ HIT WITH ' + c.name + ' RAY', e.x, e.y - e.size - 12);
-            ctx.shadowBlur = 0;
         }
     }
 
@@ -2752,6 +2750,7 @@ function resize() {
     canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     initStars();
+    buildStarLayer();
 }
 
 function init() {
@@ -2863,6 +2862,7 @@ function init() {
     addTouchClick('buy-double', function() { buyUpgrade('doublePts'); });
     addTouchClick('buy-shadow5', function() { buyShadowRate(5); });
     addTouchClick('buy-shadow10', function() { buyShadowRate(10); });
+    addTouchClick('buy-shadow15', function() { buyShadowRate(15); });
     addTouchClick('buy-shadow20', function() { buyShadowRate(20); });
     addTouchClick('buy-shadow30', function() { buyShadowRate(30); });
     addTouchClick('exit-btn-title', function() {
@@ -2929,6 +2929,8 @@ if ('serviceWorker' in navigator) {
     });
 }
 window.addEventListener('load', init);
+
+
 
 </script>
 </body>
