@@ -654,6 +654,29 @@ const MEGA_COLORS = [
 ];
 const MAX_RAY_LEN = 2000;
 
+// ─── DEVICE-RESPONSIVE SHADOW SIZE ───
+// Phone: 2.5x smaller, iPad/tablet: 1.5x smaller, laptop/desktop: normal
+let SHADOW_SCALE = 1;
+
+function computeShadowScale() {
+    const ua = navigator.userAgent;
+    const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+    const maxDim = Math.max(window.screen.width, window.screen.height);
+    const minDim = Math.min(window.screen.width, window.screen.height);
+    // iPad: explicit iPad UA, or modern iPadOS (reports as Mac with touch points)
+    const isIPad = /iPad/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+    // Other tablets: touch device with large-ish square-ish screen
+    const isTablet = isIPad || (isTouch && maxDim >= 900 && minDim >= 600);
+    if (isTablet) {
+        SHADOW_SCALE = 1 / 1.5;   // iPad: 1.5x smaller
+    } else if (isTouch) {
+        SHADOW_SCALE = 1 / 2.5;   // Phone: 2.5x smaller
+    } else {
+        SHADOW_SCALE = 1;         // Laptop/desktop: normal
+    }
+    return SHADOW_SCALE;
+}
+
 // ─── PERSISTENT SHOP DATA ───
 const SHOP_DATA = {
     totalPoints: parseInt(localStorage.getItem('ss_totalPoints') || '0', 10),
@@ -755,6 +778,7 @@ function saveSettingsFromUI() {
 
 // Apply on load
 applySettings();
+computeShadowScale();
 
 
 // ─── LEADERBOARD DATA (persistent) ───
@@ -1433,7 +1457,7 @@ function spawnEnemy(isBoss) {
     if (isBoss) {
         enemies.push({
             x, y, vx: 0, vy: 0,
-            size: 42, hp: 3, maxHp: 3,
+            size: 42 * SHADOW_SCALE, hp: 3, maxHp: 3,
             color: -1, isBoss: true,
             hitR: 0, hitG: 0, hitB: 0,
             rotation: 0, wobble: Math.random() * Math.PI * 2,
@@ -1444,7 +1468,7 @@ function spawnEnemy(isBoss) {
         const colorIdx = Math.floor(Math.random() * (hasFourBeam ? 4 : 3));
         enemies.push({
             x, y, vx: 0, vy: 0,
-            size: 20 + Math.random() * 8,
+            size: (20 + Math.random() * 8) * SHADOW_SCALE,
             color: colorIdx, isBoss: false,
             rotation: Math.random() * Math.PI * 2,
             wobble: Math.random() * Math.PI * 2,
