@@ -561,12 +561,6 @@ button {
             </div>
             <button class="shop-buy" id="buy-double">250,000</button>
         </div>
-        <div class="shop-card" id="card-shadow5">
-            <div class="shop-icon" style="background:rgba(43,158,255,0.2);color:#2b9eff">5</div>
-            <div class="shop-info"><div class="shop-name">Slow: 5 Shadows / 10s</div>
-            <div class="shop-desc">Fewer shadows. Easier but slower.</div></div>
-            <button class="shop-buy" id="buy-shadow5">50 coins</button>
-        </div>
         <div class="shop-card" id="card-shadow10">
             <div class="shop-icon" style="background:rgba(43,255,126,0.2);color:#2bff7e">10</div>
             <div class="shop-info"><div class="shop-name">Normal: 10 Shadows / 10s</div>
@@ -2331,7 +2325,7 @@ function endGame() {
 // SHOP
 // ═══════════════════════════════════════════════════════════════
 // Shadow rate costs
-const SHADOW_RATES = { 5: 50, 10: 10, 15: 20 };
+const SHADOW_RATES = { 10: 10, 15: 20 };
 
 function buyShadowRate(rate) {
     var cost = SHADOW_RATES[rate];
@@ -2871,7 +2865,6 @@ function init() {
     addTouchClick('lb-back-btn', goToTitle);
     addTouchClick('buy-4beam', function() { buyUpgrade('fourBeam'); });
     addTouchClick('buy-double', function() { buyUpgrade('doublePts'); });
-    addTouchClick('buy-shadow5', function() { buyShadowRate(5); });
     addTouchClick('buy-shadow10', function() { buyShadowRate(10); });
     addTouchClick('buy-shadow15', function() { buyShadowRate(15); });
     addTouchClick('buy-shadow30', function() { buyShadowRate(30); });
