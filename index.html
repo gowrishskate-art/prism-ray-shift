@@ -870,6 +870,9 @@ const game = {
     coins: parseInt(localStorage.getItem('ss_coins') || '0', 10),
     coinKillCount: 0,     // kills since last coin drop (every 30)
     coinEntities: [],     // coins floating on field
+    bottles: [],          // trap bottles with rolled paper inside
+    crystalFrozen: 0,     // seconds remaining of freeze
+    bottleTimer: 20,      // seconds until next bottle spawns
     shadowRate: 10,       // shadows per 10 seconds (configurable via shop)
     shadowSpawnAccum: 0,  // accumulator for timed spawning
 };
@@ -1216,9 +1219,15 @@ function updateCrystal(dt) {
     }
 
     // ─── MOUSE / TOUCH: moves crystal position only (does NOT change direction) ───
-    const lerp = 0.22;
-    crystal.x += (mouse.x - crystal.x) * lerp;
-    crystal.y += (mouse.y - crystal.y) * lerp;
+    // FROZEN: crystal can't move when a trap bottle was collected
+    if (game.crystalFrozen > 0) {
+        mouse.x = crystal.x;
+        mouse.y = crystal.y;
+    } else {
+        const lerp = 0.22;
+        crystal.x += (mouse.x - crystal.x) * lerp;
+        crystal.y += (mouse.y - crystal.y) * lerp;
+    }
 
     // Clamp to screen
     crystal.x = Math.max(crystal.size, Math.min(W - crystal.size, crystal.x));
@@ -1911,6 +1920,13 @@ function activateMegaMode() {
 function updateWaves(dt) {
     if (game.tutorialActive) return;
     game.bossTimer -= dt;
+    game.bottleTimer -= dt;
+
+    // Trap bottles: one spawns every 25-35s, max one on field
+    if (game.bottleTimer <= 0 && game.bottles.length === 0) {
+        spawnBottle();
+        game.bottleTimer = 25 + Math.random() * 10;
+    }
 
     if (game.enemiesKilledThisWave >= game.waveEnemyCount && enemies.length === 0) {
         // Next wave
@@ -2024,6 +2040,130 @@ function drawCoins() {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// TRAP BOTTLE — contains a rolled paper. Crash into it and the
+// crystal FREEZES for 5 seconds while shadows close in.
+// ═══════════════════════════════════════════════════════════════
+const BOTTLE_FREEZE_SECONDS = 5;
+
+function spawnBottle() {
+    // Spawn away from the crystal so it's clearly avoidable
+    let bx, by, tries = 0;
+    do {
+        bx = 80 + Math.random() * (W - 160);
+        by = 100 + Math.random() * (H - 200);
+        tries++;
+    } while (Math.hypot(bx - crystal.x, by - crystal.y) < 220 && tries < 20);
+    game.bottles.push({
+        x: bx, y: by,
+        vx: (Math.random() - 0.5) * 18,
+        vy: (Math.random() - 0.5) * 18,
+        size: 17, life: 14, wobble: 0,
+    });
+}
+
+function updateBottles(dt) {
+    for (let i = game.bottles.length - 1; i >= 0; i--) {
+        const b = game.bottles[i];
+        b.wobble += dt * 2;
+        b.x += b.vx * dt;
+        b.y += b.vy * dt;
+        b.vx *= 0.96; b.vy *= 0.96;
+        b.life -= dt;
+
+        // Crash into bottle → crystal freezes
+        const d = Math.hypot(crystal.x - b.x, crystal.y - b.y);
+        if (d < b.size + crystal.size * 0.55) {
+            game.crystalFrozen = BOTTLE_FREEZE_SECONDS;
+            game.shake = 12;
+            sfxHit();
+            createExplosion(b.x, b.y, '#8b4513', 14); // glass shatter shards
+            addFloatingText(b.x, b.y - 24, 'FROZEN! 5s', '#8fd4ff');
+            game.bottles.splice(i, 1);
+            continue;
+        }
+        if (b.life <= 0) game.bottles.splice(i, 1);
+    }
+
+    // Tick the freeze timer down
+    if (game.crystalFrozen > 0) {
+        game.crystalFrozen -= dt;
+        if (game.crystalFrozen < 0) game.crystalFrozen = 0;
+    }
+}
+
+function drawBottles() {
+    for (const b of game.bottles) {
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        ctx.rotate(Math.sin(b.wobble * 0.5) * 0.15);
+        const s = b.size;
+
+        // Soft glow so it reads as an object, not a shadow
+        stampGlow(0, 0, '#7ec8e3', s * 2.4, 0.22);
+
+        // ─── Bottle body (rounded flask) ───
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.28, -s);          // neck top-left
+        ctx.lineTo(s * 0.28, -s);           // neck top-right
+        ctx.lineTo(s * 0.28, -s * 0.55);    // neck into shoulder
+        ctx.quadraticCurveTo(s * 0.95, -s * 0.3, s * 0.95, s * 0.35);
+        ctx.quadraticCurveTo(s * 0.95, s, 0, s);
+        ctx.quadraticCurveTo(-s * 0.95, s, -s * 0.95, s * 0.35);
+        ctx.quadraticCurveTo(-s * 0.95, -s * 0.3, -s * 0.28, -s * 0.55);
+        ctx.closePath();
+        // Glass fill
+        ctx.fillStyle = 'rgba(120,190,220,0.30)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(150,215,240,0.9)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // ─── Rolled paper inside (diagonal cylinder) ───
+        ctx.save();
+        ctx.rotate(0.6);
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.55, 0);
+        ctx.lineTo(s * 0.55, 0);
+        ctx.lineTo(s * 0.4, s * 0.42);
+        ctx.lineTo(-s * 0.4, s * 0.42);
+        ctx.closePath();
+        ctx.fillStyle = '#e8d9b0';                      // paper body
+        ctx.fill();
+        ctx.strokeStyle = '#b09a6a';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        // spiral lines on the roll
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.3, 0); ctx.lineTo(-s * 0.18, s * 0.42);
+    ctx.moveTo(0, 0);        ctx.lineTo(s * 0.12, s * 0.42);
+    ctx.moveTo(s * 0.3, 0);  ctx.lineTo(s * 0.42, s * 0.42);
+        ctx.strokeStyle = 'rgba(176,154,106,0.7)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        // end cap of the roll
+        ctx.beginPath();
+        ctx.ellipse(s * 0.55, 0, s * 0.1, s * 0.21, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#cbb98e';
+        ctx.fill();
+        ctx.restore();
+
+        // Cork
+        ctx.fillStyle = '#a8763e';
+        ctx.fillRect(-s * 0.26, -s * 1.18, s * 0.52, s * 0.2);
+
+        // Expiry ring (turns red when about to vanish)
+        if (b.life < 4) {
+            ctx.strokeStyle = 'rgba(255,90,90,' + (b.life / 4) + ')';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, 0, s * 1.6, 0, Math.PI * 2 * (b.life / 14));
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
 // SCREEN EFFECTS
 // ═══════════════════════════════════════════════════════════════
 function updateEffects(dt) {
@@ -2079,6 +2219,7 @@ function render(dt) {
 
     // Gems
     drawCoins();
+    drawBottles();
     drawGems();
 
     // Beam
@@ -2107,6 +2248,26 @@ function render(dt) {
 
     ctx.restore();
 
+
+    // FROZEN overlay: icy tint + countdown + border
+    if (game.crystalFrozen > 0) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(120,190,255,0.12)';
+        ctx.fillRect(0, 0, W, H);
+        const fpulse = 0.4 + 0.4 * Math.sin(game.time * 6);
+        ctx.strokeStyle = 'rgba(140,210,255,' + fpulse + ')';
+        ctx.lineWidth = 5;
+        ctx.strokeRect(2, 2, W - 4, H - 4);
+        // Countdown over the crystal
+        ctx.font = 'bold 20px Segoe UI, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#bfe6ff';
+        ctx.shadowColor = '#4aa8e8';
+        ctx.shadowBlur = 8;
+        ctx.fillText('❄ ' + Math.ceil(game.crystalFrozen), crystal.x, crystal.y + crystal.size * 2.4);
+        ctx.shadowBlur = 0;
+        ctx.restore();
+    }
 
     // Mega mode border glow + kill countdown
     if (game.megaMode) {
@@ -2171,6 +2332,7 @@ function gameLoop(timestamp) {
     computeRays();
     checkRayCollisions();
     updateCoins(dt);
+    updateBottles(dt);
     updateGems(dt);
     updateParticles(dt);
     updateFloatingTexts(dt);
@@ -2251,6 +2413,9 @@ function startGame() {
     game.spawnTimer = 1; game.bossTimer = 20;
     game.coinKillCount = 0;
     game.coinEntities = [];
+    game.bottles = [];
+    game.crystalFrozen = 0;
+    game.bottleTimer = 20;
     game.shadowSpawnAccum = 0;
     game.megaMode = false; game.megaTimer = 0;
     game.megaKillsNeeded = game.megaKillThreshold;
