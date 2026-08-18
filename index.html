@@ -579,12 +579,6 @@ button {
             <div class="shop-desc">More shadows. Faster action!</div></div>
             <button class="shop-buy" id="buy-shadow15">20 coins</button>
         </div>
-        <div class="shop-card" id="card-shadow20">
-            <div class="shop-icon" style="background:rgba(255,24,69,0.2);color:#ff1845">20</div>
-            <div class="shop-info"><div class="shop-name">Insane: 20 Shadows / 10s</div>
-            <div class="shop-desc">Maximum chaos!</div></div>
-            <button class="shop-buy" id="buy-shadow20">30 coins</button>
-        </div>
     </div>
     <button class="btn" id="shop-back-btn" style="margin-top: 30px;">Back</button>
 </div>
@@ -2337,7 +2331,7 @@ function endGame() {
 // SHOP
 // ═══════════════════════════════════════════════════════════════
 // Shadow rate costs
-const SHADOW_RATES = { 5: 50, 10: 10, 15: 20, 20: 20 };
+const SHADOW_RATES = { 5: 50, 10: 10, 15: 20 };
 
 function buyShadowRate(rate) {
     var cost = SHADOW_RATES[rate];
@@ -2880,7 +2874,6 @@ function init() {
     addTouchClick('buy-shadow5', function() { buyShadowRate(5); });
     addTouchClick('buy-shadow10', function() { buyShadowRate(10); });
     addTouchClick('buy-shadow15', function() { buyShadowRate(15); });
-    addTouchClick('buy-shadow20', function() { buyShadowRate(20); });
     addTouchClick('buy-shadow30', function() { buyShadowRate(30); });
     addTouchClick('exit-btn-title', function() {
         // Try to close the tab; if blocked, go to a blank page
