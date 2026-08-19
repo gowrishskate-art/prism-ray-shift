@@ -112,6 +112,7 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
 #hud-wave .hud-val { color: #2b9eff; }
 #hud-time .hud-val { color: #ffaa00; }
 #hud-coins .hud-val { color: #ffd700; }
+#hud-kills .hud-val { color: #ff8844; }
 #hud-username .hud-val { color: #80a0ff; font-size: 16px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #lives-icons { display: flex; gap: 4px; padding-top: 4px; }
 .life-icon { width: 14px; height: 14px; border-radius: 50%;
@@ -214,6 +215,54 @@ body.no-touch #dir-controls { display: none !important; }
 .dir-right { top: 56px; left: 112px; }
 .dir-down  { top: 112px; left: 56px; }
 
+
+/* ─── PACKAGE B UI: daily reward, level bar, achievements ─── */
+#daily-popup {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    z-index: 30; background: rgba(10,6,30,0.95); border: 2px solid rgba(255,215,0,0.5);
+    border-radius: 20px; padding: 26px 34px; text-align: center; display: none;
+    box-shadow: 0 0 40px rgba(255,180,0,0.25); backdrop-filter: blur(10px);
+    max-width: 90vw;
+}
+#daily-popup.active { display: block; animation: tutFadeIn 0.4s ease; }
+.daily-title { font-size: 22px; font-weight: 900; color: #ffd700; margin-bottom: 6px; }
+.daily-sub { font-size: 13px; color: #9999bb; margin-bottom: 14px; }
+.daily-coins { font-size: 40px; font-weight: 900; color: #ffd700; margin-bottom: 4px; }
+.daily-streak { font-size: 13px; color: #ffb347; margin-bottom: 18px; }
+.daily-claim {
+    padding: 12px 34px; font-size: 17px; font-weight: 800; border-radius: 30px;
+    background: linear-gradient(135deg, #b8860b, #ffd700); color: #000;
+    border: none; cursor: pointer; touch-action: manipulation;
+}
+
+/* Level bar on title */
+.title-level-box {
+    max-width: 380px; width: 88vw; margin: 0 auto 14px;
+    background: rgba(12,8,30,0.6); border: 1px solid rgba(120,80,255,0.25);
+    border-radius: 12px; padding: 8px 14px;
+}
+.title-level-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.title-level-name { font-size: 14px; font-weight: 800; color: #b9a8ff; }
+.title-level-num { font-size: 11px; color: #8888bb; }
+.title-level-bar { height: 7px; border-radius: 4px; background: rgba(30,20,60,0.9); overflow: hidden; }
+.title-level-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #7b4dff, #b94dff); transition: width 0.4s; }
+
+/* Achievements list */
+.ach-list { max-width: 430px; margin: 0 auto; width: 100%; }
+.ach-row {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(12,8,30,0.7); border: 1px solid rgba(120,80,255,0.18);
+    border-radius: 12px; padding: 10px 14px; margin-bottom: 7px;
+}
+.ach-row.done { border-color: rgba(255,215,0,0.45); }
+.ach-icon { font-size: 22px; width: 32px; text-align: center; filter: grayscale(1); opacity: 0.45; }
+.ach-row.done .ach-icon { filter: none; opacity: 1; }
+.ach-info { flex: 1; }
+.ach-name { font-size: 14px; font-weight: 700; color: #ddddee; }
+.ach-desc { font-size: 11px; color: #8888aa; }
+.ach-reward { font-size: 12px; font-weight: 800; color: #ffd700; white-space: nowrap; }
+.ach-row:not(.done) .ach-reward { color: #776644; }
+
 /* ─── SHOP SCREEN ─── */
 #leaderboard-screen {
     background: radial-gradient(ellipse at 50% 30%, #0a0828 0%, #050018 50%, #030010 100%);
@@ -239,6 +288,11 @@ body.no-touch #dir-controls { display: none !important; }
 .shop-points-label {
     font-size: 12px; color: #8888bb; text-transform: uppercase;
     letter-spacing: 2px; margin-bottom: 4px;
+}
+.shop-section-label {
+    max-width: 520px; margin: 26px auto 10px; width: 100%;
+    font-size: 12px; font-weight: 800; color: #8a8ac0; text-transform: uppercase; letter-spacing: 2px;
+    border-bottom: 1px solid rgba(120,80,255,0.2); padding-bottom: 6px;
 }
 .shop-grid {
     display: flex; flex-direction: column; gap: 20px;
@@ -480,6 +534,7 @@ button {
     <div class="hud-box" id="hud-time"><div class="hud-label">Time</div><div class="hud-val">0:00</div></div>
     <div class="hud-box" id="hud-coins"><div class="hud-label">Coins</div><div class="hud-val">0</div></div>
     <div class="hud-box" id="hud-username"><div class="hud-val">&nbsp;</div></div>
+    <div class="hud-box" id="hud-kills"><div class="hud-label">Kills</div><div class="hud-val">0</div></div>
 </div>
 <div id="combo-display"></div>
 <button id="pause-btn">II</button>
@@ -503,12 +558,28 @@ button {
     <div class="tutorial-card" id="tut-card"></div>
 </div>
 
+<!-- DAILY REWARD POPUP -->
+<div id="daily-popup">
+    <div class="daily-title">🎁 Daily Reward!</div>
+    <div class="daily-sub">Come back every day for bigger bonuses</div>
+    <div class="daily-coins" id="daily-coins-amt">+5 🪙</div>
+    <div class="daily-streak" id="daily-streak-txt">Day 1 streak</div>
+    <button class="daily-claim" id="daily-claim-btn">Claim!</button>
+</div>
+
 <!-- TITLE SCREEN -->
 <div id="title-screen" class="screen active">
     <div class="title-logo">Spectrum Slice</div>
     <div class="title-sub">Split Light ✦ Destroy Shadow</div>
     <div id="title-time-played"></div>
     <div id="title-username"></div>
+    <div class="title-level-box" id="title-level-box">
+        <div class="title-level-row">
+            <span class="title-level-name" id="title-level-name">Rookie</span>
+            <span class="title-level-num" id="title-level-num">Lv 1</span>
+        </div>
+        <div class="title-level-bar"><div class="title-level-fill" id="title-level-fill" style="width:0%"></div></div>
+    </div>
     <div class="title-music-label">🎵 Choose Your Music:</div>
     <div id="title-music-bar" class="title-music-bar"></div>
     <button class="btn primary" id="play-btn">Play</button>
@@ -535,6 +606,7 @@ button {
         <div class="go-stat"><div class="go-stat-val" id="final-combo">0</div><div class="go-stat-lbl">Max Combo</div></div>
     </div>
     <button class="btn primary" id="playagain-btn">Play Again</button>
+    <button class="btn" id="share-btn-gameover">Share</button>
     <button class="btn" id="settings-btn-gameover">Settings</button>
     <button class="btn" id="menu-btn">Menu</button>
 </div>
@@ -544,7 +616,7 @@ button {
     <div class="shop-title">Shop</div>
     <div class="shop-points-label">Total Points Earned</div>
     <div class="shop-points" id="shop-points">0</div>
-    <div class="shop-grid">
+    <div class="shop-section-label">Upgrades</div><div class="shop-grid">
         <div class="shop-card" id="card-4beam">
             <div class="shop-icon" style="background:rgba(187,24,255,0.2);color:#bb18ff">+1</div>
             <div class="shop-info">
@@ -561,11 +633,77 @@ button {
             </div>
             <button class="shop-buy" id="buy-double">250,000</button>
         </div>
+        <div class="shop-card" id="card-easy">
+            <div class="shop-icon" style="background:rgba(43,255,126,0.2);color:#2bff7e">😊</div>
+            <div class="shop-info"><div class="shop-name">Easy Mode</div>
+            <div class="shop-desc">5 lives, slower shadows. Great for kids!</div></div>
+            <button class="shop-buy" id="buy-diff-easy">Select</button>
+        </div>
+        <div class="shop-card" id="card-normal">
+            <div class="shop-icon" style="background:rgba(43,158,255,0.2);color:#2b9eff">🎮</div>
+            <div class="shop-info"><div class="shop-name">Normal Mode</div>
+            <div class="shop-desc">3 lives, standard speed.</div></div>
+            <button class="shop-buy" id="buy-diff-normal">Select</button>
+        </div>
+        <div class="shop-card" id="card-hard">
+            <div class="shop-icon" style="background:rgba(255,24,69,0.2);color:#ff1845">🔥</div>
+            <div class="shop-info"><div class="shop-name">Hard Mode</div>
+            <div class="shop-desc">2 lives, fast shadows. For pros!</div></div>
+            <button class="shop-buy" id="buy-diff-hard">Select</button>
+        </div>
+        <div class="shop-card" id="card-shape-star">
+            <div class="shop-icon" style="background:rgba(255,215,0,0.2);color:#ffd700">⭐</div>
+            <div class="shop-info"><div class="shop-name">Star Crystal</div>
+            <div class="shop-desc">5-point star shape.</div></div>
+            <button class="shop-buy" id="buy-shape-star">30 coins</button>
+        </div>
+        <div class="shop-card" id="card-shape-diamond">
+            <div class="shop-icon" style="background:rgba(120,220,255,0.2);color:#78dcff">💎</div>
+            <div class="shop-info"><div class="shop-name">Diamond Crystal</div>
+            <div class="shop-desc">Classic gem shape.</div></div>
+            <button class="shop-buy" id="buy-shape-diamond">45 coins</button>
+        </div>
+        <div class="shop-card" id="card-shape-hexagon">
+            <div class="shop-icon" style="background:rgba(187,24,255,0.2);color:#bb18ff">⬡</div>
+            <div class="shop-info"><div class="shop-name">Hexagon Crystal</div>
+            <div class="shop-desc">Six-sided prism.</div></div>
+            <button class="shop-buy" id="buy-shape-hexagon">60 coins</button>
+        </div>
+        <div class="shop-card" id="card-trail-rainbow">
+            <div class="shop-icon" style="background:rgba(255,215,0,0.2);color:#ffd700">🌈</div>
+            <div class="shop-info"><div class="shop-name">Rainbow Trail</div>
+            <div class="shop-desc">Colorful trail behind crystal.</div></div>
+            <button class="shop-buy" id="buy-trail-rainbow">40 coins</button>
+        </div>
+        <div class="shop-card" id="card-trail-fire">
+            <div class="shop-icon" style="background:rgba(255,120,0,0.2);color:#ff7800">🔥</div>
+            <div class="shop-info"><div class="shop-name">Fire Trail</div>
+            <div class="shop-desc">Blazing flame trail.</div></div>
+            <button class="shop-buy" id="buy-trail-fire">40 coins</button>
+        </div>
+        <div class="shop-card" id="card-trail-sparkle">
+            <div class="shop-icon" style="background:rgba(255,255,200,0.2);color:#fff8c0">✨</div>
+            <div class="shop-info"><div class="shop-name">Sparkle Trail</div>
+            <div class="shop-desc">Twinkling stardust trail.</div></div>
+            <button class="shop-buy" id="buy-trail-sparkle">40 coins</button>
+        </div>
+        <div class="shop-card" id="card-theme-aurora">
+            <div class="shop-icon" style="background:rgba(80,255,180,0.2);color:#50ffb4">🌌</div>
+            <div class="shop-info"><div class="shop-name">Aurora Theme</div>
+            <div class="shop-desc">Northern lights background.</div></div>
+            <button class="shop-buy" id="buy-theme-aurora">50 coins</button>
+        </div>
+        <div class="shop-card" id="card-theme-sunset">
+            <div class="shop-icon" style="background:rgba(255,150,80,0.2);color:#ff9650">🌅</div>
+            <div class="shop-info"><div class="shop-name">Sunset Theme</div>
+            <div class="shop-desc">Warm evening glow.</div></div>
+            <button class="shop-buy" id="buy-theme-sunset">50 coins</button>
+        </div>
         <div class="shop-card" id="card-shadow10">
             <div class="shop-icon" style="background:rgba(43,255,126,0.2);color:#2bff7e">10</div>
             <div class="shop-info"><div class="shop-name">Normal: 10 Shadows / 10s</div>
             <div class="shop-desc">Default rate. Balanced.</div></div>
-            <button class="shop-buy" id="buy-shadow10">20 coins</button>
+            <button class="shop-buy" id="buy-shadow10">10 coins</button>
         </div>
         <div class="shop-card" id="card-shadow15">
             <div class="shop-icon" style="background:rgba(255,136,0,0.2);color:#ff8800">15</div>
@@ -577,58 +715,8 @@ button {
     <button class="btn" id="shop-back-btn" style="margin-top: 30px;">Back</button>
 </div>
 
-<!-- LEADERBOARD SCREEN -->
-<div id="leaderboard-screen" class="screen">
-    <div class="shop-title">Leaderboard</div>
-    <div class="lb-best-label">Your Best Score</div>
-    <div class="lb-best-score" id="lb-best-score">0</div>
-    <div class="lb-history-label">Recent High Scores</div>
-    <div id="lb-list" class="lb-list"></div>
-    <button class="btn" id="lb-back-btn" style="margin-top: 30px;">Back</button>
-</div>
-
-<!-- SETTINGS SCREEN -->
-<div id="settings-screen" class="screen">
-    <div class="shop-title">Settings</div>
-
-    <div class="settings-section">
-        <div class="settings-label">Username</div>
-        <input type="text" id="settings-username" class="settings-input" maxlength="20" placeholder="Enter your name">
-    </div>
-
-    <div class="settings-section">
-        <div class="settings-label">Crystal Color</div>
-        <div class="settings-color-row">
-            <input type="color" id="settings-crystal-color" class="settings-color-picker" value="#80a0ff">
-        </div>
-    </div>
-
-    <div class="settings-section">
-        <div class="settings-label">Beam &amp; Shadow Colors</div>
-        <div class="settings-beam-grid">
-            <div class="settings-beam-item">
-                <div class="settings-beam-label">Beam 1</div>
-                <input type="color" id="settings-beam1" class="settings-color-picker" value="#ff1845">
-            </div>
-            <div class="settings-beam-item">
-                <div class="settings-beam-label">Beam 2</div>
-                <input type="color" id="settings-beam2" class="settings-color-picker" value="#18ff45">
-            </div>
-            <div class="settings-beam-item">
-                <div class="settings-beam-label">Beam 3</div>
-                <input type="color" id="settings-beam3" class="settings-color-picker" value="#1895ff">
-            </div>
-        </div>
-        <div class="settings-hint">Shadows will match your beam colors</div>
-    </div>
-
-    <button class="btn primary" id="settings-save-btn">Save</button>
-    <button class="btn" id="settings-shop-btn">Shop</button>
-    <button class="btn" id="settings-back-btn">Back</button>
-</div>
-
 <script>
-// ═════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // SPECTRUM SLICE — Complete Game Engine
 // ═══════════════════════════════════════════════════════════════
 
@@ -1254,14 +1342,8 @@ function drawCrystal() {
     // aimAngle=0 → right, so rotate by aimAngle
     ctx.rotate(crystal.aimAngle);
 
-    // ─── TRIANGLE shape: one pointy edge pointing RIGHT (+X) ───
-    // Tip points right, base is on the left
-    ctx.beginPath();
-    ctx.moveTo(s * 1.4, 0);              // tip (right)
-    ctx.lineTo(-s * 0.8, -s * 0.9);      // bottom-left
-    ctx.lineTo(-s * 0.5, 0);              // back center indent
-    ctx.lineTo(-s * 0.8, s * 0.9);        // top-left
-    ctx.closePath();
+    // ─── Crystal shape (customizable via shop) ───
+    crystalShapePath(s);
 
     // Glass fill — uses the player's chosen crystal color
     const cc = SETTINGS.crystalColor; // #rrggbb
@@ -1476,7 +1558,7 @@ function spawnEnemy(isBoss) {
             color: -1, isBoss: true,
             hitR: 0, hitG: 0, hitB: 0,
             rotation: 0, wobble: Math.random() * Math.PI * 2,
-            speed: (22 + game.wave * 1.5) * 1.5,
+            speed: (22 + game.wave * 1.5) * 1.5 * diff().speedMult,
         });
     } else {
         const hasFourBeam = SHOP_DATA.owned.indexOf('fourBeam') >= 0;
@@ -1487,7 +1569,7 @@ function spawnEnemy(isBoss) {
             color: colorIdx, isBoss: false,
             rotation: Math.random() * Math.PI * 2,
             wobble: Math.random() * Math.PI * 2,
-            speed: (28 + game.wave * 2.5 + Math.random() * 12) * 1.5,
+            speed: (28 + game.wave * 2.5 + Math.random() * 12) * 1.5 * diff().speedMult,
             hp: 1,
         });
     }
@@ -1728,9 +1810,12 @@ function killEnemy(idx, color, isBossKill) {
         sfxBoss();
         game.shake = 20;
         game.flashAlpha = 0.4;
+        createConfetti(e.x, e.y, 50);   // big confetti for bosses
+        trackStat('bosses', 1);
     } else {
         sfxKill(e.color);
         game.shake = Math.max(game.shake, 4);
+        createConfetti(e.x, e.y, 10);   // small confetti per kill
     }
 
     // Show combo
@@ -1758,6 +1843,45 @@ function damagePlayer() {
 // ═══════════════════════════════════════════════════════════════
 // PARTICLES
 // ═══════════════════════════════════════════════════════════════
+function createConfetti(x, y, count) {
+    // Rainbow confetti squares for celebrations
+    const confColors = ['#ff1845', '#ff8800', '#ffee00', '#18ff45', '#1895ff', '#bb18ff', '#ff77aa'];
+    for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 60 + Math.random() * 220;
+        particles.push({
+            x, y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 60,
+            life: 0.8 + Math.random() * 0.8,
+            maxLife: 1.6,
+            size: 2 + Math.random() * 3,
+            color: confColors[Math.floor(Math.random() * confColors.length)],
+            confetti: true,
+            spin: Math.random() * Math.PI * 2,
+            spinSpeed: (Math.random() - 0.5) * 10,
+        });
+    }
+}
+
+function drawConfetti() {
+    ctx.save();
+    for (const p of particles) {
+        if (!p.confetti) continue;
+        const a = Math.max(0, p.life / p.maxLife);
+        p.spin += p.spinSpeed * 0.016;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.spin);
+        ctx.globalAlpha = a;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size, -p.size * 0.6, p.size * 2, p.size * 1.2);
+        ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+}
+
 function createExplosion(x, y, color, count) {
     for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2;
@@ -1808,7 +1932,15 @@ function drawParticles() {
 // FLOATING TEXT
 // ═══════════════════════════════════════════════════════════════
 function addFloatingText(x, y, text, color) {
-    floatingTexts.push({ x, y, text, color, life: 1.2, maxLife: 1.2, vy: -40 });
+    floatingTexts.push({ x, y, text, color, life: 1.2, maxLife: 1.2, vy: -40, born: game.time });
+}
+
+function textScale(t) {
+    // Bouncy pop: overshoot then settle
+    const age = game.time - t.born;
+    if (age < 0.15) return 0.3 + (age / 0.15) * 0.9;      // grow in
+    if (age < 0.3) return 1.2 - (age - 0.15) / 0.15 * 0.2; // overshoot back
+    return 1;
 }
 
 function updateFloatingTexts(dt) {
@@ -1827,9 +1959,14 @@ function drawFloatingTexts() {
     ctx.font = 'bold 18px Segoe UI, sans-serif';
     for (const t of floatingTexts) {
         const a = Math.min(1, t.life / 0.5);
+        const sc = t.born !== undefined ? textScale(t) : 1;
+        ctx.save();
         ctx.globalAlpha = a;
+        ctx.translate(t.x, t.y);
+        ctx.scale(sc, sc);
         ctx.fillStyle = t.color;
-        ctx.fillText(t.text, t.x, t.y);
+        ctx.fillText(t.text, 0, 0);
+        ctx.restore();
     }
     ctx.globalAlpha = 1;
     ctx.shadowBlur = 0;
@@ -1905,6 +2042,7 @@ function drawGems() {
 }
 
 function activateMegaMode() {
+    trackStat('megaCount', 1);
     game.megaMode = true;
     game.megaTimer = 6;
     game.megaKillsNeeded = game.megaKillThreshold; // reset for next time
@@ -1933,22 +2071,21 @@ function updateWaves(dt) {
         game.wave++;
         game.enemiesKilledThisWave = 0;
         game.waveEnemyCount = 5 + Math.floor(game.wave * 1.5);
-        sfxWave();
         const waveText = game.wave % 5 === 0 ? '\u{1F525} WAVE ' + game.wave : 'WAVE ' + game.wave;
-        const waveColor = game.wave % 5 === 0 ? '#ff8800' : '#2b9eff';
-        addFloatingText(W/2, H/2, waveText, waveColor);
+        let waveSub = '';
+        if (game.wave % 5 === 0) {
+            waveSub = 'Milestone wave!';
+            if (game.lives < 5) { game.lives++; waveSub = '+1 LIFE BONUS!'; }
+        }
+        showWaveBanner(waveText, waveSub);
         game.flashAlpha = 0.15;
         game.shake = Math.max(game.shake, 5);
-        if (game.wave % 5 === 0 && game.lives < 5) {
-            game.lives++;
-            addFloatingText(W/2, H/2 + 40, '+1 LIFE BONUS!', '#ff2b5e');
-        }
         updateHUD();
     }
 
     // Spawn shadows at configurable rate (shadowRate per 10 seconds)
     game.shadowSpawnAccum += dt;
-    const spawnInterval = 10 / game.shadowRate;
+    const spawnInterval = 10 / (game.shadowRate * diff().rateMult);
     while (game.shadowSpawnAccum >= spawnInterval) {
         game.shadowSpawnAccum -= spawnInterval;
         if (enemies.filter(e => !e.isBoss).length < 20) {
@@ -1999,6 +2136,7 @@ function updateCoins(dt) {
         const d = Math.hypot(crystal.x - c.x, crystal.y - c.y);
         if (d < c.size + crystal.size * 0.6) {
             game.coins += c.value;
+            trackStat('coinsCollected', c.value);
             localStorage.setItem('ss_coins', game.coins.toString());
             sfxGem();
             createExplosion(c.x, c.y, '#ffd700', 15);
@@ -2163,6 +2301,72 @@ function drawBottles() {
     }
 }
 
+
+// ═══════════════════════════════════════════════════════════════
+// WAVE BANNER — animated slide-in banner
+// ═══════════════════════════════════════════════════════════════
+let waveBanner = null; // {text, sub, t, dur}
+
+function showWaveBanner(text, sub) {
+    waveBanner = { text: text, sub: sub || '', t: 0, dur: 2.2 };
+    sfxWave();
+}
+
+function updateWaveBanner(dt) {
+    if (!waveBanner) return;
+    waveBanner.t += dt;
+    if (waveBanner.t > waveBanner.dur) waveBanner = null;
+}
+
+function drawWaveBanner() {
+    if (!waveBanner) return;
+    const b = waveBanner;
+    const p = b.t / b.dur;
+    // Ease: slide in 0-0.2, hold 0.2-0.8, slide out 0.8-1
+    let slide;
+    if (p < 0.2) slide = 1 - (p / 0.2);           // 1 -> 0 (from offscreen)
+    else if (p > 0.8) slide = (p - 0.8) / 0.2;    // 0 -> 1 (to offscreen)
+    else slide = 0;
+    const ease = slide * slide * (3 - 2 * slide); // smoothstep
+    const y = H * 0.30 - ease * H * 0.4;
+
+    ctx.save();
+    ctx.globalAlpha = 1 - ease * 0.9;
+    // Banner ribbon
+    const w = Math.min(W * 0.8, 460), h = 74;
+    const x = (W - w) / 2;
+    ctx.fillStyle = 'rgba(10,6,28,0.88)';
+    ctx.strokeStyle = 'rgba(120,80,255,0.6)';
+    ctx.lineWidth = 2;
+    // Rounded ribbon
+    ctx.beginPath();
+    ctx.moveTo(x + 18, y); ctx.lineTo(x + w - 18, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + 18);
+    ctx.lineTo(x + w, y + h - 18);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - 18, y + h);
+    ctx.lineTo(x + 18, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - 18);
+    ctx.lineTo(x, y + 18);
+    ctx.quadraticCurveTo(x, y, x + 18, y);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    // Main text with slight scale pulse
+    const pulse = 1 + 0.06 * Math.sin(b.t * 6);
+    ctx.translate(W / 2, y + h / 2 - 6);
+    ctx.scale(pulse, pulse);
+    ctx.font = '900 34px Segoe UI, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = b.text.indexOf('WAVE') >= 0 || b.text.indexOf('\u{1F525}') >= 0 ? '#6ec6ff' : '#ffd700';
+    ctx.fillText(b.text, 0, 0);
+    if (b.sub) {
+        ctx.font = '700 16px Segoe UI, sans-serif';
+        ctx.fillStyle = '#ffb3c8';
+        ctx.fillText(b.sub, 0, 26);
+    }
+    ctx.restore();
+}
+
 // ═══════════════════════════════════════════════════════════════
 // SCREEN EFFECTS
 // ═══════════════════════════════════════════════════════════════
@@ -2214,6 +2418,8 @@ function render(dt) {
     ctx.fillStyle = nebGrad2;
     ctx.fillRect(0, 0, W, H);
 
+    // Theme background
+    drawTheme();
     // Stars
     drawStars(dt);
 
@@ -2248,6 +2454,10 @@ function render(dt) {
 
     ctx.restore();
 
+
+    drawConfetti();
+    drawWaveBanner();
+    drawTrail();
 
     // FROZEN overlay: icy tint + countdown + border
     if (game.crystalFrozen > 0) {
@@ -2337,10 +2547,46 @@ function gameLoop(timestamp) {
     updateParticles(dt);
     updateFloatingTexts(dt);
     updateEffects(dt);
+    updateWaveBanner(dt);
+    updateTrail();
 
     render(dt);
     drawTutorialGuides();
     updateHUD();
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// ANIMATED TITLE — floating crystal splitting light
+// ═══════════════════════════════════════════════════════════════
+let titleTime = 0;
+function renderTitleAnim(dt) {
+    titleTime += dt;
+    const cx = W / 2, cy = H * 0.5;
+    // Soft beam across
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const by = H * 0.5;
+    const g = ctx.createLinearGradient(0, by - 20, 0, by + 20);
+    g.addColorStop(0, 'rgba(120,180,255,0)');
+    g.addColorStop(0.5, 'rgba(180,220,255,0.10)');
+    g.addColorStop(1, 'rgba(120,180,255,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, by - 20, W, 40);
+    ctx.restore();
+    // Floating crystal
+    crystal.x = cx;
+    crystal.y = cy + Math.sin(titleTime * 1.4) * 14;
+    crystal.inBeam = true;
+    crystal.aimAngle = Math.PI / 2 + Math.sin(titleTime * 0.6) * 0.7;
+    crystal.glowPhase = titleTime * 3;
+    computeRays();
+    drawRays();
+    drawCrystal();
+    // Twinkle stars occasionally
+    if (Math.random() < 0.04) {
+        createExplosion(cx + (Math.random() - 0.5) * W * 0.6, cy + (Math.random() - 0.5) * H * 0.4, '#aaccff', 2);
+    }
 }
 
 function renderTitleBg(dt) {
@@ -2353,12 +2599,10 @@ function renderTitleBg(dt) {
     ng.addColorStop(1, 'rgba(3,0,16,0)');
     ctx.fillStyle = ng; ctx.fillRect(0,0,W,H);
 
-    for (const s of stars) {
-        s.twinkle += dt * s.twinkleSpeed;
-        const a = s.brightness * (0.4 + 0.6 * (0.5 + 0.5 * Math.sin(s.twinkle)));
-        ctx.fillStyle = `rgba(180,200,255,${a})`;
-        ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI*2); ctx.fill();
-    }
+    drawStars(dt);
+    updateParticles(dt);
+    drawParticles();
+    renderTitleAnim(dt);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2376,6 +2620,9 @@ function updateHUD() {
     // Username shown during gameplay
     const unHud = document.querySelector('#hud-username .hud-val');
     if (unHud) unHud.textContent = SETTINGS.username ? '👤 ' + SETTINGS.username : '';
+    // Kill counter
+    const killHud = document.querySelector('#hud-kills .hud-val');
+    if (killHud) killHud.textContent = game.kills;
 
     const livesDiv = document.getElementById('lives-icons');
     livesDiv.innerHTML = '';
@@ -2407,7 +2654,7 @@ function showScreen(id) {
 function startGame() {
     initAudio();
     game.state = 'playing';
-    game.score = 0; game.wave = 1; game.kills = 0; game.lives = 3;
+    game.score = 0; game.wave = 1; game.kills = 0; game.lives = diff().lives;
     game.combo = 0; game.maxCombo = 0; game.comboTimer = 0;
     game.waveEnemyCount = 6; game.enemiesKilledThisWave = 0;
     game.spawnTimer = 1; game.bossTimer = 20;
@@ -2418,6 +2665,7 @@ function startGame() {
     game.bottleTimer = 20;
     game.shadowSpawnAccum = 0;
     game.megaMode = false; game.megaTimer = 0;
+    game.showScoreCard = false;
     game.megaKillsNeeded = game.megaKillThreshold;
     game.time = 0; game.playTime = 0; game.shake = 0; game.flashAlpha = 0;
     game.paused = false;
@@ -2446,6 +2694,7 @@ function startGame() {
     document.getElementById('shop-screen').classList.remove('active');
     document.getElementById('leaderboard-screen').classList.remove('active');
     document.getElementById('settings-screen').classList.remove('active');
+    document.getElementById('achievements-screen').classList.remove('active');
     document.getElementById('hud').classList.add('active');
     document.getElementById('pause-btn').classList.add('active');
     document.getElementById('exit-btn').classList.add('active');
@@ -2463,6 +2712,23 @@ function startGame() {
 
 function endGame() {
     game.state = 'gameover';
+    game.showScoreCard = true;
+    // Track stats + XP + achievements
+    trackStat('games', 1);
+    trackStat('kills', game.kills);
+    trackStat('bestScore', game.score, true);
+    trackStat('bestWave', game.wave, true);
+    trackStat('bestCombo', game.maxCombo, true);
+    addXP(Math.floor(game.score / 100) + game.kills * 2);
+    const newAchievements = checkAchievements();
+    if (newAchievements.length > 0) {
+        setTimeout(function() {
+            for (const a of newAchievements) {
+                addFloatingText(W/2, H/2 - 60, '🏆 ' + a.name + ' +' + a.reward + ' coins!', '#ffd700');
+            }
+            createConfetti(W/2, H/2, 40);
+        }, 800);
+    }
     // Add this game's score to total points (persistent)
     SHOP_DATA.totalPoints += game.score;
     localStorage.setItem('ss_totalPoints', SHOP_DATA.totalPoints.toString());
@@ -2484,6 +2750,419 @@ function endGame() {
     document.getElementById('combo-display').classList.remove('active');
     hideMusicBar();
     stopMusic();
+}
+
+
+
+
+// ═══════════════════════════════════════════════════════════════
+// PACKAGE D — DIFFICULTY MODES + SHAREABLE SCORE CARD
+// ═══════════════════════════════════════════════════════════════
+const DIFFICULTIES = {
+    easy:   { name: 'Easy',   lives: 5, speedMult: 0.75, rateMult: 0.7 },
+    normal: { name: 'Normal', lives: 3, speedMult: 1.0,  rateMult: 1.0 },
+    hard:   { name: 'Hard',   lives: 2, speedMult: 1.3,  rateMult: 1.4 },
+};
+let difficulty = localStorage.getItem('ss_difficulty') || 'normal';
+
+function setDifficulty(d) {
+    if (!DIFFICULTIES[d]) return;
+    difficulty = d;
+    localStorage.setItem('ss_difficulty', d);
+    renderShop();
+}
+function diff() { return DIFFICULTIES[difficulty]; }
+
+// ─── Shareable score card (drawn on canvas, kid-screenshot friendly) ───
+function drawScoreCard() {
+    // Called after death: renders a pretty card behind game-over stats
+    const cw = Math.min(W * 0.9, 440), ch = 210;
+    const x = (W - cw) / 2, y = Math.max(90, H * 0.16);
+    ctx.save();
+    // Card body
+    const grad = ctx.createLinearGradient(0, y, 0, y + ch);
+    grad.addColorStop(0, 'rgba(16,10,42,0.96)');
+    grad.addColorStop(1, 'rgba(8,4,24,0.96)');
+    ctx.fillStyle = grad;
+    ctx.strokeStyle = 'rgba(140,100,255,0.5)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(x, y, cw, ch, 20) : ctx.rect(x, y, cw, ch);
+    ctx.fill(); ctx.stroke();
+    // Header
+    ctx.textAlign = 'center';
+    ctx.font = '900 26px Segoe UI, sans-serif';
+    ctx.fillStyle = '#ffd700';
+    ctx.fillText('SPECTRUM SLICE', W / 2, y + 44);
+    ctx.font = '700 13px Segoe UI, sans-serif';
+    ctx.fillStyle = '#8888bb';
+    ctx.fillText((SETTINGS.username || 'Player') + '  •  Lv ' + getLevelInfo().level + ' ' + getLevelInfo().title, W / 2, y + 68);
+    // Score big
+    ctx.font = '900 44px Segoe UI, sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(game.score.toLocaleString(), W / 2, y + 118);
+    ctx.font = '700 13px Segoe UI, sans-serif';
+    ctx.fillStyle = '#8888bb';
+    ctx.fillText('SCORE', W / 2, y + 136);
+    // Mini stats row
+    ctx.fillStyle = '#b9a8ff';
+    ctx.font = '700 14px Segoe UI, sans-serif';
+    ctx.fillText('Wave ' + game.wave + '   •   ' + game.kills + ' Kills   •   ' + game.maxCombo + 'x Combo', W / 2, y + 168);
+    ctx.fillStyle = '#667788';
+    ctx.font = '600 11px Segoe UI, sans-serif';
+    ctx.fillText('screenshot & challenge your friends!', W / 2, y + 192);
+    ctx.restore();
+}
+
+// ─── Challenge link ───
+function getChallengeText() {
+    return 'I scored ' + (getBestScore()).toLocaleString() + ' in Spectrum Slice! Can you beat me? ' +
+           location.href;
+}
+function shareScore() {
+    const text = getChallengeText();
+    if (navigator.share) {
+        navigator.share({ title: 'Spectrum Slice', text: text }).catch(function() {});
+    } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(function() {
+            var btn = document.getElementById('share-btn-gameover');
+            if (btn) { btn.textContent = 'Copied!'; setTimeout(function() { btn.textContent = 'Share'; }, 1500); }
+        }).catch(function() {});
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PACKAGE C — CRYSTAL SHAPES / TRAILS / THEMES
+// ═══════════════════════════════════════════════════════════════
+const CRYSTAL_SHAPES = [
+    { id: 'arrow',    name: 'Arrow',     cost: 0 },
+    { id: 'star',     name: 'Star',      cost: 30 },
+    { id: 'diamond',  name: 'Diamond',   cost: 45 },
+    { id: 'hexagon',  name: 'Hexagon',   cost: 60 },
+];
+const CRYSTAL_TRAILS = [
+    { id: 'none',     name: 'None',      cost: 0 },
+    { id: 'rainbow',  name: 'Rainbow',   cost: 40 },
+    { id: 'fire',     name: 'Fire',      cost: 40 },
+    { id: 'sparkle',  name: 'Sparkle',   cost: 40 },
+];
+const BG_THEMES = [
+    { id: 'space',    name: 'Deep Space', cost: 0 },
+    { id: 'aurora',   name: 'Aurora',     cost: 50 },
+    { id: 'sunset',   name: 'Sunset',     cost: 50 },
+];
+
+const COSMETICS = {
+    shape: localStorage.getItem('ss_shape') || 'arrow',
+    trail: localStorage.getItem('ss_trail') || 'none',
+    theme: localStorage.getItem('ss_theme') || 'space',
+    owned: JSON.parse(localStorage.getItem('ss_cosmeticOwned') || '["arrow","none","space"]'),
+};
+
+function saveCosmetics() {
+    localStorage.setItem('ss_shape', COSMETICS.shape);
+    localStorage.setItem('ss_trail', COSMETICS.trail);
+    localStorage.setItem('ss_theme', COSMETICS.theme);
+    localStorage.setItem('ss_cosmeticOwned', JSON.stringify(COSMETICS.owned));
+}
+
+function buyCosmetic(id) {
+    let item = null, kind = null;
+    for (const s of CRYSTAL_SHAPES) if (s.id === id) { item = s; kind = 'shape'; }
+    for (const t of CRYSTAL_TRAILS) if (t.id === id) { item = t; kind = 'trail'; }
+    for (const b of BG_THEMES) if (b.id === id) { item = b; kind = 'theme'; }
+    if (!item) return;
+    const owned = COSMETICS.owned.indexOf(id) >= 0;
+    if (!owned) {
+        if (game.coins < item.cost) return;
+        game.coins -= item.cost;
+        localStorage.setItem('ss_coins', game.coins.toString());
+        COSMETICS.owned.push(id);
+    }
+    COSMETICS[kind] = id;
+    saveCosmetics();
+    renderShop();
+}
+
+// ─── Trail rendering ───
+const trailPoints = [];
+function updateTrail() {
+    if (COSMETICS.trail === 'none') return;
+    trailPoints.push({ x: crystal.x, y: crystal.y, life: 1 });
+    if (trailPoints.length > 26) trailPoints.shift();
+    for (const p of trailPoints) p.life -= 0.045;
+    while (trailPoints.length && trailPoints[0].life <= 0) trailPoints.shift();
+}
+
+function drawTrail() {
+    if (COSMETICS.trail === 'none' || trailPoints.length < 2) return;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    let i = 0;
+    for (const p of trailPoints) {
+        const t = i / trailPoints.length;
+        const r = 9 * p.life;
+        let color;
+        if (COSMETICS.trail === 'rainbow') {
+            const hue = (game.time * 90 + i * 14) % 360;
+            color = 'hsl(' + hue + ',100%,60%)';
+        } else if (COSMETICS.trail === 'fire') {
+            color = 'hsl(' + (18 + t * 30) + ',100%,' + (55 - t * 15) + '%)';
+        } else {
+            color = '#fff8c0';
+        }
+        ctx.globalAlpha = p.life * 0.5;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+        ctx.fill();
+        if (COSMETICS.trail === 'sparkle' && Math.random() < 0.3) {
+            ctx.globalAlpha = p.life * 0.8;
+            ctx.fillRect(p.x + (Math.random()-0.5)*14, p.y + (Math.random()-0.5)*14, 2, 2);
+        }
+        i++;
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+}
+
+// ─── Theme backgrounds (drawn behind stars) ───
+function drawTheme() {
+    const theme = COSMETICS.theme;
+    if (theme === 'aurora') {
+        // Soft moving aurora curtains
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        for (let i = 0; i < 3; i++) {
+            const gx = W * (0.25 + 0.25 * i) + Math.sin(game.time * 0.4 + i * 2) * 60;
+            const grad = ctx.createLinearGradient(0, 0, 0, H);
+            const hue = 140 + i * 40 + Math.sin(game.time + i) * 20;
+            grad.addColorStop(0, 'hsla(' + hue + ',80%,55%,0)');
+            grad.addColorStop(0.5, 'hsla(' + hue + ',80%,55%,0.10)');
+            grad.addColorStop(1, 'hsla(' + hue + ',80%,55%,0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(gx - 120, 0, 240, H);
+        }
+        ctx.restore();
+    } else if (theme === 'sunset') {
+        // Warm bottom-up gradient
+        const grad = ctx.createLinearGradient(0, H * 0.55, 0, H);
+        grad.addColorStop(0, 'rgba(255,120,60,0)');
+        grad.addColorStop(1, 'rgba(255,90,60,0.16)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, H * 0.55, W, H * 0.45);
+        // Sun glow low on horizon
+        stampGlow(W * 0.5, H * 0.92, '#ff9a50', 200, 0.16);
+    }
+}
+
+// ─── Crystal shape variants ───
+function crystalShapePath(s) {
+    ctx.beginPath();
+    if (COSMETICS.shape === 'star') {
+        // 5-point star, pointy tip to the right
+        for (let i = 0; i < 10; i++) {
+            const a = (i / 10) * Math.PI * 2;
+            const r = (i % 2 === 0) ? s * 1.5 : s * 0.65;
+            const px = Math.cos(a) * r, py = Math.sin(a) * r;
+            if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+    } else if (COSMETICS.shape === 'diamond') {
+        ctx.moveTo(s * 1.6, 0);
+        ctx.lineTo(0, -s * 1.05);
+        ctx.lineTo(-s * 1.1, 0);
+        ctx.lineTo(0, s * 1.05);
+    } else if (COSMETICS.shape === 'hexagon') {
+        for (let i = 0; i < 6; i++) {
+            const a = (i / 6) * Math.PI * 2;
+            const px = Math.cos(a) * s * 1.25, py = Math.sin(a) * s * 1.25;
+            if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+    } else {
+        // default arrow
+        ctx.moveTo(s * 1.4, 0);
+        ctx.lineTo(-s * 0.8, -s * 0.9);
+        ctx.lineTo(-s * 0.5, 0);
+        ctx.lineTo(-s * 0.8, s * 0.9);
+    }
+    ctx.closePath();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PACKAGE B — DAILY REWARDS / ACHIEVEMENTS / XP LEVELS
+// ═══════════════════════════════════════════════════════════════
+
+// ─── DAILY LOGIN REWARDS ───
+const DAY_MS = 24 * 60 * 60 * 1000;
+const DAILY_COINS = [5, 8, 12, 18, 25, 35, 50]; // day 1..7 then stays at 50
+
+function getDailyData() {
+    return {
+        lastClaim: parseInt(localStorage.getItem('ss_dailyLast') || '0', 10),
+        streak: parseInt(localStorage.getItem('ss_dailyStreak') || '0', 10),
+    };
+}
+
+function canClaimDaily() {
+    const d = getDailyData();
+    return Date.now() - d.lastClaim >= DAY_MS;
+}
+
+function claimDaily() {
+    if (!canClaimDaily()) return null;
+    const d = getDailyData();
+    // Continue streak if claimed within 2 days, else reset
+    if (Date.now() - d.lastClaim < DAY_MS * 2) d.streak = Math.min(d.streak + 1, 7);
+    else d.streak = 1;
+    const coins = DAILY_COINS[d.streak - 1];
+    localStorage.setItem('ss_dailyLast', Date.now().toString());
+    localStorage.setItem('ss_dailyStreak', d.streak.toString());
+    game.coins += coins;
+    localStorage.setItem('ss_coins', game.coins.toString());
+    return { coins: coins, streak: d.streak };
+}
+
+function daysUntilDaily() {
+    const d = getDailyData();
+    const left = DAY_MS - (Date.now() - d.lastClaim);
+    return left <= 0 ? 0 : left / DAY_MS;
+}
+
+// ─── ACHIEVEMENTS ───
+const ACHIEVEMENTS = [
+    { id: 'kill1',    name: 'First Blood',       desc: 'Kill your first shadow',           reward: 2,  goal: 1,   stat: 'kills' },
+    { id: 'kill50',   name: 'Shadow Hunter',     desc: 'Kill 50 shadows',                  reward: 5,  goal: 50,  stat: 'kills' },
+    { id: 'kill250',  name: 'Shadow Slayer',     desc: 'Kill 250 shadows',                 reward: 15, goal: 250, stat: 'kills' },
+    { id: 'kill1000', name: 'Void Exterminator', desc: 'Kill 1000 shadows',                reward: 50, goal: 1000,stat: 'kills' },
+    { id: 'wave5',    name: 'Getting Warm',      desc: 'Reach wave 5',                     reward: 5,  goal: 5,   stat: 'bestWave' },
+    { id: 'wave10',   name: 'Prism Veteran',     desc: 'Reach wave 10',                    reward: 12, goal: 10,  stat: 'bestWave' },
+    { id: 'wave20',   name: 'Light Master',      desc: 'Reach wave 20',                    reward: 30, goal: 20,  stat: 'bestWave' },
+    { id: 'boss1',    name: 'Boss Bopper',       desc: 'Defeat your first boss',           reward: 5,  goal: 1,   stat: 'bosses' },
+    { id: 'boss10',   name: 'Boss Breaker',      desc: 'Defeat 10 bosses',                 reward: 20, goal: 10,  stat: 'bosses' },
+    { id: 'score5k',  name: 'High Roller',       desc: 'Score 5,000 in one game',          reward: 5,  goal: 5000,   stat: 'bestScore' },
+    { id: 'score25k', name: 'Star Player',       desc: 'Score 25,000 in one game',         reward: 15, goal: 25000,  stat: 'bestScore' },
+    { id: 'score100k',name: 'Legend of Light',   desc: 'Score 100,000 in one game',        reward: 50, goal: 100000, stat: 'bestScore' },
+    { id: 'combo10',  name: 'Chain Reaction',    desc: 'Get a 10x combo',                  reward: 8,  goal: 10,  stat: 'bestCombo' },
+    { id: 'combo25',  name: 'Unstoppable',       desc: 'Get a 25x combo',                  reward: 20, goal: 25,  stat: 'bestCombo' },
+    { id: 'mega3',    name: 'Rainbow Rider',     desc: 'Trigger mega beam 3 times',        reward: 8,  goal: 3,   stat: 'megaCount' },
+    { id: 'play10',   name: 'Regular Player',    desc: 'Play 10 games',                    reward: 5,  goal: 10,  stat: 'games' },
+    { id: 'play50',   name: 'Dedicated Prism',   desc: 'Play 50 games',                    reward: 20, goal: 50,  stat: 'games' },
+    { id: 'coin10',   name: 'Coin Collector',    desc: 'Collect 10 coins',                 reward: 5,  goal: 10,  stat: 'coinsCollected' },
+    { id: 'coin50',   name: 'Treasure Hunter',   desc: 'Collect 50 coins',                 reward: 15, goal: 50,  stat: 'coinsCollected' },
+    { id: 'noHit5',   name: 'Untouchable',       desc: 'Finish a wave 5+ without damage',  reward: 10, goal: 5,   stat: 'perfectWaves' },
+];
+
+function getStats() {
+    return JSON.parse(localStorage.getItem('ss_stats') || '{}');
+}
+function saveStats(s) {
+    localStorage.setItem('ss_stats', JSON.stringify(s));
+}
+function getUnlockedAchievements() {
+    return JSON.parse(localStorage.getItem('ss_achievements') || '[]');
+}
+function unlockAchievement(id) {
+    const unlocked = getUnlockedAchievements();
+    if (unlocked.indexOf(id) >= 0) return;
+    unlocked.push(id);
+    localStorage.setItem('ss_achievements', JSON.stringify(unlocked));
+}
+
+// Track a stat and check achievements (call after games / events)
+function trackStat(stat, value, isMax) {
+    const s = getStats();
+    if (isMax) s[stat] = Math.max(s[stat] || 0, value);
+    else s[stat] = (s[stat] || 0) + value;
+    saveStats(s);
+    checkAchievements();
+    return s[stat];
+}
+
+function checkAchievements() {
+    const s = getStats();
+    const unlocked = getUnlockedAchievements();
+    let newly = [];
+    for (const a of ACHIEVEMENTS) {
+        if (unlocked.indexOf(a.id) >= 0) continue;
+        if ((s[a.stat] || 0) >= a.goal) {
+            unlockAchievement(a.id);
+            game.coins += a.reward;
+            localStorage.setItem('ss_coins', game.coins.toString());
+            newly.push(a);
+        }
+    }
+    return newly;
+}
+
+// ─── XP LEVELS ───
+const LEVEL_TITLES = [
+    'Rookie', 'Spark', 'Prism Apprentice', 'Beam Rider', 'Light Weaver',
+    'Spectrum Knight', 'Radiant Ace', 'Prism Master', 'Luminary', 'Legend of Light'
+];
+function xpForLevel(lv) { return Math.floor(100 * Math.pow(1.35, lv - 1)); }
+function getXP() { return parseInt(localStorage.getItem('ss_xp') || '0', 10); }
+function addXP(amount) {
+    let xp = getXP() + amount;
+    localStorage.setItem('ss_xp', xp.toString());
+    return xp;
+}
+function getLevelInfo() {
+    let xp = getXP(), lv = 1;
+    while (xp >= xpForLevel(lv)) { xp -= xpForLevel(lv); lv++; }
+    lv = Math.min(lv, LEVEL_TITLES.length);
+    return { level: lv, intoLevel: xp, needed: xpForLevel(lv), title: LEVEL_TITLES[lv - 1] };
+}
+
+
+// ─── Daily reward popup ───
+function showDailyPopupIfReady() {
+    if (!canClaimDaily()) return;
+    const d = getDailyData();
+    const nextStreak = (Date.now() - d.lastClaim < DAY_MS * 2) ? Math.min(d.streak + 1, 7) : 1;
+    const coins = DAILY_COINS[nextStreak - 1];
+    document.getElementById('daily-coins-amt').textContent = '+' + coins + ' coins';
+    document.getElementById('daily-streak-txt').textContent = 'Day ' + nextStreak + ' streak';
+    document.getElementById('daily-popup').classList.add('active');
+}
+
+function claimDailyUI() {
+    const res = claimDaily();
+    if (!res) return;
+    document.getElementById('daily-popup').classList.remove('active');
+    createConfetti(W / 2, H / 2, 30);
+    updateTitleTime(); // refresh displays
+}
+
+// ─── Level bar on title ───
+function updateLevelBar() {
+    const info = getLevelInfo();
+    document.getElementById('title-level-name').textContent = info.title;
+    document.getElementById('title-level-num').textContent = 'Lv ' + info.level + ' • ' + info.intoLevel + '/' + info.needed + ' XP';
+    document.getElementById('title-level-fill').style.width = Math.min(100, (info.intoLevel / info.needed) * 100) + '%';
+}
+
+// ─── Achievements screen ───
+function openAchievements() {
+    game.state = 'achievements';
+    showScreen('achievements');
+    renderAchievements();
+}
+
+function renderAchievements() {
+    const s = getStats();
+    const unlocked = getUnlockedAchievements();
+    const list = document.getElementById('ach-list');
+    let htmlStr = '';
+    for (const a of ACHIEVEMENTS) {
+        const done = unlocked.indexOf(a.id) >= 0;
+        const prog = Math.min(s[a.stat] || 0, a.goal);
+        htmlStr += '<div class="ach-row' + (done ? ' done' : '') + '">' +
+            '<div class="ach-icon">🏆</div>' +
+            '<div class="ach-info"><div class="ach-name">' + a.name + '</div>' +
+            '<div class="ach-desc">' + a.desc + ' (' + prog + '/' + a.goal + ')</div></div>' +
+            '<div class="ach-reward">' + (done ? '✓ Done' : '+' + a.reward + ' 🪙') + '</div></div>';
+    }
+    list.innerHTML = htmlStr;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2549,6 +3228,55 @@ function renderShop() {
         }
     }
 
+
+    // Difficulty cards
+    var diffs = ['easy', 'normal', 'hard'];
+    for (var di = 0; di < diffs.length; di++) {
+        var dkey = diffs[di];
+        var dcard = document.getElementById('card-' + (dkey === 'normal' ? 'normal' : dkey));
+        var dbtn = document.getElementById('buy-diff-' + dkey);
+        if (!dcard || !dbtn) continue;
+        if (difficulty === dkey) {
+            dcard.classList.add('active-rate'); dcard.classList.remove('locked');
+            dbtn.textContent = 'Active'; dbtn.classList.add('disabled'); dbtn.classList.remove('affordable');
+        } else {
+            dcard.classList.remove('active-rate');
+            dbtn.textContent = 'Select'; dbtn.classList.add('affordable'); dbtn.classList.remove('disabled');
+        }
+    }
+
+    // Cosmetic cards (shapes, trails, themes)
+    var cosmeticSets = [
+        { items: CRYSTAL_SHAPES, kind: 'shape' },
+        { items: CRYSTAL_TRAILS, kind: 'trail' },
+        { items: BG_THEMES, kind: 'theme' },
+    ];
+    for (var si = 0; si < cosmeticSets.length; si++) {
+        var set = cosmeticSets[si];
+        for (var ci = 0; ci < set.items.length; ci++) {
+            var item = set.items[ci];
+            if (item.cost === 0 && set.items[0] === item) { /* default card = skip render */ }
+            var cid = item.id;
+            var ccard = document.getElementById('card-' + set.kind + '-' + cid);
+            var cbtn = document.getElementById('buy-' + set.kind + '-' + cid);
+            if (!ccard || !cbtn) continue;
+            var isOwned = COSMETICS.owned.indexOf(cid) >= 0;
+            var isEquipped = COSMETICS[set.kind] === cid;
+            if (isEquipped) {
+                ccard.classList.add('active-rate'); ccard.classList.remove('locked'); ccard.classList.remove('owned');
+                cbtn.textContent = 'Equipped'; cbtn.classList.add('disabled'); cbtn.classList.remove('affordable');
+            } else if (isOwned) {
+                ccard.classList.remove('active-rate'); ccard.classList.remove('locked'); ccard.classList.add('owned');
+                cbtn.textContent = 'Equip'; cbtn.classList.add('affordable'); cbtn.classList.remove('disabled');
+            } else {
+                ccard.classList.remove('active-rate'); ccard.classList.remove('owned');
+                cbtn.textContent = item.cost + ' coins';
+                if (game.coins >= item.cost) { ccard.classList.remove('locked'); cbtn.classList.add('affordable'); cbtn.classList.remove('disabled'); }
+                else { ccard.classList.add('locked'); cbtn.classList.add('disabled'); cbtn.classList.remove('affordable'); }
+            }
+        }
+    }
+
     // Show coins in shop
     var coinDisplay = document.getElementById('shop-coins');
     if (coinDisplay) coinDisplay.textContent = game.coins + ' coins';
@@ -2599,6 +3327,7 @@ function goToTitle() {
     document.getElementById('shop-screen').classList.remove('active');
     document.getElementById('leaderboard-screen').classList.remove('active');
     document.getElementById('settings-screen').classList.remove('active');
+    document.getElementById('achievements-screen').classList.remove('active');
     document.getElementById('hud').classList.remove('active');
     document.getElementById('pause-btn').classList.remove('active');
     document.getElementById('exit-btn').classList.remove('active');
@@ -2609,6 +3338,7 @@ function goToTitle() {
     stopMusic();
     // Refresh total time played (value may have changed after a game)
     const savedTime = parseInt(localStorage.getItem('ss_totalTime') || '0', 10);
+    updateLevelBar();
     const tpEl = document.getElementById('title-time-played');
     if (tpEl) tpEl.textContent = '⏱ Total Time Played: ' + formatTime(savedTime);
 }
@@ -3025,6 +3755,9 @@ function init() {
     addTouchClick('settings-btn-gameover', openSettings);
     addTouchClick('settings-save-btn', saveSettingsFromUI);
     addTouchClick('settings-shop-btn', openShop);
+    addTouchClick('settings-ach-btn', openAchievements);
+    addTouchClick('ach-back-btn', goToTitle);
+    addTouchClick('daily-claim-btn', claimDailyUI);
     addTouchClick('settings-back-btn', goToTitle);
     addTouchClick('shop-back-btn', goToTitle);
     addTouchClick('lb-back-btn', goToTitle);
@@ -3032,6 +3765,18 @@ function init() {
     addTouchClick('buy-double', function() { buyUpgrade('doublePts'); });
     addTouchClick('buy-shadow10', function() { buyShadowRate(10); });
     addTouchClick('buy-shadow15', function() { buyShadowRate(15); });
+    addTouchClick('buy-diff-easy', function() { setDifficulty('easy'); });
+    addTouchClick('buy-diff-normal', function() { setDifficulty('normal'); });
+    addTouchClick('buy-diff-hard', function() { setDifficulty('hard'); });
+    addTouchClick('buy-shape-star', function() { buyCosmetic('star'); });
+    addTouchClick('buy-shape-diamond', function() { buyCosmetic('diamond'); });
+    addTouchClick('buy-shape-hexagon', function() { buyCosmetic('hexagon'); });
+    addTouchClick('buy-trail-rainbow', function() { buyCosmetic('rainbow'); });
+    addTouchClick('buy-trail-fire', function() { buyCosmetic('fire'); });
+    addTouchClick('buy-trail-sparkle', function() { buyCosmetic('sparkle'); });
+    addTouchClick('buy-theme-aurora', function() { buyCosmetic('aurora'); });
+    addTouchClick('buy-theme-sunset', function() { buyCosmetic('sunset'); });
+    addTouchClick('share-btn-gameover', shareScore);
     addTouchClick('buy-shadow30', function() { buyShadowRate(30); });
     addTouchClick('exit-btn-title', function() {
         // Try to close the tab; if blocked, go to a blank page
@@ -3084,6 +3829,8 @@ function init() {
 
     // Show total time played on title screen
     updateTitleTime();
+    updateLevelBar();
+    showDailyPopupIfReady();
     buildTitleMusicBar();
 
     // Start loop
@@ -3097,7 +3844,6 @@ if ('serviceWorker' in navigator) {
     });
 }
 window.addEventListener('load', init);
-
 
 
 </script>
