@@ -1866,6 +1866,8 @@ function killEnemy(idx, color, isBossKill) {
     const comboMult = Math.min(1 + game.combo * 0.1, 5);
     const earned = Math.floor(baseScore * comboMult);
     game.score += earned;
+    // Maximum score per game: 300,000
+    if (game.score > 300000) game.score = 300000;
 
     // Visual feedback
     createExplosion(e.x, e.y, color, isBossKill ? 40 : 20);
@@ -2132,6 +2134,14 @@ function updateWaves(dt) {
     }
 
     if (game.enemiesKilledThisWave >= game.waveEnemyCount && enemies.length === 0) {
+        // ─── WAVE 100 VICTORY: game ends with reward ───
+        if (game.wave >= 100) {
+            game.coins += 50;
+            localStorage.setItem('ss_coins', game.coins.toString());
+            game.victory = true;
+            endGame();
+            return;
+        }
         // Next wave
         game.wave++;
         game.enemiesKilledThisWave = 0;
@@ -2142,6 +2152,7 @@ function updateWaves(dt) {
             waveSub = 'Milestone wave!';
             if (game.lives < 5) { game.lives++; waveSub = '+1 LIFE BONUS!'; }
         }
+        if (game.wave === 99) waveSub = 'Final wave! Reach 100 to WIN!';
         showWaveBanner(waveText, waveSub);
         game.flashAlpha = 0.15;
         game.shake = Math.max(game.shake, 5);
@@ -2731,6 +2742,7 @@ function startGame() {
     game.shadowSpawnAccum = 0;
     game.megaMode = false; game.megaTimer = 0;
     game.showScoreCard = false;
+    game.victory = false;
     game.megaKillsNeeded = game.megaKillThreshold;
     game.time = 0; game.playTime = 0; game.shake = 0; game.flashAlpha = 0;
     game.paused = false;
@@ -2776,8 +2788,15 @@ function startGame() {
 }
 
 function endGame() {
+    const won = game.victory;
     game.state = 'gameover';
     game.showScoreCard = true;
+    // Victory celebration at wave 100
+    if (won) {
+        createConfetti(W / 2, H * 0.3, 80);
+        showWaveBanner('🏆 VICTORY! 🏆', 'Conquered 100 waves! +50 coins!');
+        game.victory = false;
+    }
     // Track stats + XP + achievements
     trackStat('games', 1);
     trackStat('kills', game.kills);
@@ -2804,6 +2823,8 @@ function endGame() {
     addHighScore(game.score, game.wave);
 
     document.getElementById('final-score').textContent = game.score.toLocaleString();
+    var goTitle = document.querySelector('.go-title');
+    if (goTitle) goTitle.textContent = won ? '🏆 VICTORY!' : 'Shattered';
     document.getElementById('final-wave').textContent = game.wave;
     document.getElementById('final-kills').textContent = game.kills;
     document.getElementById('final-combo').textContent = game.maxCombo;
