@@ -715,6 +715,64 @@ button {
     <button class="btn" id="shop-back-btn" style="margin-top: 30px;">Back</button>
 </div>
 
+<!-- LEADERBOARD SCREEN -->
+<div id="leaderboard-screen" class="screen">
+    <div class="shop-title">Leaderboard</div>
+    <div class="lb-best-label">Your Best Score</div>
+    <div class="lb-best-score" id="lb-best-score">0</div>
+    <div class="lb-history-label">Recent High Scores</div>
+    <div id="lb-list" class="lb-list"></div>
+    <button class="btn" id="lb-back-btn" style="margin-top: 30px;">Back</button>
+</div>
+
+<!-- ACHIEVEMENTS SCREEN -->
+<div id="achievements-screen" class="screen">
+    <div class="shop-title" style="font-size:clamp(28px,6vw,44px)">🏆 Achievements</div>
+    <div id="ach-list" class="ach-list"></div>
+    <button class="btn" id="ach-back-btn" style="margin-top: 24px;">Back</button>
+</div>
+
+<!-- SETTINGS SCREEN -->
+<div id="settings-screen" class="screen">
+    <div class="shop-title">Settings</div>
+
+    <div class="settings-section">
+        <div class="settings-label">Username</div>
+        <input type="text" id="settings-username" class="settings-input" maxlength="20" placeholder="Enter your name">
+    </div>
+
+    <div class="settings-section">
+        <div class="settings-label">Crystal Color</div>
+        <div class="settings-color-row">
+            <input type="color" id="settings-crystal-color" class="settings-color-picker" value="#80a0ff">
+        </div>
+    </div>
+
+    <div class="settings-section">
+        <div class="settings-label">Beam &amp; Shadow Colors</div>
+        <div class="settings-beam-grid">
+            <div class="settings-beam-item">
+                <div class="settings-beam-label">Beam 1</div>
+                <input type="color" id="settings-beam1" class="settings-color-picker" value="#ff1845">
+            </div>
+            <div class="settings-beam-item">
+                <div class="settings-beam-label">Beam 2</div>
+                <input type="color" id="settings-beam2" class="settings-color-picker" value="#18ff45">
+            </div>
+            <div class="settings-beam-item">
+                <div class="settings-beam-label">Beam 3</div>
+                <input type="color" id="settings-beam3" class="settings-color-picker" value="#1895ff">
+            </div>
+        </div>
+        <div class="settings-hint">Shadows will match your beam colors</div>
+    </div>
+
+    <button class="btn primary" id="settings-save-btn">Save</button>
+    <button class="btn" id="settings-shop-btn">Shop</button>
+    <button class="btn" id="settings-ach-btn">Achievements</button>
+    <button class="btn" id="settings-back-btn">Back</button>
+</div>
+
 <script>
 // ═══════════════════════════════════════════════════════════════
 // SPECTRUM SLICE — Complete Game Engine
