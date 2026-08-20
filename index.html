@@ -576,7 +576,7 @@ button {
 
 <!-- TITLE SCREEN -->
 <div id="title-screen" class="screen active">
-    <div class="title-logo" id="title-logo" style="cursor:pointer">Spectrum Slice</div>
+    <div class="title-logo">Spectrum Slice</div>
     <div class="title-sub">Split Light ✦ Destroy Shadow</div>
     <div id="title-time-played"></div>
     <div id="title-username"></div>
@@ -3917,32 +3917,6 @@ function init() {
     updateTitleTime();
     updateLevelBar();
     showDailyPopupIfReady();
-
-    // ─── Secret gift: tap the logo 5 times for +1000 coins ───
-    let logoTaps = 0, logoTapTimer = null;
-    const logoEl = document.getElementById('title-logo');
-    if (logoEl) {
-        const logoTap = function() {
-            logoTaps++;
-            clearTimeout(logoTapTimer);
-            logoTapTimer = setTimeout(function() { logoTaps = 0; }, 1500);
-            if (logoTaps >= 5) {
-                logoTaps = 0;
-                // Developer-only gift: requires secret PIN
-                var pin = prompt('Developer access — enter PIN:');
-                if (pin === '2648') {
-                    game.coins += 1000;
-                    localStorage.setItem('ss_coins', game.coins.toString());
-                    createConfetti(W / 2, H * 0.3, 30);
-                    alert('+1000 coins gifted! \u{1F389} You now have ' + game.coins + ' coins.');
-                } else if (pin !== null) {
-                    alert('Wrong PIN. This gift is for the developer only.');
-                }
-            }
-        };
-        logoEl.addEventListener('click', logoTap);
-        logoEl.addEventListener('touchend', function(e) { e.preventDefault(); logoTap(); }, { passive: false });
-    }
 
     buildTitleMusicBar();
 
