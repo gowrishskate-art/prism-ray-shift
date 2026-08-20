@@ -2169,8 +2169,8 @@ function updateWaves(dt) {
         }
     }
 
-    // Boss every 3 waves
-    if (game.bossTimer <= 0 && game.wave % 3 === 0 && enemies.filter(e => e.isBoss).length === 0) {
+    // Boss in EVERY wave
+    if (game.bossTimer <= 0 && enemies.filter(e => e.isBoss).length === 0) {
         spawnEnemy(true);
         game.bossTimer = 25;
         addFloatingText(W/2, 80, 'WHITE BOSS', '#ffffff');
