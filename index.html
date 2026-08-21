@@ -658,6 +658,12 @@ button {
             <div class="shop-desc">2 lives, fast shadows. For pros!</div></div>
             <button class="shop-buy" id="buy-diff-hard">Select</button>
         </div>
+        <div class="shop-card" id="card-shape-triangle">
+            <div class="shop-icon" style="background:rgba(0,255,170,0.2);color:#00ffaa">▲</div>
+            <div class="shop-info"><div class="shop-name">Triangle Crystal</div>
+            <div class="shop-desc">Classic 3-sided prism.</div></div>
+            <button class="shop-buy" id="buy-shape-triangle">35 coins</button>
+        </div>
         <div class="shop-card" id="card-shape-star">
             <div class="shop-icon" style="background:rgba(255,215,0,0.2);color:#ffd700">⭐</div>
             <div class="shop-info"><div class="shop-name">Star Crystal</div>
@@ -2922,6 +2928,7 @@ function shareScore() {
 // ═══════════════════════════════════════════════════════════════
 const CRYSTAL_SHAPES = [
     { id: 'arrow',    name: 'Arrow',     cost: 0 },
+    { id: 'triangle', name: 'Triangle',  cost: 35 },
     { id: 'star',     name: 'Star',      cost: 30 },
     { id: 'diamond',  name: 'Diamond',   cost: 45 },
     { id: 'hexagon',  name: 'Hexagon',   cost: 60 },
@@ -3045,7 +3052,12 @@ function drawTheme() {
 // ─── Crystal shape variants ───
 function crystalShapePath(s) {
     ctx.beginPath();
-    if (COSMETICS.shape === 'star') {
+    if (COSMETICS.shape === 'triangle') {
+        // Simple triangle, tip pointing right
+        ctx.moveTo(s * 1.5, 0);
+        ctx.lineTo(-s, -s);
+        ctx.lineTo(-s, s);
+    } else if (COSMETICS.shape === 'star') {
         // 5-point star, pointy tip to the right
         for (let i = 0; i < 10; i++) {
             const a = (i / 10) * Math.PI * 2;
@@ -3854,6 +3866,7 @@ function init() {
     addTouchClick('buy-diff-easy', function() { setDifficulty('easy'); });
     addTouchClick('buy-diff-normal', function() { setDifficulty('normal'); });
     addTouchClick('buy-diff-hard', function() { setDifficulty('hard'); });
+    addTouchClick('buy-shape-triangle', function() { buyCosmetic('triangle'); });
     addTouchClick('buy-shape-star', function() { buyCosmetic('star'); });
     addTouchClick('buy-shape-diamond', function() { buyCosmetic('diamond'); });
     addTouchClick('buy-shape-hexagon', function() { buyCosmetic('hexagon'); });
