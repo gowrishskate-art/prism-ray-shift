@@ -576,7 +576,7 @@ button {
 
 <!-- TITLE SCREEN -->
 <div id="title-screen" class="screen active">
-    <div class="title-logo">Spectrum Slice</div>
+    <div class="title-logo" id="title-logo" style="cursor:pointer">Spectrum Slice</div>
     <div class="title-sub">Split Light ✦ Destroy Shadow</div>
     <div id="title-time-played"></div>
     <div id="title-username"></div>
@@ -3917,6 +3917,47 @@ function init() {
     updateTitleTime();
     updateLevelBar();
     showDailyPopupIfReady();
+
+
+    // ─── Logo gift: 20 taps in 7 seconds = +50 coins (once per day) ───
+    let logoTaps = 0, logoTapStart = 0;
+    const logoEl = document.getElementById('title-logo');
+    if (logoEl) {
+        const logoTap = function() {
+            const now = Date.now();
+            // First tap of a burst starts the 7s window
+            if (logoTaps === 0) logoTapStart = now;
+            // Expired window? restart counting
+            if (now - logoTapStart > 7000) {
+                logoTaps = 0;
+                logoTapStart = now;
+            }
+            logoTaps++;
+
+            if (logoTaps >= 20) {
+                logoTaps = 0;
+                // Once-per-day check
+                const last = parseInt(localStorage.getItem('ss_logoGiftDay') || '0', 10);
+                const today = Math.floor(now / 86400000); // day number
+                if (today === last) {
+                    // already claimed today — show remaining time
+                    const msLeft = (last + 1) * 86400000 - now;
+                    const hrs = Math.floor(msLeft / 3600000);
+                    const mins = Math.floor((msLeft % 3600000) / 60000);
+                    alert('You already claimed today\u{2757} Come back in ' + hrs + 'h ' + mins + 'm for 50 more coins!');
+                    return;
+                }
+                // Grant
+                game.coins += 50;
+                localStorage.setItem('ss_coins', game.coins.toString());
+                localStorage.setItem('ss_logoGiftDay', today.toString());
+                createConfetti(W / 2, H * 0.3, 30);
+                alert('+50 coins! \u{1F381} (Logo bonus — come back tomorrow for more)');
+            }
+        };
+        logoEl.addEventListener('click', logoTap);
+        logoEl.addEventListener('touchend', function(e) { e.preventDefault(); logoTap(); }, { passive: false });
+    }
 
     buildTitleMusicBar();
 
