@@ -1,4 +1,4 @@
-const CACHE_NAME = 'spectrum-slice-v2';
+const CACHE_NAME = 'spectrum-slice-v3';
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 // Install — cache all assets

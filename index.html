@@ -113,6 +113,39 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
 #hud-time .hud-val { color: #ffaa00; }
 #hud-coins .hud-val { color: #ffd700; }
 #hud-kills .hud-val { color: #ff8844; }
+
+/* ─── Wave progress bar ─── */
+#wave-progress {
+    position: absolute;
+    left: 50%; transform: translateX(-50%);
+    top: 64px;
+    width: 200px; height: 18px;
+    background: rgba(10,6,24,0.75);
+    border: 1px solid rgba(140,120,255,0.4);
+    border-radius: 10px;
+    overflow: hidden;
+    z-index: 20;
+}
+#wave-progress-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, #6a3fff, #a06bff);
+    transition: width 0.3s ease;
+}
+#wave-progress-fill.almost {
+    background: linear-gradient(90deg, #ffb400, #ffd700);
+    animation: almost-glow 0.8s ease infinite alternate;
+}
+@keyframes almost-glow {
+    from { filter: brightness(1); }
+    to   { filter: brightness(1.6); }
+}
+#wave-progress-text {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: bold; letter-spacing: 0.5px;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+}
 #hud-username .hud-val { color: #80a0ff; font-size: 16px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #lives-icons { display: flex; gap: 4px; padding-top: 4px; }
 .life-icon { width: 14px; height: 14px; border-radius: 50%;
@@ -528,6 +561,45 @@ button {
     canvas { height: 100vh; width: 100vw; }
 }
 
+
+/* ─── FAMILY SCORE BOARD ─── */
+#family-screen { overflow-y: auto; padding: 30px 20px; -webkit-overflow-scrolling: touch; }
+.family-sub { color: #9a8fc2; font-size: 13px; margin-bottom: 16px; text-align: center; }
+.family-row {
+    background: rgba(20,14,44,0.85);
+    border: 1px solid rgba(140,120,255,0.3);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    font-size: 15px;
+    color: #d8d2f0;
+    display: flex; align-items: center; gap: 8px;
+}
+.family-row.champion {
+    border-color: #ffd700;
+    background: rgba(50,38,8,0.85);
+    color: #ffe98a;
+    font-size: 16px;
+}
+.family-empty { color: #8078a8; text-align: center; padding: 30px 0; }
+#weekly-challenge-box {
+    margin-top: 22px;
+    background: rgba(10,24,20,0.85);
+    border: 1px solid rgba(50,220,140,0.35);
+    border-radius: 12px;
+    padding: 14px 16px;
+}
+.wc-title { color: #4ade80; font-weight: bold; font-size: 15px; margin-bottom: 6px; }
+.wc-desc { color: #9ad8b8; font-size: 13px; margin-bottom: 8px; }
+.wc-bar-bg { height: 12px; background: rgba(0,0,0,0.5); border-radius: 6px; overflow: hidden; }
+.wc-bar-fill { height: 100%; background: linear-gradient(90deg, #22c55e, #4ade80); width: 0%; transition: width .3s; }
+.wc-status { color: #9ad8b8; font-size: 12px; margin-top: 6px; }
+
+
+.settings-slider-row { display:flex; align-items:center; gap:10px; margin:8px 0; color:#c8c2e0; font-size:14px; }
+.settings-slider-row span { width:52px; }
+.settings-slider-row input[type="range"] { flex:1; accent-color:#8c78ff; }
+
 </style>
 </head>
 <body>
@@ -542,7 +614,8 @@ button {
     <div class="hud-box" id="hud-coins"><div class="hud-label">Coins</div><div class="hud-val">0</div></div>
     <div class="hud-box" id="hud-username"><div class="hud-val">&nbsp;</div></div>
     <div class="hud-box" id="hud-kills"><div class="hud-label">Kills</div><div class="hud-val">0</div></div>
-</div>
+    <div id="wave-progress"><div id="wave-progress-fill"></div><div id="wave-progress-text">WAVE 1 — 0/6</div></div>
+ </div>
 <div id="combo-display"></div>
 <button id="pause-btn">II</button>
 <button id="exit-btn">✕</button>
@@ -591,6 +664,7 @@ button {
     <div id="title-music-bar" class="title-music-bar"></div>
     <button class="btn primary" id="play-btn">Play</button>
     <button class="btn" id="how-btn">How to Play</button>
+    <button class="btn" id="family-btn">👑 Family Scores</button>
     <button class="btn" id="settings-btn-title">Settings</button>
     <button class="btn" id="exit-btn-title">Exit</button>
     <div class="instructions" id="instr-text">
@@ -682,6 +756,24 @@ button {
             <div class="shop-desc">Six-sided prism.</div></div>
             <button class="shop-buy" id="buy-shape-hexagon">60 coins</button>
         </div>
+        <div class="shop-card" id="card-shape-heart">
+            <div class="shop-icon" style="background:rgba(255,64,129,0.2);color:#ff4081">💗</div>
+            <div class="shop-info"><div class="shop-name">Heart Crystal</div>
+            <div class="shop-desc">Spread the love.</div></div>
+            <button class="shop-buy" id="buy-shape-heart">40 coins</button>
+        </div>
+        <div class="shop-card" id="card-shape-lightning">
+            <div class="shop-icon" style="background:rgba(255,230,0,0.2);color:#ffe600">⚡</div>
+            <div class="shop-info"><div class="shop-name">Lightning Crystal</div>
+            <div class="shop-desc">Electrifying bolt shape.</div></div>
+            <button class="shop-buy" id="buy-shape-lightning">40 coins</button>
+        </div>
+        <div class="shop-card" id="card-shape-crescent">
+            <div class="shop-icon" style="background:rgba(180,220,255,0.2);color:#b4dcff">🌙</div>
+            <div class="shop-info"><div class="shop-name">Crescent Crystal</div>
+            <div class="shop-desc">Moon-shaped prism.</div></div>
+            <button class="shop-buy" id="buy-shape-crescent">40 coins</button>
+        </div>
         <div class="shop-card" id="card-trail-rainbow">
             <div class="shop-icon" style="background:rgba(255,215,0,0.2);color:#ffd700">🌈</div>
             <div class="shop-info"><div class="shop-name">Rainbow Trail</div>
@@ -712,6 +804,18 @@ button {
             <div class="shop-desc">Warm evening glow.</div></div>
             <button class="shop-buy" id="buy-theme-sunset">50 coins</button>
         </div>
+        <div class="shop-card" id="card-theme-diwali">
+            <div class="shop-icon" style="background:rgba(255,150,30,0.2);color:#ff961e">🪔</div>
+            <div class="shop-info"><div class="shop-name">Diwali Theme</div>
+            <div class="shop-desc">Festival of lights diyas.</div></div>
+            <button class="shop-buy" id="buy-theme-diwali">50 coins</button>
+        </div>
+        <div class="shop-card" id="card-theme-christmas">
+            <div class="shop-icon" style="background:rgba(80,220,120,0.2);color:#50dc78">🎄</div>
+            <div class="shop-info"><div class="shop-name">Christmas Theme</div>
+            <div class="shop-desc">Falling snow + pine tint.</div></div>
+            <button class="shop-buy" id="buy-theme-christmas">50 coins</button>
+        </div>
         <div class="shop-card" id="card-shadow10">
             <div class="shop-icon" style="background:rgba(43,255,126,0.2);color:#2bff7e">10</div>
             <div class="shop-info"><div class="shop-name">Normal: 10 Shadows / 10s</div>
@@ -726,6 +830,15 @@ button {
         </div>
     </div>
     <button class="btn" id="shop-back-btn" style="margin-top: 30px;">Back</button>
+</div>
+
+<!-- FAMILY SCORE BOARD SCREEN -->
+<div id="family-screen" class="screen">
+    <div class="shop-title">👑 Family Scores</div>
+    <div class="family-sub">Top 5 on this device — everyone takes turns!</div>
+    <div id="family-board-list"></div>
+    <div id="weekly-challenge-box"></div>
+    <button class="btn" id="family-back-btn">Back</button>
 </div>
 
 <!-- LEADERBOARD SCREEN -->
@@ -781,6 +894,15 @@ button {
     </div>
 
     <button class="btn primary" id="settings-save-btn">Save</button>
+    <div class="settings-section" style="margin-top:14px">
+        <div class="settings-label">Accessibility</div>
+        <button class="btn" id="colorblind-toggle">🎨 Colorblind Mode: OFF</button>
+    </div>
+    <div class="settings-section">
+        <div class="settings-label">Sound</div>
+        <div class="settings-slider-row"><span>Music</span><input type="range" id="music-vol" min="0" max="100" value="35"></div>
+        <div class="settings-slider-row"><span>SFX</span><input type="range" id="sfx-vol" min="0" max="100" value="80"></div>
+    </div>
     <button class="btn" id="settings-shop-btn">Shop</button>
     <button class="btn" id="settings-ach-btn">Achievements</button>
     <button class="btn" id="settings-back-btn">Back</button>
@@ -1634,15 +1756,45 @@ function spawnEnemy(isBoss) {
     } else {
         const hasFourBeam = SHOP_DATA.owned.indexOf('fourBeam') >= 0;
         const colorIdx = Math.floor(Math.random() * (hasFourBeam ? 4 : 3));
-        enemies.push({
+
+        // ─── Enemy variant selection ───
+        // Speedster: fast small zigzag (from wave 3), Tank: 2 hits (from wave 5),
+        // Splitter: splits into 2 minis (from wave 7), Golden: rare bonus coins
+        let variant = 'normal';
+        const r = Math.random();
+        if (r < 0.04) variant = 'golden';
+        else if (game.wave >= 3 && r < 0.15) variant = 'speedster';
+        else if (game.wave >= 5 && r < 0.25) variant = 'tank';
+        else if (game.wave >= 7 && r < 0.33) variant = 'splitter';
+
+        const baseSpeed = (28 + game.wave * 2.5 + Math.random() * 12) * 1.5 * diff().speedMult;
+        const enemy = {
             x, y, vx: 0, vy: 0,
             size: (20 + Math.random() * 8) * SHADOW_SCALE,
             color: colorIdx, isBoss: false,
             rotation: Math.random() * Math.PI * 2,
             wobble: Math.random() * Math.PI * 2,
-            speed: (28 + game.wave * 2.5 + Math.random() * 12) * 1.5 * diff().speedMult,
+            speed: baseSpeed,
             hp: 1,
-        });
+            variant,
+        };
+        if (variant === 'speedster') {
+            enemy.size = 13 * SHADOW_SCALE;                   // small
+            enemy.speed = baseSpeed * 1.9;                    // much faster
+            enemy.zigzagPhase = Math.random() * Math.PI * 2;
+        } else if (variant === 'tank') {
+            enemy.size = 34 * SHADOW_SCALE;                   // big
+            enemy.hp = 2; enemy.maxHp = 2;                    // two hits
+            enemy.speed = baseSpeed * 0.6;                    // slower
+        } else if (variant === 'splitter') {
+            enemy.size = 24 * SHADOW_SCALE;
+            enemy.isParent = true;
+        } else if (variant === 'golden') {
+            enemy.size = 17 * SHADOW_SCALE;
+            enemy.speed = baseSpeed * 1.3;
+            enemy.golden = true;
+        }
+        enemies.push(enemy);
     }
 }
 
@@ -1659,6 +1811,14 @@ function updateEnemies(dt) {
             const wobbleY = Math.sin(e.wobble * 1.3) * 0.3;
             e.vx = (dx / dist + wobbleX) * e.speed;
             e.vy = (dy / dist + wobbleY) * e.speed;
+            // Speedster zigzag: strong perpendicular sway
+            if (e.variant === 'speedster') {
+                e.zigzagPhase += dt * 6;
+                const perpX = -dy / dist, perpY = dx / dist;
+                const sway = Math.sin(e.zigzagPhase) * 0.9;
+                e.vx += perpX * sway * e.speed;
+                e.vy += perpY * sway * e.speed;
+            }
         }
         e.x += e.vx * dt;
         e.y += e.vy * dt;
@@ -1703,9 +1863,139 @@ function drawShadowCreature(e) {
     const c = RAY_COLORS[e.color];
 
     // Outer glow (cached sprite — no per-frame gradient)
-    stampGlow(0, 0, c.hex, s * 2, 0.35);
+    stampGlow(0, 0, e.golden ? '#ffd700' : c.hex, s * 2, 0.35);
 
-    // Shadow body — jagged blob
+    // ─── Variant bodies ───
+    if (e.variant === 'tank') {
+        // Tank: heavy hexagon with armor ring + HP pips
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+            const a = (i / 6) * Math.PI * 2 + 0.5;
+            const px = Math.cos(a) * s * 0.95, py = Math.sin(a) * s * 0.95;
+            if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(8,4,16,0.92)';
+        ctx.fill();
+        ctx.strokeStyle = c.hex; ctx.lineWidth = 6; ctx.globalAlpha = 0.5; ctx.stroke();
+        ctx.globalAlpha = 1; ctx.lineWidth = 3; ctx.stroke();
+        // armor plate line
+        ctx.beginPath(); ctx.moveTo(-s * 0.5, 0); ctx.lineTo(s * 0.5, 0);
+        ctx.strokeStyle = c.hex; ctx.lineWidth = 2; ctx.globalAlpha = 0.6; ctx.stroke();
+        ctx.globalAlpha = 1;
+        // HP pips (1 pip per remaining hp)
+        for (let h = 0; h < e.hp; h++) {
+            ctx.fillStyle = c.hex;
+            ctx.beginPath();
+            ctx.arc(-((e.hp - 1) * 5) + h * 10, -s * 0.55, 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        // eyes
+        ctx.fillStyle = c.hex;
+        ctx.beginPath();
+        ctx.arc(-s * 0.18, -s * 0.05, 2.5, 0, Math.PI * 2);
+        ctx.arc(s * 0.18, -s * 0.05, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        return;
+    }
+    if (e.variant === 'splitter') {
+        // Splitter: two overlapping circles (hints it will split)
+        ctx.beginPath();
+        ctx.arc(-s * 0.35, 0, s * 0.62, 0, Math.PI * 2);
+        ctx.arc(s * 0.35, 0, s * 0.62, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(8,4,16,0.92)';
+        ctx.fill();
+        ctx.strokeStyle = c.hex; ctx.lineWidth = 5; ctx.globalAlpha = 0.5; ctx.stroke();
+        ctx.globalAlpha = 1; ctx.lineWidth = 2.5; ctx.stroke();
+        // eyes on both lobes
+        ctx.fillStyle = c.hex;
+        ctx.beginPath();
+        ctx.arc(-s * 0.42, -s * 0.08, 2, 0, Math.PI * 2);
+        ctx.arc(-s * 0.24, -s * 0.08, 2, 0, Math.PI * 2);
+        ctx.arc(s * 0.24, -s * 0.08, 2, 0, Math.PI * 2);
+        ctx.fill();
+        return;
+    }
+    if (e.variant === 'speedster') {
+        // Speedster: sleek dart shape with motion streaks
+        const dir = Math.atan2(e.vy, e.vx);
+        ctx.rotate(-e.rotation);       // undo blob rotation so dart faces travel
+        ctx.rotate(dir);
+        ctx.beginPath();
+        ctx.moveTo(s * 1.4, 0);
+        ctx.lineTo(-s * 0.9, -s * 0.7);
+        ctx.lineTo(-s * 0.4, 0);
+        ctx.lineTo(-s * 0.9, s * 0.7);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(8,4,16,0.92)';
+        ctx.fill();
+        ctx.strokeStyle = c.hex; ctx.lineWidth = 4; ctx.globalAlpha = 0.5; ctx.stroke();
+        ctx.globalAlpha = 1; ctx.lineWidth = 2; ctx.stroke();
+        // speed streaks behind
+        ctx.globalAlpha = 0.35;
+        ctx.strokeStyle = c.hex; ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(-s * 1.2, -s * 0.4); ctx.lineTo(-s * 2.2, -s * 0.4);
+        ctx.moveTo(-s * 1.2, 0);       ctx.lineTo(-s * 2.4, 0);
+        ctx.moveTo(-s * 1.2, s * 0.4); ctx.lineTo(-s * 2.2, s * 0.4);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        // eye
+        ctx.fillStyle = c.hex;
+        ctx.beginPath();
+        ctx.arc(s * 0.3, 0, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        return;
+    }
+    if (e.golden) {
+        // Golden: star-sparkle body with gold glow + coin ring
+        ctx.beginPath();
+        for (let i = 0; i < 10; i++) {
+            const a = (i / 10) * Math.PI * 2;
+            const r = (i % 2 === 0) ? s * 1.1 : s * 0.5;
+            const px = Math.cos(a) * r, py = Math.sin(a) * r;
+            if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(30,20,0,0.92)';
+        ctx.fill();
+        ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 5; ctx.globalAlpha = 0.55; ctx.stroke();
+        ctx.globalAlpha = 1; ctx.lineWidth = 2.5; ctx.stroke();
+        // coin sign
+        ctx.fillStyle = '#ffd700';
+        ctx.font = 'bold ' + Math.max(10, s * 0.9) + 'px sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('$', 0, 1);
+        return;
+    }
+    if (e.variant === 'mini') {
+        // Mini (split child): tiny simple blob
+        ctx.beginPath();
+        ctx.arc(0, 0, s * 0.8, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(8,4,16,0.92)';
+        ctx.fill();
+        ctx.strokeStyle = c.hex; ctx.lineWidth = 3; ctx.globalAlpha = 0.5; ctx.stroke();
+        ctx.globalAlpha = 1; ctx.lineWidth = 1.8; ctx.stroke();
+        ctx.fillStyle = c.hex;
+        ctx.beginPath();
+        ctx.arc(-s * 0.15, -s * 0.1, 1.5, 0, Math.PI * 2);
+        ctx.arc(s * 0.15, -s * 0.1, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+        return;
+    }
+
+    // Colorblind helper: distinct symbol per color drawn on body
+    if (COLORBLIND) {
+        ctx.save();
+        ctx.rotate(-e.rotation); // keep symbols upright
+        ctx.fillStyle = c.hex;
+        ctx.font = 'bold ' + Math.max(11, s * 0.8) + 'px sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(['R', 'G', 'B'][e.color] || '?', 0, 0);
+        ctx.restore();
+    }
+
+    // Shadow body — jagged blob (normal)
     ctx.beginPath();
     const points = 8;
     for (let i = 0; i <= points; i++) {
@@ -1848,8 +2138,45 @@ function killEnemy(idx, color, isBossKill) {
     const e = enemies[idx];
     if (!e) return;
 
+    // ─── Tank: first hit only cracks it ───
+    if (!e.isBoss && e.variant === 'tank' && e.hp > 1) {
+        e.hp--;
+        e.hitFlash = 0.25;
+        addFloatingText(e.x, e.y - 20, 'CRACKED!', '#ffffff');
+        createExplosion(e.x, e.y, color, 8);
+        sfxHit();
+        return; // survives this hit
+    }
+
+    // ─── Golden: bonus coins ───
+    if (e.golden) {
+        const bonus = 5 + Math.floor(Math.random() * 6); // 5-10 coins
+        game.coins += bonus;
+        localStorage.setItem('ss_coins', game.coins.toString());
+        addFloatingText(e.x, e.y - 24, '+' + bonus + ' COINS!', '#ffd700');
+    }
+
+    // ─── Splitter: spawn 2 minis on death ───
+    if (e.variant === 'splitter') {
+        for (let k = 0; k < 2; k++) {
+            enemies.push({
+                x: e.x + (k === 0 ? -14 : 14), y: e.y,
+                vx: 0, vy: 0,
+                size: 12 * SHADOW_SCALE,
+                color: e.color, isBoss: false,
+                rotation: Math.random() * Math.PI * 2,
+                wobble: Math.random() * Math.PI * 2,
+                speed: e.speed * 1.15,
+                hp: 1,
+                variant: 'mini',
+            });
+        }
+        addFloatingText(e.x, e.y - 24, 'SPLIT!', '#ff7bff');
+    }
+
     game.kills++;
     game.enemiesKilledThisWave++;
+    trackWeeklyKill();
     maybeDropCoin(e.x, e.y);
     if (game.tutorialActive && !game.firstKillDone) game.firstKillDone = true;
 
@@ -1889,6 +2216,11 @@ function killEnemy(idx, color, isBossKill) {
         sfxKill(e.color);
         game.shake = Math.max(game.shake, 4);
         createConfetti(e.x, e.y, 10);   // small confetti per kill
+    }
+
+    // Vibration feedback (mobile)
+    if (navigator.vibrate) {
+        navigator.vibrate(isBossKill ? 60 : 15);
     }
 
     // Show combo
@@ -2140,8 +2472,8 @@ function updateWaves(dt) {
     }
 
     if (game.enemiesKilledThisWave >= game.waveEnemyCount && enemies.length === 0) {
-        // ─── WAVE 100 VICTORY: game ends with reward ───
-        if (game.wave >= 100) {
+        // ─── WAVE 100 VICTORY: game ends with reward (unless in Endless Mode) ───
+        if (game.wave >= 100 && !game.endless) {
             game.coins += 50;
             localStorage.setItem('ss_coins', game.coins.toString());
             game.victory = true;
@@ -2177,9 +2509,13 @@ function updateWaves(dt) {
 
     // Boss in EVERY wave
     if (game.bossTimer <= 0 && enemies.filter(e => e.isBoss).length === 0) {
-        spawnEnemy(true);
+        if (isMegaBossWave(game.wave)) {
+            spawnMegaBoss();
+        } else {
+            spawnEnemy(true);
+            addFloatingText(W/2, 80, 'WHITE BOSS', '#ffffff');
+        }
         game.bossTimer = 25;
-        addFloatingText(W/2, 80, 'WHITE BOSS', '#ffffff');
     }
 }
 
@@ -2706,6 +3042,18 @@ function updateHUD() {
     const killHud = document.querySelector('#hud-kills .hud-val');
     if (killHud) killHud.textContent = game.kills;
 
+    // Wave progress bar
+    const wpFill = document.getElementById('wave-progress-fill');
+    const wpText = document.getElementById('wave-progress-text');
+    if (wpFill && wpText) {
+        const quota = game.waveEnemyCount;
+        const done = Math.min(game.enemiesKilledThisWave, quota);
+        const pct = Math.round((done / quota) * 100);
+        wpFill.style.width = pct + '%';
+        wpFill.classList.toggle('almost', pct >= 80);
+        wpText.textContent = 'WAVE ' + game.wave + ' — ' + done + '/' + quota;
+    }
+
     const livesDiv = document.getElementById('lives-icons');
     livesDiv.innerHTML = '';
     for (let i = 0; i < game.lives; i++) {
@@ -2749,6 +3097,7 @@ function startGame() {
     game.megaMode = false; game.megaTimer = 0;
     game.showScoreCard = false;
     game.victory = false;
+    game.endless = false;
     game.megaKillsNeeded = game.megaKillThreshold;
     game.time = 0; game.playTime = 0; game.shake = 0; game.flashAlpha = 0;
     game.paused = false;
@@ -2828,6 +3177,15 @@ function endGame() {
     // Add to leaderboard
     addHighScore(game.score, game.wave);
 
+    // Family Score Board: save this run + champion banner if #1
+    const famResult = saveFamilyScore(SETTINGS.username, game.score, game.wave);
+    if (famResult.isRecord && game.score > 0) {
+        setTimeout(function() {
+            showWaveBanner('👑 NEW FAMILY RECORD!', SETTINGS.username + ' takes the crown!');
+            createConfetti(W / 2, H * 0.3, 50);
+        }, 1200);
+    }
+
     document.getElementById('final-score').textContent = game.score.toLocaleString();
     var goTitle = document.querySelector('.go-title');
     if (goTitle) goTitle.textContent = won ? '🏆 VICTORY!' : 'Shattered';
@@ -2842,6 +3200,9 @@ function endGame() {
     document.getElementById('combo-display').classList.remove('active');
     hideMusicBar();
     stopMusic();
+
+    // Victory at wave 100: offer Endless Mode
+    if (won) offerEndlessMode();
 }
 
 
@@ -2927,11 +3288,14 @@ function shareScore() {
 // PACKAGE C — CRYSTAL SHAPES / TRAILS / THEMES
 // ═══════════════════════════════════════════════════════════════
 const CRYSTAL_SHAPES = [
-    { id: 'arrow',    name: 'Arrow',     cost: 0 },
-    { id: 'triangle', name: 'Triangle',  cost: 35 },
-    { id: 'star',     name: 'Star',      cost: 30 },
-    { id: 'diamond',  name: 'Diamond',   cost: 45 },
-    { id: 'hexagon',  name: 'Hexagon',   cost: 60 },
+    { id: 'arrow',     name: 'Arrow',     cost: 0 },
+    { id: 'triangle',  name: 'Triangle',  cost: 35 },
+    { id: 'star',      name: 'Star',      cost: 30 },
+    { id: 'diamond',   name: 'Diamond',   cost: 45 },
+    { id: 'hexagon',   name: 'Hexagon',   cost: 60 },
+    { id: 'heart',     name: 'Heart',     cost: 40 },
+    { id: 'lightning', name: 'Lightning', cost: 40 },
+    { id: 'crescent',  name: 'Crescent',  cost: 40 },
 ];
 const CRYSTAL_TRAILS = [
     { id: 'none',     name: 'None',      cost: 0 },
@@ -2943,7 +3307,18 @@ const BG_THEMES = [
     { id: 'space',    name: 'Deep Space', cost: 0 },
     { id: 'aurora',   name: 'Aurora',     cost: 50 },
     { id: 'sunset',   name: 'Sunset',     cost: 50 },
+    { id: 'diwali',   name: 'Diwali',     cost: 50 },
+    { id: 'christmas',name: 'Christmas',  cost: 50 },
 ];
+
+let MUSIC_VOL = parseFloat(localStorage.getItem('ss_musicVol') || '0.35');
+let SFX_VOL = parseFloat(localStorage.getItem('ss_sfxVol') || '0.8');
+const COLORBLIND = localStorage.getItem('ss_colorblind') === 'true';
+function toggleColorblind() {
+    const newVal = !(localStorage.getItem('ss_colorblind') === 'true');
+    localStorage.setItem('ss_colorblind', newVal.toString());
+    location.reload();
+}
 
 const COSMETICS = {
     shape: localStorage.getItem('ss_shape') || 'arrow',
@@ -3046,13 +3421,72 @@ function drawTheme() {
         ctx.fillRect(0, H * 0.55, W, H * 0.45);
         // Sun glow low on horizon
         stampGlow(W * 0.5, H * 0.92, '#ff9a50', 200, 0.16);
+    } else if (theme === 'diwali') {
+        // Diwali: warm diyas glow bottom + golden sparkle drift
+        const grad = ctx.createLinearGradient(0, H * 0.6, 0, H);
+        grad.addColorStop(0, 'rgba(255,140,0,0)');
+        grad.addColorStop(1, 'rgba(255,120,20,0.14)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, H * 0.6, W, H * 0.4);
+        // rows of diyas along the bottom
+        const diyaCount = 7;
+        for (let i = 0; i < diyaCount; i++) {
+            const dx = W * (0.08 + (i / (diyaCount - 1)) * 0.84);
+            const flicker = 0.10 + 0.05 * Math.sin(game.time * 3 + i * 1.7);
+            stampGlow(dx, H * 0.94, '#ffa020', 46, flicker);
+            ctx.fillStyle = '#7a4a10';
+            ctx.beginPath(); ctx.ellipse(dx, H * 0.965, 13, 5, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#ffb340';
+            ctx.beginPath(); ctx.ellipse(dx, H * 0.955, 4, 7, 0, 0, Math.PI * 2); ctx.fill();
+        }
+        // drifting gold sparkles
+        ctx.globalAlpha = 0.5;
+        for (let i = 0; i < 18; i++) {
+            const sx = ((i * 173 + game.time * (14 + (i % 5) * 6)) % (W + 40)) - 20;
+            const sy = (H * 0.25) + Math.sin(game.time * 0.7 + i * 2.3) * H * 0.16 + (i * 37) % (H * 0.5);
+            ctx.fillStyle = i % 3 === 0 ? '#ffd700' : '#ffa030';
+            ctx.fillRect(sx, sy, 2, 2);
+        }
+        ctx.globalAlpha = 1;
+    } else if (theme === 'christmas') {
+        // Christmas: falling snow + pine-green tint
+        ctx.fillStyle = 'rgba(20,60,40,0.10)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = 'rgba(230,240,255,0.8)';
+        for (let i = 0; i < 40; i++) {
+            const sx = ((i * 211 + Math.sin(i) * 40 + game.time * 18) % (W + 30)) - 15;
+            const sy = ((i * 137 + game.time * (26 + (i % 7) * 8)) % (H + 30)) - 15;
+            const r = 1 + (i % 3) * 0.7;
+            ctx.globalAlpha = 0.35 + (i % 4) * 0.12;
+            ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
     }
 }
 
 // ─── Crystal shape variants ───
 function crystalShapePath(s) {
     ctx.beginPath();
-    if (COSMETICS.shape === 'triangle') {
+    if (COSMETICS.shape === 'heart') {
+        // Heart crystal
+        ctx.moveTo(0, s * 1.1);
+        ctx.bezierCurveTo(-s * 1.6, -s * 0.2, -s * 0.7, -s * 1.3, 0, -s * 0.45);
+        ctx.bezierCurveTo(s * 0.7, -s * 1.3, s * 1.6, -s * 0.2, 0, s * 1.1);
+    } else if (COSMETICS.shape === 'lightning') {
+        // Lightning bolt
+        ctx.moveTo(-s * 0.25, -s * 1.3);
+        ctx.lineTo(s * 0.6, -s * 1.3);
+        ctx.lineTo(s * 0.05, -s * 0.2);
+        ctx.lineTo(s * 0.7, -s * 0.2);
+        ctx.lineTo(-s * 0.4, s * 1.3);
+        ctx.lineTo(-s * 0.05, s * 0.25);
+        ctx.lineTo(-s * 0.7, s * 0.25);
+        ctx.closePath();
+    } else if (COSMETICS.shape === 'crescent') {
+        // Crescent moon (tip pointing right)
+        ctx.arc(0, 0, s * 1.2, Math.PI * 0.5, Math.PI * 1.5, false);
+        ctx.bezierCurveTo(s * 0.4, -s * 0.9, s * 0.4, s * 0.9, 0, s * 1.2);
+    } else if (COSMETICS.shape === 'triangle') {
         // Simple triangle, tip pointing right
         ctx.moveTo(s * 1.5, 0);
         ctx.lineTo(-s, -s);
@@ -3084,6 +3518,151 @@ function crystalShapePath(s) {
         ctx.lineTo(-s * 0.8, s * 0.9);
     }
     ctx.closePath();
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// WEEKLY CHALLENGE — kill target this week (resets Monday)
+// ═══════════════════════════════════════════════════════════════
+function weekNumber(d) {
+    // ISO week number
+    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const dayNum = date.getUTCDay() || 7;
+    date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+    return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+}
+const WEEKLY_TARGET = 100;
+function getWeeklyData() {
+    const now = new Date();
+    const wk = now.getFullYear() + '-W' + weekNumber(now);
+    let data = JSON.parse(localStorage.getItem('ss_weekly') || 'null');
+    if (!data || data.week !== wk) {
+        data = { week: wk, kills: 0, claimed: false };
+        localStorage.setItem('ss_weekly', JSON.stringify(data));
+    }
+    return data;
+}
+function trackWeeklyKill() {
+    const data = getWeeklyData();
+    data.kills++;
+    localStorage.setItem('ss_weekly', JSON.stringify(data));
+    if (!data.claimed && data.kills >= WEEKLY_TARGET) {
+        data.claimed = true;
+        localStorage.setItem('ss_weekly', JSON.stringify(data));
+        game.coins += 20;
+        localStorage.setItem('ss_coins', game.coins.toString());
+        setTimeout(function() {
+            showWaveBanner('🎯 WEEKLY CHALLENGE DONE!', '+20 coins! ' + WEEKLY_TARGET + ' shadows destroyed');
+            createConfetti(W/2, H*0.35, 40);
+        }, 600);
+    }
+}
+function renderWeeklyChallenge() {
+    const el = document.getElementById('weekly-challenge-box');
+    if (!el) return;
+    const data = getWeeklyData();
+    const pct = Math.min(100, Math.round((data.kills / WEEKLY_TARGET) * 100));
+    const done = data.claimed || data.kills >= WEEKLY_TARGET;
+    el.innerHTML =
+        '<div class="wc-title">🎯 Weekly Challenge</div>' +
+        '<div class="wc-desc">Destroy ' + WEEKLY_TARGET + ' shadows this week → <b>20 coins</b></div>' +
+        '<div class="wc-bar-bg"><div class="wc-bar-fill" style="width:' + pct + '%"></div></div>' +
+        '<div class="wc-status">' + (done ? '✅ Completed! Come back next Monday.' : data.kills + ' / ' + WEEKLY_TARGET + ' shadows destroyed') + '</div>';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FAMILY SCORE BOARD (top 5, local device)
+// ═══════════════════════════════════════════════════════════════
+function getFamilyBoard() {
+    return JSON.parse(localStorage.getItem('ss_familyBoard') || '[]');
+}
+function saveFamilyScore(name, score, wave) {
+    const board = getFamilyBoard();
+    board.push({ name: (name || 'Player').substring(0, 12), score: score, wave: wave, date: Date.now() });
+    board.sort((a, b) => b.score - a.score);
+    const top5 = board.slice(0, 5);
+    const isRecord = top5.length > 0 && top5[0].score === score && top5[0].date === board.find(e => e.score === score && e.name === (name || 'Player').substring(0,12))?.date;
+    localStorage.setItem('ss_familyBoard', JSON.stringify(top5));
+    return { board: top5, isRecord };
+}
+function renderFamilyBoard() {
+    const el = document.getElementById('family-board-list');
+    if (!el) return;
+    const board = getFamilyBoard();
+    if (board.length === 0) {
+        el.innerHTML = '<div class="family-empty">No scores yet — be the first! 🎮</div>';
+        return;
+    }
+    el.innerHTML = board.map((entry, i) =>
+        '<div class="family-row' + (i === 0 ? ' champion' : '') + '">' +
+        (i === 0 ? '👑' : (i + 1)) + ' <b>' + entry.name + '</b>' +
+        ' — ' + entry.score.toLocaleString() + ' pts — Wave ' + entry.wave +
+        '</div>'
+    ).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MEGA BOSS (every 10 waves) + ENDLESS MODE
+// ═══════════════════════════════════════════════════════════════
+function isMegaBossWave(w) { return w % 10 === 0; }
+
+function spawnMegaBoss() {
+    const side = Math.floor(Math.random() * 4);
+    const m = 60;
+    let x, y;
+    if (side === 0) { x = W / 2; y = -m; }
+    else if (side === 1) { x = W + m; y = H / 2; }
+    else if (side === 2) { x = W / 2; y = H + m; }
+    else { x = -m; y = H / 2; }
+    enemies.push({
+        x, y, vx: 0, vy: 0,
+        size: 64 * SHADOW_SCALE, hp: 6, maxHp: 6,
+        color: -1, isBoss: true, isMegaBoss: true,
+        hitR: 0, hitG: 0, hitB: 0,
+        rotation: 0, wobble: Math.random() * Math.PI * 2,
+        speed: (30 + game.wave * 1.2) * 1.5 * diff().speedMult,
+    });
+    addFloatingText(W / 2, 100, '⚠ MEGA BOSS ⚠', '#ff1845');
+    game.shake = 15;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ENDLESS MODE — after victory at 100, continue with no caps
+// ═══════════════════════════════════════════════════════════════
+let endlessUnlocked = localStorage.getItem('ss_endlessUnlocked') === 'true';
+function offerEndlessMode() {
+    if (!game.victory) return;
+    // Called from endGame victory path — show choice overlay
+    const goBtns = document.querySelector('.go-buttons');
+    if (!goBtns) return;
+    if (document.getElementById('endless-btn')) return; // already added
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-primary';
+    btn.id = 'endless-btn';
+    btn.textContent = '♾ ENDLESS MODE';
+    addTouchClickDirect(btn, function() {
+        endlessUnlocked = true;
+        localStorage.setItem('ss_endlessUnlocked', 'true');
+        // Continue: keep score, wave 101+
+        game.state = 'playing';
+        game.showScoreCard = false;
+        game.victory = false;
+        game.endless = true;
+        game.wave = 101;
+        game.enemiesKilledThisWave = 0;
+        game.waveEnemyCount = 5 + Math.floor(game.wave * 1.5);
+        showWaveBanner('♾ ENDLESS MODE', 'No limits now!');
+        if (goBtns.contains(btn)) goBtns.removeChild(btn);
+        document.getElementById('hud').classList.add('active');
+        document.getElementById('pause-btn').classList.add('active');
+        startMusic();
+    });
+    goBtns.appendChild(btn);
+}
+function addTouchClickDirect(el, handler) {
+    el.addEventListener('click', handler);
+    el.addEventListener('touchend', function(e) { e.preventDefault(); handler(); }, { passive: false });
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -3850,10 +4429,38 @@ function init() {
     addTouchClick('playagain-btn', startGame);
     addTouchClick('menu-btn', goToTitle);
     addTouchClick('settings-btn-title', openSettings);
+    addTouchClick('family-btn', function() { renderFamilyBoard(); renderWeeklyChallenge(); showScreen('family'); });
+    addTouchClick('family-back-btn', function() { showScreen('title'); });
     addTouchClick('settings-btn-gameover', openSettings);
     addTouchClick('settings-save-btn', saveSettingsFromUI);
     addTouchClick('settings-shop-btn', openShop);
     addTouchClick('settings-ach-btn', openAchievements);
+
+    // Colorblind toggle (reloads page to apply)
+    const cbBtn = document.getElementById('colorblind-toggle');
+    if (cbBtn) {
+        cbBtn.textContent = '🎨 Colorblind Mode: ' + (localStorage.getItem('ss_colorblind') === 'true' ? 'ON' : 'OFF');
+        addTouchClickDirect(cbBtn, toggleColorblind);
+    }
+
+    // Volume sliders
+    const mv = document.getElementById('music-vol');
+    const sv = document.getElementById('sfx-vol');
+    if (mv) {
+        mv.value = Math.round((typeof MUSIC_VOL !== 'undefined' ? MUSIC_VOL : 0.35) * 100);
+        mv.addEventListener('input', function() {
+            MUSIC_VOL = mv.value / 100;
+            localStorage.setItem('ss_musicVol', mv.value);
+            if (typeof musicGainNode !== 'undefined' && musicGainNode) musicGainNode.gain.value = MUSIC_VOL;
+        });
+    }
+    if (sv) {
+        sv.value = Math.round((typeof SFX_VOL !== 'undefined' ? SFX_VOL : 0.8) * 100);
+        sv.addEventListener('input', function() {
+            SFX_VOL = sv.value / 100;
+            localStorage.setItem('ss_sfxVol', sv.value);
+        });
+    }
     addTouchClick('ach-back-btn', goToTitle);
     addTouchClick('daily-claim-btn', claimDailyUI);
     addTouchClick('settings-back-btn', goToTitle);
@@ -3867,6 +4474,9 @@ function init() {
     addTouchClick('buy-diff-normal', function() { setDifficulty('normal'); });
     addTouchClick('buy-diff-hard', function() { setDifficulty('hard'); });
     addTouchClick('buy-shape-triangle', function() { buyCosmetic('triangle'); });
+    addTouchClick('buy-shape-heart', function() { buyCosmetic('heart'); });
+    addTouchClick('buy-shape-lightning', function() { buyCosmetic('lightning'); });
+    addTouchClick('buy-shape-crescent', function() { buyCosmetic('crescent'); });
     addTouchClick('buy-shape-star', function() { buyCosmetic('star'); });
     addTouchClick('buy-shape-diamond', function() { buyCosmetic('diamond'); });
     addTouchClick('buy-shape-hexagon', function() { buyCosmetic('hexagon'); });
@@ -3875,6 +4485,8 @@ function init() {
     addTouchClick('buy-trail-sparkle', function() { buyCosmetic('sparkle'); });
     addTouchClick('buy-theme-aurora', function() { buyCosmetic('aurora'); });
     addTouchClick('buy-theme-sunset', function() { buyCosmetic('sunset'); });
+    addTouchClick('buy-theme-diwali', function() { buyCosmetic('diwali'); });
+    addTouchClick('buy-theme-christmas', function() { buyCosmetic('christmas'); });
     addTouchClick('share-btn-gameover', shareScore);
     addTouchClick('buy-shadow30', function() { buyShadowRate(30); });
     addTouchClick('exit-btn-title', function() {
@@ -3985,11 +4597,6 @@ if ('serviceWorker' in navigator) {
     });
 }
 window.addEventListener('load', init);
-
-
-ndow.addEventListener('load', init);
-
-
 </script>
 </body>
 </html>
