@@ -2471,7 +2471,7 @@ function updateWaves(dt) {
         game.bottleTimer = 25 + Math.random() * 10;
     }
 
-    if (game.enemiesKilledThisWave >= game.waveEnemyCount && enemies.length === 0) {
+    if (game.enemiesKilledThisWave >= game.waveEnemyCount) {
         // ─── WAVE 100 VICTORY: game ends with reward (unless in Endless Mode) ───
         if (game.wave >= 100 && !game.endless) {
             game.coins += 50;
@@ -2480,7 +2480,8 @@ function updateWaves(dt) {
             endGame();
             return;
         }
-        // Next wave
+        // Next wave — advances as soon as the kill quota is met
+        // (leftover shadows stay on screen and keep counting toward the NEXT wave)
         game.wave++;
         game.enemiesKilledThisWave = 0;
         game.waveEnemyCount = 5 + Math.floor(game.wave * 1.5);
