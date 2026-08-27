@@ -29,6 +29,10 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
 /* ─── TITLE SCREEN ─── */
 #title-screen {
     background: radial-gradient(ellipse at 50% 40%, #0a0828 0%, #050018 50%, #030010 100%);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    justify-content: flex-start;
+    padding: 24px 16px 32px;
 }
 .title-logo {
     font-size: clamp(42px, 9vw, 84px);
@@ -664,6 +668,13 @@ button {
 }
 .avatar-btn.selected { border-color:#ffd700; box-shadow:0 0 8px rgba(255,215,0,0.35); }
 
+
+.shop-section-title {
+    width: 100%; color:#7dffc8; font-weight:bold; font-size:14px;
+    letter-spacing:1px; margin:18px 0 8px; text-align:left;
+    border-bottom:1px solid rgba(125,255,200,0.25); padding-bottom:4px;
+}
+
 </style>
 </head>
 <body>
@@ -726,14 +737,8 @@ button {
     </div>
     <div class="title-music-label">🎵 Choose Your Music:</div>
     <div id="title-music-bar" class="title-music-bar"></div>
-    <div class="mode-picker-label">Choose Game Mode:</div>
-    <div id="mode-picker">
-        <div class="mode-card" data-mode="classic"><span class="mode-icon">🎮</span><span class="mode-name">Classic</span><button class="mode-btn">Select</button></div>
-        <div class="mode-card" data-mode="zen"><span class="mode-icon">😌</span><span class="mode-name">Zen</span><button class="mode-btn">Select</button></div>
-        <div class="mode-card" data-mode="rush"><span class="mode-icon">⏱</span><span class="mode-name">Rush</span><button class="mode-btn">Select</button></div>
-        <div class="mode-card" data-mode="nightmare"><span class="mode-icon">💀</span><span class="mode-name">Nightmare</span><button class="mode-btn">Select</button></div>
-    </div>
-    <div id="nightmare-lock-note" style="display:none;color:#ff8844;font-size:12px;margin:4px 0 8px">💀 Nightmare locked — beat the Shadow King (wave 100) first!</div>
+    <div class="mode-picker-label">Game Mode: <b id="current-mode-label" style="color:#7dffc8">🎮 Classic</b></div>
+    <button class="btn" id="change-mode-btn">Change Mode (in Shop)</button>
     <button class="btn primary" id="play-btn">Play</button>
     <button class="btn" id="how-btn">How to Play</button>
     <button class="btn" id="family-btn">👑 Family Scores</button>
@@ -803,6 +808,31 @@ button {
             <div class="shop-info"><div class="shop-name">Hard Mode</div>
             <div class="shop-desc">2 lives, fast shadows. For pros!</div></div>
             <button class="shop-buy" id="buy-diff-hard">Select</button>
+        </div>
+        <div class="shop-section-title">🎮 GAME MODES</div>
+        <div class="shop-card mode-shop-card" data-mode="classic">
+            <div class="shop-icon" style="background:rgba(140,120,255,0.2);color:#c8b8ff">🎮</div>
+            <div class="shop-info"><div class="shop-name">Classic Mode</div>
+            <div class="shop-desc">The full adventure — 100 waves to the Shadow King.</div></div>
+            <button class="shop-buy mode-btn">Select</button>
+        </div>
+        <div class="shop-card mode-shop-card" data-mode="zen">
+            <div class="shop-icon" style="background:rgba(80,220,120,0.2);color:#50dc78">😌</div>
+            <div class="shop-info"><div class="shop-name">Zen Mode</div>
+            <div class="shop-desc">No lives lost. Relax and slice forever!</div></div>
+            <button class="shop-buy mode-btn">Select</button>
+        </div>
+        <div class="shop-card mode-shop-card" data-mode="rush">
+            <div class="shop-icon" style="background:rgba(255,170,0,0.2);color:#ffaa00">⏱</div>
+            <div class="shop-info"><div class="shop-name">Rush Mode</div>
+            <div class="shop-desc">60 seconds, 4x shadows — max kills!</div></div>
+            <button class="shop-buy mode-btn">Select</button>
+        </div>
+        <div class="shop-card mode-shop-card" data-mode="nightmare">
+            <div class="shop-icon" style="background:rgba(255,24,69,0.2);color:#ff1845">💀</div>
+            <div class="shop-info"><div class="shop-name">Nightmare Mode</div>
+            <div class="shop-desc">1 life, 2x speed. Beat the Shadow King to unlock!</div></div>
+            <button class="shop-buy mode-btn">Select</button>
         </div>
         <div class="shop-card" id="card-shape-triangle">
             <div class="shop-icon" style="background:rgba(0,255,170,0.2);color:#00ffaa">▲</div>
@@ -3937,10 +3967,11 @@ function setGameMode(mode) {
     gameMode = mode;
     localStorage.setItem('ss_gameMode', mode);
     renderModePicker();
+    renderShop();
 }
 function nightmareUnlocked() { return localStorage.getItem('ss_endlessUnlocked') === 'true'; }
 function renderModePicker() {
-    document.querySelectorAll('.mode-card').forEach(card => {
+    document.querySelectorAll('.mode-shop-card').forEach(card => {
         const mode = card.getAttribute('data-mode');
         card.classList.toggle('active-rate', gameMode === mode);
         const btn = card.querySelector('.mode-btn');
@@ -3950,8 +3981,12 @@ function renderModePicker() {
             btn.classList.toggle('affordable', gameMode !== mode);
         }
     });
-    const lockNote = document.getElementById('nightmare-lock-note');
-    if (lockNote) lockNote.style.display = nightmareUnlocked() ? 'none' : 'block';
+    // Title screen label shows current mode
+    const label = document.getElementById('current-mode-label');
+    if (label) {
+        const md = GAME_MODES[gameMode];
+        label.textContent = md.icon + ' ' + md.name;
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -4520,6 +4555,7 @@ function openShop() {
     game.state = 'shop';
     showScreen('shop');
     renderShop();
+    renderModePicker();
 }
 
 function renderShop() {
@@ -5084,15 +5120,17 @@ function init() {
     addTouchClick('family-btn', function() { renderFamilyBoard(); renderWeeklyChallenge(); renderMissions(); renderWheelState(); renderAvatarPicker(); showScreen('family'); });
     addTouchClick('wheel-spin-btn', spinFortuneWheel);
 
-    // Game mode picker
-    document.querySelectorAll('.mode-card').forEach(function(card) {
+    // Game mode picker (shop cards)
+    document.querySelectorAll('.mode-shop-card').forEach(function(card) {
         const mode = card.getAttribute('data-mode');
         const btn = card.querySelector('.mode-btn');
         const pick = function() { setGameMode(mode); };
         if (btn) addTouchClickDirect(btn, pick);
-        card.addEventListener('click', pick);
     });
     renderModePicker();
+
+    // Title shortcut: open shop to change mode
+    addTouchClick('change-mode-btn', function() { openShop(); });
     addTouchClick('family-back-btn', function() { showScreen('title'); });
     addTouchClick('settings-btn-gameover', openSettings);
     addTouchClick('settings-save-btn', saveSettingsFromUI);
