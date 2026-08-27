@@ -600,6 +600,70 @@ button {
 .settings-slider-row span { width:52px; }
 .settings-slider-row input[type="range"] { flex:1; accent-color:#8c78ff; }
 
+
+/* ─── MISSIONS + WHEEL ─── */
+.rewards-hub-section {
+    margin-top: 22px;
+    background: rgba(24,14,44,0.85);
+    border: 1px solid rgba(140,120,255,0.3);
+    border-radius: 12px;
+    padding: 14px 16px;
+}
+.mission-row {
+    background: rgba(10,6,24,0.6);
+    border: 1px solid rgba(140,120,255,0.2);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+}
+.mission-row.done { border-color: #4ade80; }
+.mission-desc { color: #e8e2ff; font-size: 14px; margin-bottom: 2px; }
+.mission-meta { color: #9a8fc2; font-size: 12px; margin-bottom: 6px; }
+.wheel-result {
+    font-size: 26px;
+    font-weight: bold;
+    color: #ffd700;
+    margin: 12px 0;
+    min-height: 34px;
+}
+.wheel-result.spinning { animation: almost-glow 0.3s ease infinite alternate; }
+
+
+/* ─── MODE PICKER ─── */
+.mode-picker-label { color:#9a8fc2; font-size:13px; margin-top:10px; }
+#mode-picker { display:flex; gap:8px; margin:8px 0 14px; flex-wrap:wrap; justify-content:center; }
+.mode-card {
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    background: rgba(16,10,36,0.85);
+    border: 1px solid rgba(140,120,255,0.3);
+    border-radius: 10px;
+    padding: 8px 12px;
+    min-width: 74px;
+}
+.mode-card.active-rate { border-color:#00ffaa; box-shadow:0 0 10px rgba(0,255,170,0.25); }
+.mode-icon { font-size: 20px; }
+.mode-name { font-size: 12px; color:#d8d2f0; font-weight:bold; }
+.mode-btn {
+    font-size: 10px; padding: 3px 10px; margin-top:3px;
+    background: rgba(140,120,255,0.2); color:#c8b8ff;
+    border:1px solid rgba(140,120,255,0.4); border-radius:6px; cursor:pointer;
+}
+.mode-btn.affordable { background: rgba(0,255,170,0.15); color:#7dffc8; border-color:rgba(0,255,170,0.4); }
+.mode-btn.disabled { opacity:0.6; cursor:default; }
+
+
+/* ─── AVATAR PICKER ─── */
+#avatar-picker { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+.avatar-btn {
+    font-size: 22px;
+    background: rgba(16,10,36,0.85);
+    border: 2px solid rgba(140,120,255,0.3);
+    border-radius: 10px;
+    padding: 6px 8px;
+    cursor: pointer;
+}
+.avatar-btn.selected { border-color:#ffd700; box-shadow:0 0 8px rgba(255,215,0,0.35); }
+
 </style>
 </head>
 <body>
@@ -662,6 +726,14 @@ button {
     </div>
     <div class="title-music-label">🎵 Choose Your Music:</div>
     <div id="title-music-bar" class="title-music-bar"></div>
+    <div class="mode-picker-label">Choose Game Mode:</div>
+    <div id="mode-picker">
+        <div class="mode-card" data-mode="classic"><span class="mode-icon">🎮</span><span class="mode-name">Classic</span><button class="mode-btn">Select</button></div>
+        <div class="mode-card" data-mode="zen"><span class="mode-icon">😌</span><span class="mode-name">Zen</span><button class="mode-btn">Select</button></div>
+        <div class="mode-card" data-mode="rush"><span class="mode-icon">⏱</span><span class="mode-name">Rush</span><button class="mode-btn">Select</button></div>
+        <div class="mode-card" data-mode="nightmare"><span class="mode-icon">💀</span><span class="mode-name">Nightmare</span><button class="mode-btn">Select</button></div>
+    </div>
+    <div id="nightmare-lock-note" style="display:none;color:#ff8844;font-size:12px;margin:4px 0 8px">💀 Nightmare locked — beat the Shadow King (wave 100) first!</div>
     <button class="btn primary" id="play-btn">Play</button>
     <button class="btn" id="how-btn">How to Play</button>
     <button class="btn" id="family-btn">👑 Family Scores</button>
@@ -792,6 +864,24 @@ button {
             <div class="shop-desc">Twinkling stardust trail.</div></div>
             <button class="shop-buy" id="buy-trail-sparkle">40 coins</button>
         </div>
+        <div class="shop-card" id="card-pet-firefly">
+            <div class="shop-icon" style="background:rgba(255,230,109,0.2);color:#ffe66d">✨</div>
+            <div class="shop-info"><div class="shop-name">Firefly Pet</div>
+            <div class="shop-desc">Tiny glowing buddy. Collects coins!</div></div>
+            <button class="shop-buy" id="buy-pet-firefly">45 coins</button>
+        </div>
+        <div class="shop-card" id="card-pet-sprite">
+            <div class="shop-icon" style="background:rgba(125,255,200,0.2);color:#7dffc8">⭐</div>
+            <div class="shop-info"><div class="shop-name">Star Sprite Pet</div>
+            <div class="shop-desc">Lucky star companion. Collects coins!</div></div>
+            <button class="shop-buy" id="buy-pet-sprite">55 coins</button>
+        </div>
+        <div class="shop-card" id="card-pet-comet">
+            <div class="shop-icon" style="background:rgba(154,216,255,0.2);color:#9ad8ff">☄</div>
+            <div class="shop-info"><div class="shop-name">Comet Pet</div>
+            <div class="shop-desc">Speedy ice comet. Collects coins!</div></div>
+            <button class="shop-buy" id="buy-pet-comet">65 coins</button>
+        </div>
         <div class="shop-card" id="card-theme-aurora">
             <div class="shop-icon" style="background:rgba(80,255,180,0.2);color:#50ffb4">🌌</div>
             <div class="shop-info"><div class="shop-name">Aurora Theme</div>
@@ -838,6 +928,22 @@ button {
     <div class="family-sub">Top 5 on this device — everyone takes turns!</div>
     <div id="family-board-list"></div>
     <div id="weekly-challenge-box"></div>
+    <div class="rewards-hub-section">
+        <div class="wc-title">😀 Your Avatar</div>
+        <div class="family-sub" style="margin-bottom:10px">Shown next to your family scores!</div>
+        <div id="avatar-picker"></div>
+    </div>
+    <div class="rewards-hub-section">
+        <div class="wc-title">🎯 Daily Missions</div>
+        <div class="family-sub" style="margin-bottom:10px">3 fresh missions every day!</div>
+        <div id="missions-list"></div>
+    </div>
+    <div class="rewards-hub-section" style="text-align:center">
+        <div class="wc-title">🎡 Fortune Wheel</div>
+        <div class="family-sub">One free spin every day — up to 100 coins!</div>
+        <div id="wheel-result" class="wheel-result">Ready to spin!</div>
+        <button class="btn primary" id="wheel-spin-btn">🎡 SPIN THE WHEEL</button>
+    </div>
     <button class="btn" id="family-back-btn">Back</button>
 </div>
 
@@ -897,6 +1003,7 @@ button {
     <div class="settings-section" style="margin-top:14px">
         <div class="settings-label">Accessibility</div>
         <button class="btn" id="colorblind-toggle">🎨 Colorblind Mode: OFF</button>
+        <button class="btn" id="announcer-toggle" style="margin-top:8px">🔊 Voice Announcer: ON</button>
     </div>
     <div class="settings-section">
         <div class="settings-label">Sound</div>
@@ -1533,7 +1640,14 @@ function drawCrystal() {
 
     // Rotate to aim direction — pointy edge points in aim direction
     // aimAngle=0 → right, so rotate by aimAngle
-    ctx.rotate(crystal.aimAngle);
+    // Victory spin flourish: extra 720° that decays over 0.8s
+    let spinExtra = 0;
+    if (crystal.spinTimer > 0) {
+        const t = crystal.spinTimer / 0.8; // 1 → 0
+        spinExtra = t * Math.PI * 4;       // two full turns, easing out
+        crystal.spinTimer -= 1 / 60;        // decays in update; safe decrement here too
+    }
+    ctx.rotate(crystal.aimAngle + spinExtra);
 
     // ─── Crystal shape (customizable via shop) ───
     crystalShapePath(s);
@@ -1766,6 +1880,9 @@ function spawnEnemy(isBoss) {
         else if (game.wave >= 3 && r < 0.15) variant = 'speedster';
         else if (game.wave >= 5 && r < 0.25) variant = 'tank';
         else if (game.wave >= 7 && r < 0.33) variant = 'splitter';
+        else if (game.wave >= 9 && r < 0.40) variant = 'shielder';
+        else if (game.wave >= 11 && r < 0.46) variant = 'healer';
+        else if (game.wave >= 13 && r < 0.53) variant = 'phantom';
 
         const baseSpeed = (28 + game.wave * 2.5 + Math.random() * 12) * 1.5 * diff().speedMult;
         const enemy = {
@@ -1793,6 +1910,19 @@ function spawnEnemy(isBoss) {
             enemy.size = 17 * SHADOW_SCALE;
             enemy.speed = baseSpeed * 1.3;
             enemy.golden = true;
+        } else if (variant === 'shielder') {
+            enemy.size = 26 * SHADOW_SCALE;
+            enemy.speed = baseSpeed * 0.8;
+            enemy.shieldColor = colorIdx; // blocks this beam color
+        } else if (variant === 'healer') {
+            enemy.size = 23 * SHADOW_SCALE;
+            enemy.speed = baseSpeed * 0.7;
+            enemy.healPulse = 0;
+        } else if (variant === 'phantom') {
+            enemy.size = 21 * SHADOW_SCALE;
+            enemy.speed = baseSpeed * 1.1;
+            enemy.phaseTimer = Math.random() * 4;
+            enemy.visible = true;
         }
         enemies.push(enemy);
     }
@@ -1811,7 +1941,34 @@ function updateEnemies(dt) {
             const wobbleY = Math.sin(e.wobble * 1.3) * 0.3;
             e.vx = (dx / dist + wobbleX) * e.speed;
             e.vy = (dy / dist + wobbleY) * e.speed;
-            // Speedster zigzag: strong perpendicular sway
+            // Healer: pulses heal to nearby shadows
+        if (e.variant === 'healer') {
+            e.healPulse += dt;
+            if (e.healPulse > 3) {
+                e.healPulse = 0;
+                let healed = 0;
+                for (const other of enemies) {
+                    if (other === e || other.isBoss) continue;
+                    const hd = Math.hypot(other.x - e.x, other.y - e.y);
+                    if (hd < 140 && other.hp < (other.maxHp || 1)) {
+                        other.hp = Math.min(other.maxHp || 1, other.hp + 1);
+                        healed++;
+                        addFloatingText(other.x, other.y - 14, '+HP', '#4ade80');
+                    }
+                }
+                if (healed > 0) {
+                    createExplosion(e.x, e.y, '#4ade80', 6);
+                    addFloatingText(e.x, e.y - 26, 'HEALED ' + healed + '!', '#4ade80');
+                }
+            }
+        }
+        // Phantom: fades invisible every few seconds
+        if (e.variant === 'phantom') {
+            e.phaseTimer += dt;
+            const cycle = e.phaseTimer % 6;
+            e.visible = cycle < 3.6; // visible 60% of the time
+        }
+        // Speedster zigzag: strong perpendicular sway
             if (e.variant === 'speedster') {
                 e.zigzagPhase += dt * 6;
                 const perpX = -dy / dist, perpY = dx / dist;
@@ -1828,6 +1985,8 @@ function updateEnemies(dt) {
         if (e.isBoss) {
             e.hitR *= 0.85; e.hitG *= 0.85; e.hitB *= 0.85;
         }
+        // Shadow King special behavior
+        if (e.isShadowKing) updateShadowKing(e, dt);
 
         // Check collision with crystal (damage player)
         const cd = Math.hypot(crystal.x - e.x, crystal.y - e.y);
@@ -1848,7 +2007,9 @@ function drawEnemies() {
         ctx.translate(e.x, e.y);
         ctx.rotate(e.rotation);
 
-        if (e.isBoss) {
+        if (e.isShadowKing) {
+            drawShadowKing(e);
+        } else if (e.isBoss) {
             drawBoss(e);
         } else {
             drawShadowCreature(e);
@@ -1966,6 +2127,76 @@ function drawShadowCreature(e) {
         ctx.font = 'bold ' + Math.max(10, s * 0.9) + 'px sans-serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText('$', 0, 1);
+        return;
+    }
+    if (e.variant === 'shielder') {
+        // Shielder: body + crescent shield arc on the crystal-facing side
+        const ang = Math.atan2(crystal.y - e.y, crystal.x - e.x);
+        ctx.rotate(-e.rotation); // work in world orientation
+        ctx.beginPath();
+        ctx.arc(0, 0, s * 0.85, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(8,4,16,0.92)';
+        ctx.fill();
+        ctx.strokeStyle = c.hex; ctx.lineWidth = 4; ctx.globalAlpha = 0.5; ctx.stroke();
+        ctx.globalAlpha = 1; ctx.lineWidth = 2.2; ctx.stroke();
+        if (e.shieldColor !== null && e.shieldColor !== undefined) {
+            // shield arc facing player, in the shield color
+            ctx.beginPath();
+            ctx.arc(0, 0, s * 1.25, ang - 0.9, ang + 0.9);
+            ctx.strokeStyle = RAY_COLORS[e.shieldColor].hex;
+            ctx.lineWidth = 6; ctx.globalAlpha = 0.9;
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+        }
+        ctx.fillStyle = c.hex;
+        ctx.beginPath();
+        ctx.arc(-s * 0.18, -s * 0.08, 2.2, 0, Math.PI * 2);
+        ctx.arc(s * 0.18, -s * 0.08, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+        return;
+    }
+    if (e.variant === 'healer') {
+        // Healer: green cross emblem + soft pulse ring
+        const pulse = 0.5 + 0.5 * Math.sin(e.healPulse * 2);
+        ctx.beginPath();
+        ctx.arc(0, 0, s * (1.0 + pulse * 0.15), 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(8,4,16,0.92)';
+        ctx.fill();
+        ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 4; ctx.globalAlpha = 0.5 + pulse * 0.3; ctx.stroke();
+        ctx.globalAlpha = 1; ctx.lineWidth = 2.2; ctx.stroke();
+        // green cross
+        ctx.fillStyle = '#4ade80';
+        const cw = s * 0.16, cl = s * 0.55;
+        ctx.fillRect(-cw / 2, -cl / 2, cw, cl);
+        ctx.fillRect(-cl / 2, -cw / 2, cl, cw);
+        return;
+    }
+    if (e.variant === 'phantom') {
+        // Phantom: ghostly body that fades
+        const alpha = e.visible ? 1 : 0.18;
+        ctx.globalAlpha = alpha;
+        ctx.beginPath();
+        ctx.arc(0, 0, s * 0.9, Math.PI, 0);
+        ctx.lineTo(s * 0.9, s * 0.7);
+        for (let wv = 0; wv < 4; wv++) {
+            const wx = s * 0.9 - (wv + 0.5) * (s * 0.45);
+            const wy = s * (wv % 2 === 0 ? 0.45 : 0.7);
+            ctx.quadraticCurveTo(wx, wy + s * 0.15, wx - s * 0.225, s * (wv % 2 === 0 ? 0.7 : 0.45));
+        }
+        ctx.lineTo(-s * 0.9, 0);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(8,4,16,0.92)';
+        ctx.fill();
+        ctx.strokeStyle = c.hex; ctx.lineWidth = 4; ctx.globalAlpha = alpha * 0.6; ctx.stroke();
+        ctx.globalAlpha = alpha;
+        ctx.lineWidth = 2; ctx.stroke();
+        // spooky eyes
+        ctx.fillStyle = c.hex;
+        ctx.beginPath();
+        ctx.arc(-s * 0.25, -s * 0.2, 2.2, 0, Math.PI * 2);
+        ctx.arc(s * 0.25, -s * 0.2, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
         return;
     }
     if (e.variant === 'mini') {
@@ -2120,6 +2351,18 @@ function checkRayCollisions() {
                 if (ray.colorIdx === 0) e.hitR = 1;
                 else if (ray.colorIdx === 1) e.hitG = 1;
                 else if (ray.colorIdx === 2) e.hitB = 1;
+                // ─── SHADOW KING: every matched beam chips HP ───
+                if (e.isShadowKing) {
+                    if (ray.colorIdx === 0 && !e._chipR) { e._chipR = true; e.hp -= 1; e.hitFlash = 0.2; }
+                    if (ray.colorIdx === 1 && !e._chipG) { e._chipG = true; e.hp -= 1; e.hitFlash = 0.2; }
+                    if (ray.colorIdx === 2 && !e._chipB) { e._chipB = true; e.hp -= 1; e.hitFlash = 0.2; }
+                    // decay chip flags so each beam can hit again each frame
+                    setTimeout(function() { e._chipR = e._chipG = e._chipB = false; }, 120);
+                    if (e.hp <= 0) {
+                        killEnemy(i, '#e8d5ff', true);
+                    }
+                    continue; // king handled — skip the all-3 instant check
+                }
                 // Check if all 3 are lit
                 if (e.hitR > 0.3 && e.hitG > 0.3 && e.hitB > 0.3) {
                     killEnemy(i, '#ffffff', true);
@@ -2127,6 +2370,21 @@ function checkRayCollisions() {
             } else {
                 // Color match required
                 if (ray.colorIdx === e.color) {
+                    // Shielder: absorbs first hit with its shield color, then shield breaks
+                    if (e.variant === 'shielder' && e.shieldColor !== null && e.shieldColor !== undefined) {
+                        if (ray.colorIdx === e.shieldColor) {
+                            e.shieldColor = null; // shield shattered by the blocked hit
+                            e.hitFlash = 0.3;
+                            addFloatingText(e.x, e.y - 20, 'SHIELD BROKE!', '#ffffff');
+                            createExplosion(e.x, e.y, '#ffffff', 8);
+                            sfxHit();
+                            continue;
+                        }
+                    }
+                    // Phantom: invisible = immune
+                    if (e.variant === 'phantom' && !e.visible) {
+                        continue;
+                    }
                     killEnemy(i, RAY_COLORS[e.color].hex);
                 }
             }
@@ -2177,6 +2435,9 @@ function killEnemy(idx, color, isBossKill) {
     game.kills++;
     game.enemiesKilledThisWave++;
     trackWeeklyKill();
+    missionStat('kills', 1);
+    if (e.golden) missionStat('goldKills', 1);
+    if (e.variant === 'tank') missionStat('tankKills', 1);
     maybeDropCoin(e.x, e.y);
     if (game.tutorialActive && !game.firstKillDone) game.firstKillDone = true;
 
@@ -2192,6 +2453,7 @@ function killEnemy(idx, color, isBossKill) {
     game.combo++;
     game.comboTimer = 2.5;
     if (game.combo > game.maxCombo) game.maxCombo = game.combo;
+    missionStat('combo', game.combo, true);
 
     // Score
     const hasDouble = SHOP_DATA.owned.indexOf('doublePts') >= 0;
@@ -2212,6 +2474,10 @@ function killEnemy(idx, color, isBossKill) {
         game.flashAlpha = 0.4;
         createConfetti(e.x, e.y, 50);   // big confetti for bosses
         trackStat('bosses', 1);
+        missionStat('bossKills', 1);
+        triggerVictorySpin();
+        announce(e.isShadowKing ? 'You defeated the Shadow King! Legend!' : 'Boss destroyed!');
+        if (e.isShadowKing) announce('Victory!');
     } else {
         sfxKill(e.color);
         game.shake = Math.max(game.shake, 4);
@@ -2226,12 +2492,15 @@ function killEnemy(idx, color, isBossKill) {
     // Show combo
     if (game.combo >= 3) {
         showCombo(game.combo);
+        if (game.combo === 10) announce('Rampage!');
+        else if (game.combo === 20) announce('Unstoppable!');
     }
 
     enemies.splice(idx, 1);
 }
 
 function damagePlayer() {
+    if (gameMode === 'zen') return; // Zen: invincible
     if (game.lives <= 0) return;
     game.lives--;
     game.combo = 0;
@@ -2472,14 +2741,21 @@ function updateWaves(dt) {
     }
 
     if (game.enemiesKilledThisWave >= game.waveEnemyCount) {
-        // ─── WAVE 100 VICTORY: game ends with reward (unless in Endless Mode) ───
-        if (game.wave >= 100 && !game.endless) {
+        // ─── WAVE 100: SHADOW KING final boss ───
+        if (game.wave >= 100 && !game.endless && !game.shadowKing) {
+            if (!enemies.some(e => e.isShadowKing)) {
+                spawnShadowKing();
+            }
+            // Wave waits until the King falls
+        } else if (game.wave >= 100 && !game.endless && game.shadowKing && !enemies.some(e => e.isShadowKing)) {
+            // King defeated → real victory
             game.coins += 50;
             localStorage.setItem('ss_coins', game.coins.toString());
             game.victory = true;
+            game.shadowKing = false;
             endGame();
             return;
-        }
+        } else {
         // Next wave — advances as soon as the kill quota is met
         // (leftover shadows stay on screen and keep counting toward the NEXT wave)
         game.wave++;
@@ -2491,16 +2767,20 @@ function updateWaves(dt) {
             waveSub = 'Milestone wave!';
             if (game.lives < 5) { game.lives++; waveSub = '+1 LIFE BONUS!'; }
         }
-        if (game.wave === 99) waveSub = 'Final wave! Reach 100 to WIN!';
+        if (game.wave === 99) waveSub = 'Final wave! Face the SHADOW KING!';
         showWaveBanner(waveText, waveSub);
         game.flashAlpha = 0.15;
         game.shake = Math.max(game.shake, 5);
+        missionStat('wave', game.wave, true);
+        if (game.wave % 10 === 0) announce('Wave ' + game.wave + '!');
         updateHUD();
+        }
     }
 
     // Spawn shadows at configurable rate (shadowRate per 10 seconds)
     game.shadowSpawnAccum += dt;
-    const spawnInterval = 10 / (game.shadowRate * diff().rateMult);
+    const rushBoost = gameMode === 'rush' ? 4 : 1;
+    const spawnInterval = 10 / (game.shadowRate * diff().rateMult * rushBoost);
     while (game.shadowSpawnAccum >= spawnInterval) {
         game.shadowSpawnAccum -= spawnInterval;
         if (enemies.filter(e => !e.isBoss).length < 20) {
@@ -2855,9 +3135,11 @@ function render(dt) {
 
     // Enemies
     drawEnemies();
+    drawKingHPBar();
 
     // Crystal
     drawCrystal();
+    drawPet();
 
     // Particles
     drawParticles();
@@ -2946,6 +3228,16 @@ function gameLoop(timestamp) {
     game.time += dt;
     game.playTime += dt;
 
+    // ─── RUSH MODE: 60 second countdown, then game over ───
+    if (gameMode === 'rush') {
+        game.rushTimeLeft -= dt;
+        if (game.rushTimeLeft <= 0) {
+            game.rushTimeLeft = 0;
+            endGame();
+            return;
+        }
+    }
+
     updateBeam(dt);
     updateCrystal(dt); // crystal always responsive, even in slow-mo
 
@@ -2961,6 +3253,7 @@ function gameLoop(timestamp) {
     computeRays();
     checkRayCollisions();
     updateCoins(dt);
+    petCoinMagnet(dt);
     updateBottles(dt);
     updateGems(dt);
     updateParticles(dt);
@@ -3034,7 +3327,14 @@ function updateHUD() {
     // Timer: format as M:SS
     const mins = Math.floor(game.playTime / 60);
     const secs = Math.floor(game.playTime % 60);
-    document.querySelector('#hud-time .hud-val').textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
+    if (gameMode === 'rush') {
+        const rl = Math.ceil(game.rushTimeLeft);
+        document.querySelector('#hud-time .hud-val').textContent = '⏱ ' + rl + 's';
+        document.querySelector('#hud-time .hud-val').style.color = rl <= 10 ? '#ff1845' : '#ffaa00';
+    } else {
+        document.querySelector('#hud-time .hud-val').textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
+        document.querySelector('#hud-time .hud-val').style.color = '';
+    }
     document.querySelector('#hud-coins .hud-val').textContent = game.coins;
     // Username shown during gameplay
     const unHud = document.querySelector('#hud-username .hud-val');
@@ -3099,6 +3399,8 @@ function startGame() {
     game.showScoreCard = false;
     game.victory = false;
     game.endless = false;
+    game.shadowKing = false;
+    game.rushTimeLeft = 60;
     game.megaKillsNeeded = game.megaKillThreshold;
     game.time = 0; game.playTime = 0; game.shake = 0; game.flashAlpha = 0;
     game.paused = false;
@@ -3225,7 +3527,14 @@ function setDifficulty(d) {
     localStorage.setItem('ss_difficulty', d);
     renderShop();
 }
-function diff() { return DIFFICULTIES[difficulty]; }
+function diff() {
+    // Nightmare mode multiplies on top of chosen difficulty
+    const base = DIFFICULTIES[difficulty];
+    if (gameMode === 'nightmare') {
+        return { lives: 1, speedMult: base.speedMult * 2, rateMult: base.rateMult * 2, name: 'Nightmare' };
+    }
+    return base;
+}
 
 // ─── Shareable score card (drawn on canvas, kid-screenshot friendly) ───
 function drawScoreCard() {
@@ -3304,6 +3613,12 @@ const CRYSTAL_TRAILS = [
     { id: 'fire',     name: 'Fire',      cost: 40 },
     { id: 'sparkle',  name: 'Sparkle',   cost: 40 },
 ];
+const PETS = [
+    { id: 'nopet',    name: 'No Pet',    cost: 0 },
+    { id: 'firefly',  name: 'Firefly',   cost: 45 },
+    { id: 'sprite',   name: 'Star Sprite', cost: 55 },
+    { id: 'comet',    name: 'Comet',     cost: 65 },
+];
 const BG_THEMES = [
     { id: 'space',    name: 'Deep Space', cost: 0 },
     { id: 'aurora',   name: 'Aurora',     cost: 50 },
@@ -3325,13 +3640,15 @@ const COSMETICS = {
     shape: localStorage.getItem('ss_shape') || 'arrow',
     trail: localStorage.getItem('ss_trail') || 'none',
     theme: localStorage.getItem('ss_theme') || 'space',
-    owned: JSON.parse(localStorage.getItem('ss_cosmeticOwned') || '["arrow","none","space"]'),
+    pet: localStorage.getItem('ss_pet') || 'nopet',
+    owned: JSON.parse(localStorage.getItem('ss_cosmeticOwned') || '["arrow","none","space","nopet"]'),
 };
 
 function saveCosmetics() {
     localStorage.setItem('ss_shape', COSMETICS.shape);
     localStorage.setItem('ss_trail', COSMETICS.trail);
     localStorage.setItem('ss_theme', COSMETICS.theme);
+    localStorage.setItem('ss_pet', COSMETICS.pet);
     localStorage.setItem('ss_cosmeticOwned', JSON.stringify(COSMETICS.owned));
 }
 
@@ -3340,6 +3657,7 @@ function buyCosmetic(id) {
     for (const s of CRYSTAL_SHAPES) if (s.id === id) { item = s; kind = 'shape'; }
     for (const t of CRYSTAL_TRAILS) if (t.id === id) { item = t; kind = 'trail'; }
     for (const b of BG_THEMES) if (b.id === id) { item = b; kind = 'theme'; }
+    for (const p of PETS) if (p.id === id) { item = p; kind = 'pet'; }
     if (!item) return;
     const owned = COSMETICS.owned.indexOf(id) >= 0;
     if (!owned) {
@@ -3522,6 +3840,231 @@ function crystalShapePath(s) {
 }
 
 
+
+
+
+
+
+// ─── Victory spin + announcer voice ───
+let announcerEnabled = localStorage.getItem('ss_announcer') !== 'off';
+function announce(text) {
+    if (!announcerEnabled || !('speechSynthesis' in window)) return;
+    try {
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = 1.1; u.pitch = 1.2; u.volume = Math.min(1, SFX_VOL + 0.2);
+        speechSynthesis.cancel();
+        speechSynthesis.speak(u);
+    } catch (err) { /* ignore */ }
+}
+function triggerVictorySpin() {
+    crystal.spinTimer = 0.8; // drawCrystal reads this for a 720° flourish
+}
+
+// ─── Avatars ───
+const AVATARS = ['🧊','🔥','⚡','🌟','🦊','🐼','🚀','👾','🦄','🌊'];
+function getAvatar() {
+    return localStorage.getItem('ss_avatar') || '🧊';
+}
+function renderAvatarPicker() {
+    const el = document.getElementById('avatar-picker');
+    if (!el) return;
+    const cur = getAvatar();
+    el.innerHTML = AVATARS.map(a =>
+        '<button class="avatar-btn' + (a === cur ? ' selected' : '') + '" data-avatar="' + a + '">' + a + '</button>'
+    ).join('');
+    el.querySelectorAll('.avatar-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            localStorage.setItem('ss_avatar', btn.getAttribute('data-avatar'));
+            renderAvatarPicker();
+        });
+        btn.addEventListener('touchend', function(e) { e.preventDefault(); btn.click(); }, { passive: false });
+    });
+}
+
+// ─── Pet rendering + coin magnet ───
+const PET_STYLES = {
+    firefly: { color: '#ffe66d', size: 5, glow: 26 },
+    sprite:  { color: '#7dffc8', size: 6, glow: 30 },
+    comet:   { color: '#9ad8ff', size: 7, glow: 34 },
+};
+function drawPet() {
+    if (COSMETICS.pet === 'nopet') return;
+    const st = PET_STYLES[COSMETICS.pet];
+    if (!st) return;
+    const ang = game.time * 2.2;
+    const px = crystal.x + Math.cos(ang) * 46;
+    const py = crystal.y + Math.sin(ang) * 46;
+    stampGlow(px, py, st.color, st.glow, 0.5);
+    ctx.fillStyle = st.color;
+    ctx.beginPath();
+    ctx.arc(px, py, st.size, 0, Math.PI * 2);
+    ctx.fill();
+    // tiny eye
+    ctx.fillStyle = 'rgba(10,4,20,0.9)';
+    ctx.beginPath();
+    ctx.arc(px + 1.5, py - 1, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+}
+function petCoinMagnet(dt) {
+    if (COSMETICS.pet === 'nopet') return;
+    const ang = game.time * 2.2;
+    const px = crystal.x + Math.cos(ang) * 46;
+    const py = crystal.y + Math.sin(ang) * 46;
+    for (const c of coins) {
+        const d = Math.hypot(c.x - px, c.y - py);
+        if (d < 90 && d > 1) {
+            c.x += ((px - c.x) / d) * 220 * dt;
+            c.y += ((py - c.y) / d) * 220 * dt;
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GAME MODES — Zen (no death), Rush (60s), Nightmare (unlocked)
+// ═══════════════════════════════════════════════════════════════
+let gameMode = localStorage.getItem('ss_gameMode') || 'classic';
+const GAME_MODES = {
+    classic:   { name: 'Classic',    icon: '🎮' },
+    zen:       { name: 'Zen',        icon: '😌' },
+    rush:      { name: 'Rush',       icon: '⏱' },
+    nightmare: { name: 'Nightmare',  icon: '💀' },
+};
+function setGameMode(mode) {
+    if (mode === 'nightmare' && localStorage.getItem('ss_endlessUnlocked') !== 'true') {
+        alert('Nightmare unlocks after you beat the Shadow King (wave 100)! 💀');
+        return;
+    }
+    gameMode = mode;
+    localStorage.setItem('ss_gameMode', mode);
+    renderModePicker();
+}
+function nightmareUnlocked() { return localStorage.getItem('ss_endlessUnlocked') === 'true'; }
+function renderModePicker() {
+    document.querySelectorAll('.mode-card').forEach(card => {
+        const mode = card.getAttribute('data-mode');
+        card.classList.toggle('active-rate', gameMode === mode);
+        const btn = card.querySelector('.mode-btn');
+        if (btn) {
+            btn.textContent = gameMode === mode ? 'Selected' : 'Select';
+            btn.classList.toggle('disabled', gameMode === mode);
+            btn.classList.toggle('affordable', gameMode !== mode);
+        }
+    });
+    const lockNote = document.getElementById('nightmare-lock-note');
+    if (lockNote) lockNote.style.display = nightmareUnlocked() ? 'none' : 'block';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DAILY MISSIONS — 3 per day, coin rewards
+// ═══════════════════════════════════════════════════════════════
+const MISSION_POOL = [
+    { id: 'kill30',  desc: 'Vaporize 30 shadows',      target: 30,  reward: 5, stat: 'kills' },
+    { id: 'kill75',  desc: 'Vaporize 75 shadows',      target: 75,  reward: 10, stat: 'kills' },
+    { id: 'gold2',   desc: 'Kill 2 golden shadows',    target: 2,   reward: 8, stat: 'goldKills' },
+    { id: 'wave10',  desc: 'Reach wave 10',            target: 10,  reward: 10, stat: 'wave' },
+    { id: 'boss3',   desc: 'Defeat 3 bosses',          target: 3,   reward: 8, stat: 'bossKills' },
+    { id: 'combo15', desc: 'Hit a 15x combo',          target: 15,  reward: 8, stat: 'combo' },
+    { id: 'tank5',   desc: 'Crack 5 tanks',            target: 5,   reward: 8, stat: 'tankKills' },
+];
+function todayKey() { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate(); }
+function getMissions() {
+    let data = JSON.parse(localStorage.getItem('ss_missions') || 'null');
+    const today = todayKey();
+    if (!data || data.day !== today) {
+        // pick 3 random missions
+        const pool = MISSION_POOL.slice();
+        const picked = [];
+        while (picked.length < 3 && pool.length) {
+            picked.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+        }
+        data = { day: today, missions: picked.map(m => ({ id: m.id, progress: 0, claimed: false })) };
+        localStorage.setItem('ss_missions', JSON.stringify(data));
+    }
+    return data;
+}
+function missionStat(name, current, isMax) {
+    const data = getMissions();
+    let changed = false;
+    for (const um of data.missions) {
+        const def = MISSION_POOL.find(p => p.id === um.id);
+        if (!def || um.claimed || def.stat !== name) continue;
+        const newProg = isMax ? Math.max(um.progress, current) : um.progress + current;
+        if (newProg > um.progress) { um.progress = newProg; changed = true; }
+        if (um.progress >= def.target) {
+            um.claimed = true;
+            game.coins += def.reward;
+            localStorage.setItem('ss_coins', game.coins.toString());
+            setTimeout(function() {
+                showWaveBanner('🎯 MISSION DONE!', def.desc + ' — +' + def.reward + ' coins');
+                createConfetti(W/2, H*0.35, 30);
+            }, 900);
+        }
+    }
+    if (changed) localStorage.setItem('ss_missions', JSON.stringify(data));
+}
+function renderMissions() {
+    const el = document.getElementById('missions-list');
+    if (!el) return;
+    const data = getMissions();
+    el.innerHTML = data.missions.map(um => {
+        const def = MISSION_POOL.find(p => p.id === um.id);
+        const pct = Math.min(100, Math.round((um.progress / def.target) * 100));
+        return '<div class="mission-row' + (um.claimed ? ' done' : '') + '">' +
+            '<div class="mission-desc">' + (um.claimed ? '✅ ' : '') + def.desc + '</div>' +
+            '<div class="mission-meta">' + um.progress + '/' + def.target + ' · +' + def.reward + 'c</div>' +
+            '<div class="wc-bar-bg"><div class="wc-bar-fill" style="width:' + pct + '%"></div></div>' +
+            '</div>';
+    }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FORTUNE WHEEL — 1 free spin per day
+// ═══════════════════════════════════════════════════════════════
+const WHEEL_SEGMENTS = [5, 10, 15, 25, 50, 100, 25, 15]; // clockwise
+function canSpinWheel() {
+    return localStorage.getItem('ss_wheelDay') !== todayKey();
+}
+function spinFortuneWheel() {
+    if (!canSpinWheel()) {
+        alert('You already spun today! Come back tomorrow 🎡');
+        return;
+    }
+    localStorage.setItem('ss_wheelDay', todayKey());
+    const idx = Math.floor(Math.random() * WHEEL_SEGMENTS.length);
+    const prize = WHEEL_SEGMENTS[idx];
+    game.coins += prize;
+    localStorage.setItem('ss_coins', game.coins.toString());
+    // animated banner sequence
+    const el = document.getElementById('wheel-result');
+    if (el) {
+        el.textContent = '🎡 Spinning...';
+        el.classList.add('spinning');
+        let ticks = 0;
+        const iv = setInterval(function() {
+            ticks++;
+            el.textContent = '🎡 ' + WHEEL_SEGMENTS[(idx + ticks) % WHEEL_SEGMENTS.length] + ' coins?';
+            if (ticks >= 12) {
+                clearInterval(iv);
+                el.classList.remove('spinning');
+                el.textContent = '🎉 ' + prize + ' COINS!' + (prize >= 50 ? ' JACKPOT!' : '');
+                createConfetti(W/2, H*0.35, prize >= 50 ? 60 : 25);
+            }
+        }, 160);
+    }
+    renderWheelState();
+}
+function renderWheelState() {
+    const btn = document.getElementById('wheel-spin-btn');
+    if (!btn) return;
+    if (canSpinWheel()) {
+        btn.textContent = '🎡 SPIN THE WHEEL';
+        btn.classList.add('affordable'); btn.classList.remove('disabled');
+    } else {
+        btn.textContent = '🎡 Come back tomorrow';
+        btn.classList.add('disabled'); btn.classList.remove('affordable');
+    }
+}
+
 // ═══════════════════════════════════════════════════════════════
 // WEEKLY CHALLENGE — kill target this week (resets Monday)
 // ═══════════════════════════════════════════════════════════════
@@ -3580,7 +4123,7 @@ function getFamilyBoard() {
 }
 function saveFamilyScore(name, score, wave) {
     const board = getFamilyBoard();
-    board.push({ name: (name || 'Player').substring(0, 12), score: score, wave: wave, date: Date.now() });
+    board.push({ name: (name || 'Player').substring(0, 12), score: score, wave: wave, date: Date.now(), avatar: getAvatar() });
     board.sort((a, b) => b.score - a.score);
     const top5 = board.slice(0, 5);
     const isRecord = top5.length > 0 && top5[0].score === score && top5[0].date === board.find(e => e.score === score && e.name === (name || 'Player').substring(0,12))?.date;
@@ -3597,10 +4140,117 @@ function renderFamilyBoard() {
     }
     el.innerHTML = board.map((entry, i) =>
         '<div class="family-row' + (i === 0 ? ' champion' : '') + '">' +
-        (i === 0 ? '👑' : (i + 1)) + ' <b>' + entry.name + '</b>' +
+        (i === 0 ? '👑' : (i + 1)) + ' ' + (entry.avatar || '🧊') + ' <b>' + entry.name + '</b>' +
         ' — ' + entry.score.toLocaleString() + ' pts — Wave ' + entry.wave +
         '</div>'
     ).join('');
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// SHADOW KING — final boss at wave 100 (3 phases, HP bar)
+// ═══════════════════════════════════════════════════════════════
+function spawnShadowKing() {
+    enemies.push({
+        x: W / 2, y: -80, vx: 0, vy: 0,
+        size: 78 * SHADOW_SCALE, hp: 30, maxHp: 30,
+        color: -1, isBoss: true, isShadowKing: true,
+        hitR: 0, hitG: 0, hitB: 0,
+        rotation: 0, wobble: Math.random() * Math.PI * 2,
+        speed: 34 * 1.5 * diff().speedMult,
+        phase: 1,
+        summonTimer: 4,
+    });
+    game.shadowKing = true;
+    showWaveBanner('👑 SHADOW KING 👑', 'Final Battle — destroy him!');
+    game.shake = 18;
+    sfxBoss();
+}
+function kingPhase(e) { return e.hp > 20 ? 1 : (e.hp > 10 ? 2 : 3); }
+function updateShadowKing(e, dt) {
+    const ph = kingPhase(e);
+    if (ph !== e.phase) {
+        e.phase = ph;
+        showWaveBanner('👑 KING PHASE ' + ph + '!', ph === 3 ? 'ENRAGED! Finish him!' : 'He grows desperate...');
+        game.shake = 14;
+        createConfetti(W / 2, H / 3, 20);
+    }
+    // Slow drift toward crystal, faster each phase
+    const dx = crystal.x - e.x, dy = crystal.y - e.y;
+    const dist = Math.hypot(dx, dy);
+    const spd = e.speed * (0.55 + ph * 0.25);
+    if (dist > 150) { e.vx = (dx / dist) * spd; e.vy = (dy / dist) * spd; }
+    else { e.vx *= 0.95; e.vy *= 0.95; }
+    // Phase 2+: summons minions
+    e.summonTimer -= dt;
+    if (ph >= 2 && e.summonTimer <= 0) {
+        e.summonTimer = ph === 3 ? 2.4 : 4;
+        for (let i = 0; i < (ph === 3 ? 3 : 2); i++) spawnEnemy(false);
+        addFloatingText(e.x, e.y - e.size, 'SUMMON!', '#ff7bff');
+    }
+}
+function drawShadowKing(e) {
+    const s = e.size;
+    // huge aura
+    stampGlow(0, 0, '#b890ff', s * 3 + Math.sin(e.wobble * 2) * 12, 0.25);
+    // jagged royal blob
+    ctx.beginPath();
+    const points = 14;
+    for (let i = 0; i <= points; i++) {
+        const a = (i / points) * Math.PI * 2;
+        const r = s * (0.8 + 0.2 * Math.sin(e.wobble * 1.2 + i * 1.9));
+        const px = Math.cos(a) * r, py = Math.sin(a) * r;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(10,2,20,0.96)';
+    ctx.fill();
+    // royal purple-white border
+    ctx.strokeStyle = '#e8d5ff';
+    ctx.globalAlpha = 0.5; ctx.lineWidth = 10; ctx.stroke();
+    ctx.globalAlpha = 1; ctx.lineWidth = 4; ctx.stroke();
+    // crown
+    ctx.fillStyle = '#ffd700';
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.55, -s * 0.85);
+    ctx.lineTo(-s * 0.55, -s * 1.25);
+    ctx.lineTo(-s * 0.22, -s * 0.95);
+    ctx.lineTo(0, -s * 1.4);
+    ctx.lineTo(s * 0.22, -s * 0.95);
+    ctx.lineTo(s * 0.55, -s * 1.25);
+    ctx.lineTo(s * 0.55, -s * 0.85);
+    ctx.closePath();
+    ctx.stroke();
+    // angry eyes (phase-colored)
+    const eye = kingPhase(e) === 3 ? '#ff1845' : (kingPhase(e) === 2 ? '#ff9500' : '#e8d5ff');
+    ctx.fillStyle = eye;
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.35, -s * 0.15); ctx.lineTo(-s * 0.1, -s * 0.05); ctx.lineTo(-s * 0.35, s * 0.08); ctx.closePath();
+    ctx.moveTo(s * 0.35, -s * 0.15); ctx.lineTo(s * 0.1, -s * 0.05); ctx.lineTo(s * 0.35, s * 0.08); ctx.closePath();
+    ctx.fill();
+}
+function drawKingHPBar() {
+    const king = enemies.find(e => e.isShadowKing);
+    if (!king) return;
+    const bw = Math.min(420, W * 0.7), bh = 14;
+    const bx = (W - bw) / 2, by = 92;
+    ctx.save();
+    ctx.fillStyle = 'rgba(10,4,20,0.8)';
+    ctx.fillRect(bx - 2, by - 2, bw + 4, bh + 4);
+    ctx.fillStyle = 'rgba(60,20,80,0.9)';
+    ctx.fillRect(bx, by, bw, bh);
+    const pct = Math.max(0, king.hp / king.maxHp);
+    const grad = ctx.createLinearGradient(bx, 0, bx + bw, 0);
+    grad.addColorStop(0, '#7a2aff'); grad.addColorStop(1, kingPhase(king) === 3 ? '#ff1845' : '#c8a0ff');
+    ctx.fillStyle = grad;
+    ctx.fillRect(bx, by, bw * pct, bh);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('👑 SHADOW KING — ' + king.hp + '/' + king.maxHp + '  (Phase ' + kingPhase(king) + ')', W / 2, by + 11);
+    ctx.restore();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -3928,6 +4578,7 @@ function renderShop() {
         { items: CRYSTAL_SHAPES, kind: 'shape' },
         { items: CRYSTAL_TRAILS, kind: 'trail' },
         { items: BG_THEMES, kind: 'theme' },
+        { items: PETS, kind: 'pet' },
     ];
     for (var si = 0; si < cosmeticSets.length; si++) {
         var set = cosmeticSets[si];
@@ -4430,12 +5081,38 @@ function init() {
     addTouchClick('playagain-btn', startGame);
     addTouchClick('menu-btn', goToTitle);
     addTouchClick('settings-btn-title', openSettings);
-    addTouchClick('family-btn', function() { renderFamilyBoard(); renderWeeklyChallenge(); showScreen('family'); });
+    addTouchClick('family-btn', function() { renderFamilyBoard(); renderWeeklyChallenge(); renderMissions(); renderWheelState(); renderAvatarPicker(); showScreen('family'); });
+    addTouchClick('wheel-spin-btn', spinFortuneWheel);
+
+    // Game mode picker
+    document.querySelectorAll('.mode-card').forEach(function(card) {
+        const mode = card.getAttribute('data-mode');
+        const btn = card.querySelector('.mode-btn');
+        const pick = function() { setGameMode(mode); };
+        if (btn) addTouchClickDirect(btn, pick);
+        card.addEventListener('click', pick);
+    });
+    renderModePicker();
     addTouchClick('family-back-btn', function() { showScreen('title'); });
     addTouchClick('settings-btn-gameover', openSettings);
     addTouchClick('settings-save-btn', saveSettingsFromUI);
     addTouchClick('settings-shop-btn', openShop);
     addTouchClick('settings-ach-btn', openAchievements);
+
+    // Announcer voice toggle
+    const anBtn = document.getElementById('announcer-toggle');
+    if (anBtn) {
+        const syncAnn = function() {
+            anBtn.textContent = '🔊 Voice Announcer: ' + (announcerEnabled ? 'ON' : 'OFF');
+        };
+        syncAnn();
+        addTouchClickDirect(anBtn, function() {
+            announcerEnabled = !announcerEnabled;
+            localStorage.setItem('ss_announcer', announcerEnabled ? 'on' : 'off');
+            syncAnn();
+            if (announcerEnabled) announce('Voice on!');
+        });
+    }
 
     // Colorblind toggle (reloads page to apply)
     const cbBtn = document.getElementById('colorblind-toggle');
@@ -4488,6 +5165,9 @@ function init() {
     addTouchClick('buy-theme-sunset', function() { buyCosmetic('sunset'); });
     addTouchClick('buy-theme-diwali', function() { buyCosmetic('diwali'); });
     addTouchClick('buy-theme-christmas', function() { buyCosmetic('christmas'); });
+    addTouchClick('buy-pet-firefly', function() { buyCosmetic('firefly'); });
+    addTouchClick('buy-pet-sprite', function() { buyCosmetic('sprite'); });
+    addTouchClick('buy-pet-comet', function() { buyCosmetic('comet'); });
     addTouchClick('share-btn-gameover', shareScore);
     addTouchClick('buy-shadow30', function() { buyShadowRate(30); });
     addTouchClick('exit-btn-title', function() {
