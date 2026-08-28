@@ -1242,8 +1242,8 @@ function getGlowSprite(color, size) {
     grad.addColorStop(1, 'transparent');
     // hex -> rgba with alpha fade
     let c0 = color, c1 = color;
-    if (color[0] === '#') {
-        const r = parseInt(color.substr(1,2),16), g = parseInt(color.substr(3,2),16), b = parseInt(color.substr(5,2),16);
+    if (color[0] === '#' && color.length >= 7) {
+        const r = parseInt(color.substr(1,2),16) || 0, g = parseInt(color.substr(3,2),16) || 0, b = parseInt(color.substr(5,2),16) || 0;
         c0 = 'rgba(' + r + ',' + g + ',' + b + ',0.9)';
         c1 = 'rgba(' + r + ',' + g + ',' + b + ',0)';
     }
@@ -1677,8 +1677,8 @@ function drawCrystal() {
     crystalShapePath(s);
 
     // Glass fill — uses the player's chosen crystal color
-    const cc = SETTINGS.crystalColor; // #rrggbb
-    const ccR = parseInt(cc.substr(1, 2), 16), ccG = parseInt(cc.substr(3, 2), 16), ccB = parseInt(cc.substr(5, 2), 16);
+    const cc = (SETTINGS.crystalColor && SETTINGS.crystalColor.length === 7) ? SETTINGS.crystalColor : '#80a0ff';
+    const ccR = parseInt(cc.substr(1, 2), 16) || 0, ccG = parseInt(cc.substr(3, 2), 16) || 0, ccB = parseInt(cc.substr(5, 2), 16) || 0;
     const glassGrad = ctx.createLinearGradient(-s, 0, s * 1.4, 0);
     glassGrad.addColorStop(0, 'rgba(' + ccR + ',' + ccG + ',' + ccB + ',0.25)');
     glassGrad.addColorStop(0.5, 'rgba(' + ccR + ',' + ccG + ',' + ccB + ',0.45)');
@@ -3924,10 +3924,11 @@ function drawPet() {
 }
 function petCoinMagnet(dt) {
     if (COSMETICS.pet === 'nopet') return;
+    if (!game.coinEntities || game.coinEntities.length === 0) return;
     const ang = game.time * 2.2;
     const px = crystal.x + Math.cos(ang) * 46;
     const py = crystal.y + Math.sin(ang) * 46;
-    for (const c of coins) {
+    for (const c of game.coinEntities) {
         const d = Math.hypot(c.x - px, c.y - py);
         if (d < 90 && d > 1) {
             c.x += ((px - c.x) / d) * 220 * dt;
