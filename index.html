@@ -1713,13 +1713,13 @@ function drawCrystal() {
 
     ctx.restore();
 
-    // ─── Username floating near the crystal ───
+    // ─── Username + avatar floating near the crystal ───
     if (SETTINGS.username) {
         ctx.save();
         ctx.font = 'bold 13px Segoe UI, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
-        const label = SETTINGS.username;
+        const label = getAvatar() + ' ' + SETTINGS.username;
         const ty = crystal.y - crystal.size * 1.9;
         // Soft dark backing for readability
         const tw = ctx.measureText(label).width;
@@ -3577,11 +3577,21 @@ function drawScoreCard() {
     ctx.fillText('SPECTRUM SLICE', W / 2, y + 44);
     ctx.font = '700 13px Segoe UI, sans-serif';
     ctx.fillStyle = '#8888bb';
-    ctx.fillText((SETTINGS.username || 'Player') + '  •  Lv ' + getLevelInfo().level + ' ' + getLevelInfo().title, W / 2, y + 68);
+    ctx.fillText(getAvatar() + '  ' + (SETTINGS.username || 'Player') + '  •  Lv ' + getLevelInfo().level + ' ' + getLevelInfo().title, W / 2, y + 68);
+    // Avatar badge on the score card, left of the big score
+    ctx.font = '38px sans-serif';
+    ctx.textBaseline = 'middle';
+    const scoreLabel = game.score.toLocaleString();
+    ctx.font = '900 44px Segoe UI, sans-serif';
+    const scoreW = ctx.measureText(scoreLabel).width;
+    const avX = W / 2 - scoreW / 2 - 30;
+    ctx.font = '38px sans-serif';
+    ctx.fillText(getAvatar(), avX, y + 112);
+    ctx.textBaseline = 'alphabetic';
     // Score big
     ctx.font = '900 44px Segoe UI, sans-serif';
     ctx.fillStyle = '#ffffff';
-    ctx.fillText(game.score.toLocaleString(), W / 2, y + 118);
+    ctx.fillText(scoreLabel, W / 2, y + 118);
     ctx.font = '700 13px Segoe UI, sans-serif';
     ctx.fillStyle = '#8888bb';
     ctx.fillText('SCORE', W / 2, y + 136);
