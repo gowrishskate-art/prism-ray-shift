@@ -948,7 +948,29 @@ button {
             <button class="shop-buy" id="buy-shadow15">20 coins</button>
         </div>
     </div>
-    <button class="btn" id="shop-back-btn" style="margin-top: 30px;">Back</button>
+    <div class="shop-section-title">🎯 DAILY REWARDS</div>
+<div class="rewards-hub-section">
+        <div class="wc-title">🎯 Daily Missions</div>
+        <div class="family-sub" style="margin-bottom:10px">3 fresh missions every day!</div>
+        <div id="missions-list"></div>
+    </div>
+    <div class="rewards-hub-section" style="text-align:center">
+        <div class="wc-title">🎡 Fortune Wheel</div>
+        <div class="family-sub">One free spin every day — up to 100 coins!</div>
+        <div id="wheel-result" class="wheel-result">Ready to spin!</div>
+        <button class="btn primary" id="wheel-spin-btn">🎡 SPIN THE WHEEL</button>
+    </div>
+    <div class="rewards-hub-section">
+        <div class="wc-title">🎯 Weekly Challenge</div>
+        <div id="weekly-challenge-box"></div>
+    </div>
+    <div class="rewards-hub-section">
+        <div class="wc-title">😀 Your Avatar</div>
+        <div class="family-sub" style="margin-bottom:10px">Your profile icon!</div>
+        <div id="avatar-picker"></div>
+    </div>
+    
+        <button class="btn" id="shop-back-btn" style="margin-top: 30px;">Back</button>
 </div>
 
 <!-- LEADERBOARD SCREEN -->
@@ -1013,26 +1035,6 @@ button {
         <div class="settings-label">Sound</div>
         <div class="settings-slider-row"><span>Music</span><input type="range" id="music-vol" min="0" max="100" value="35"></div>
         <div class="settings-slider-row"><span>SFX</span><input type="range" id="sfx-vol" min="0" max="100" value="80"></div>
-    </div>
-    <div class="rewards-hub-section">
-        <div class="wc-title">🎯 Daily Missions</div>
-        <div class="family-sub" style="margin-bottom:10px">3 fresh missions every day!</div>
-        <div id="missions-list"></div>
-    </div>
-    <div class="rewards-hub-section" style="text-align:center">
-        <div class="wc-title">🎡 Fortune Wheel</div>
-        <div class="family-sub">One free spin every day — up to 100 coins!</div>
-        <div id="wheel-result" class="wheel-result">Ready to spin!</div>
-        <button class="btn primary" id="wheel-spin-btn">🎡 SPIN THE WHEEL</button>
-    </div>
-    <div class="rewards-hub-section">
-        <div class="wc-title">🎯 Weekly Challenge</div>
-        <div id="weekly-challenge-box"></div>
-    </div>
-    <div class="rewards-hub-section">
-        <div class="wc-title">😀 Your Avatar</div>
-        <div class="family-sub" style="margin-bottom:10px">Your profile icon!</div>
-        <div id="avatar-picker"></div>
     </div>
     <button class="btn" id="settings-shop-btn">Shop</button>
     <button class="btn" id="settings-ach-btn">Achievements</button>
@@ -4509,6 +4511,10 @@ function openShop() {
     showScreen('shop');
     renderShop();
     renderModePicker();
+    renderMissions();
+    renderWheelState();
+    renderWeeklyChallenge();
+    renderAvatarPicker();
 }
 
 function renderShop() {
@@ -5069,7 +5075,7 @@ function init() {
     addTouchClick('pause-btn', togglePause);
     addTouchClick('playagain-btn', startGame);
     addTouchClick('menu-btn', goToTitle);
-    addTouchClick('settings-btn-title', function() { openSettings(); renderMissions(); renderWheelState(); renderWeeklyChallenge(); renderAvatarPicker(); });
+    addTouchClick('settings-btn-title', openSettings);
     addTouchClick('wheel-spin-btn', spinFortuneWheel);
 
     // Game mode picker (shop cards)
@@ -5083,7 +5089,7 @@ function init() {
 
     // Title shortcut: open shop to change mode
     addTouchClick('change-mode-btn', function() { openShop(); });
-    addTouchClick('settings-btn-gameover', function() { openSettings(); renderMissions(); renderWheelState(); renderWeeklyChallenge(); renderAvatarPicker(); });
+    addTouchClick('settings-btn-gameover', openSettings);
     addTouchClick('settings-save-btn', saveSettingsFromUI);
     addTouchClick('settings-shop-btn', openShop);
     addTouchClick('settings-ach-btn', openAchievements);
