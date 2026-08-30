@@ -737,8 +737,6 @@ button {
     </div>
     <div class="title-music-label">🎵 Choose Your Music:</div>
     <div id="title-music-bar" class="title-music-bar"></div>
-    <div class="mode-picker-label">Game Mode: <b id="current-mode-label" style="color:#7dffc8">🎮 Classic</b></div>
-    <button class="btn" id="change-mode-btn">Change Mode (in Shop)</button>
     <button class="btn primary" id="play-btn">Play</button>
     <button class="btn" id="how-btn">How to Play</button>
     <button class="btn" id="settings-btn-title">Settings</button>
@@ -4044,12 +4042,7 @@ function renderModePicker() {
             btn.classList.toggle('affordable', gameMode !== mode);
         }
     });
-    // Title screen label shows current mode
-    const label = document.getElementById('current-mode-label');
-    if (label) {
-        const md = GAME_MODES[gameMode];
-        label.textContent = md.icon + ' ' + md.name;
-    }
+    // (title-screen mode label removed)
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -5160,8 +5153,6 @@ function init() {
     });
     renderModePicker();
 
-    // Title shortcut: open shop to change mode
-    addTouchClick('change-mode-btn', function() { openShop(); });
     addTouchClick('settings-btn-gameover', openSettings);
     addTouchClick('settings-save-btn', saveSettingsFromUI);
     addTouchClick('settings-shop-btn', openShop);
