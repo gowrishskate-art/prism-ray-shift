@@ -1104,6 +1104,20 @@ function updateTitleTime() {
         unEl.style.fontWeight = '600';
     }
 }
+
+// ─── Permanent-upgrade toggles (own forever, switch ON/OFF anytime) ───
+const UPGRADE_TOGGLES = JSON.parse(localStorage.getItem('ss_upgradeToggles') || '{}');
+function upgradeActive(id) {
+    if (SHOP_DATA.owned.indexOf(id) < 0) return false;
+    return UPGRADE_TOGGLES[id] !== false; // default ON once owned
+}
+function toggleUpgrade(id) {
+    if (SHOP_DATA.owned.indexOf(id) < 0) return;
+    UPGRADE_TOGGLES[id] = !upgradeActive(id);
+    localStorage.setItem('ss_upgradeToggles', JSON.stringify(UPGRADE_TOGGLES));
+    renderShop();
+}
+
 const UPGRADES = {
     fourBeam:   { id: 'fourBeam',   cost: 100000, name: 'Quadruple Beams' },
     doublePts:  { id: 'doublePts',  cost: 250000, name: 'Double Points' },
@@ -1800,7 +1814,7 @@ function computeRays() {
         }
     } else {
         // RGB split — 3 beams normally, 4 with upgrade
-        const hasFourBeam = SHOP_DATA.owned.indexOf('fourBeam') >= 0;
+        const hasFourBeam = upgradeActive('fourBeam');
         const numBeams = hasFourBeam ? 4 : 3;
         const baseAngle = crystal.aimAngle;
         const spread = hasFourBeam ? 0.26 : 0.30;
@@ -1889,7 +1903,7 @@ function spawnEnemy(isBoss) {
             speed: (22 + game.wave * 1.5) * 1.5 * diff().speedMult,
         });
     } else {
-        const hasFourBeam = SHOP_DATA.owned.indexOf('fourBeam') >= 0;
+        const hasFourBeam = upgradeActive('fourBeam');
         const colorIdx = Math.floor(Math.random() * (hasFourBeam ? 4 : 3));
 
         // ─── Enemy variant selection ───
@@ -2530,7 +2544,7 @@ function killEnemy(idx, color, isBossKill) {
     missionStat('combo', game.combo, true);
 
     // Score
-    const hasDouble = SHOP_DATA.owned.indexOf('doublePts') >= 0;
+    const hasDouble = upgradeActive('doublePts');
     const baseScore = isBossKill ? (hasDouble ? 1250 : 500) : (hasDouble ? 250 : 100);
     const comboMult = Math.min(1 + game.combo * 0.1, 5);
     const earned = Math.floor(baseScore * comboMult);
@@ -4563,9 +4577,15 @@ function renderShop() {
         if (owned) {
             card.classList.add('owned');
             card.classList.remove('locked');
-            btn.textContent = 'Owned';
-            btn.classList.add('disabled');
-            btn.classList.remove('affordable');
+            if (upgradeActive(u.id)) {
+                btn.textContent = 'ON — tap to turn OFF';
+                btn.classList.remove('disabled');
+                btn.classList.add('affordable');
+            } else {
+                btn.textContent = 'OFF — tap to turn ON';
+                btn.classList.remove('affordable');
+                btn.classList.remove('disabled');
+            }
         } else {
             card.classList.remove('owned');
             btn.textContent = u.cost.toLocaleString();
@@ -5145,8 +5165,8 @@ function init() {
     addTouchClick('settings-back-btn', goToTitle);
     addTouchClick('shop-back-btn', goToTitle);
     addTouchClick('lb-back-btn', goToTitle);
-    addTouchClick('buy-4beam', function() { buyUpgrade('fourBeam'); });
-    addTouchClick('buy-double', function() { buyUpgrade('doublePts'); });
+    addTouchClick('buy-4beam', function() { if (SHOP_DATA.owned.indexOf('fourBeam') >= 0) toggleUpgrade('fourBeam'); else buyUpgrade('fourBeam'); });
+    addTouchClick('buy-double', function() { if (SHOP_DATA.owned.indexOf('doublePts') >= 0) toggleUpgrade('doublePts'); else buyUpgrade('doublePts'); });
     addTouchClick('buy-shadow10', function() { buyShadowRate(10); });
     addTouchClick('buy-shadow15', function() { buyShadowRate(15); });
     addTouchClick('buy-diff-easy', function() { setDifficulty('easy'); });
