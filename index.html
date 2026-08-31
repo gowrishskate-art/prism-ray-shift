@@ -315,6 +315,9 @@ body.no-touch #dir-controls { display: none !important; }
 #shop-screen {
     background: radial-gradient(ellipse at 50% 30%, #0a0828 0%, #050018 50%, #030010 100%);
     overflow-y: auto; padding: 30px 20px;
+    justify-content: flex-start;   /* long content must start at TOP — vertical centering
+                                      pushed early cards above the unreachable scroll area */
+    align-items: center;
 }
 .shop-title {
     font-size: clamp(36px, 7vw, 60px); font-weight: 900;
@@ -772,6 +775,49 @@ button {
     <div class="shop-points-label">Total Points Earned</div>
     <div class="shop-points" id="shop-points">0</div>
     <div class="shop-section-label">Upgrades</div><div class="shop-grid">
+        <div class="shop-section-title">💎 CRYSTAL SHAPES</div>
+        <div class="shop-card" id="card-shape-triangle">
+            <div class="shop-icon" style="background:rgba(0,255,170,0.2);color:#00ffaa">▲</div>
+            <div class="shop-info"><div class="shop-name">Triangle Crystal</div>
+            <div class="shop-desc">Classic 3-sided prism.</div></div>
+            <button class="shop-buy" id="buy-shape-triangle">35 coins</button>
+        </div>
+        <div class="shop-card" id="card-shape-star">
+            <div class="shop-icon" style="background:rgba(255,215,0,0.2);color:#ffd700">⭐</div>
+            <div class="shop-info"><div class="shop-name">Star Crystal</div>
+            <div class="shop-desc">5-point star shape.</div></div>
+            <button class="shop-buy" id="buy-shape-star">30 coins</button>
+        </div>
+        <div class="shop-card" id="card-shape-diamond">
+            <div class="shop-icon" style="background:rgba(120,220,255,0.2);color:#78dcff">💎</div>
+            <div class="shop-info"><div class="shop-name">Diamond Crystal</div>
+            <div class="shop-desc">Classic gem shape.</div></div>
+            <button class="shop-buy" id="buy-shape-diamond">45 coins</button>
+        </div>
+        <div class="shop-card" id="card-shape-hexagon">
+            <div class="shop-icon" style="background:rgba(187,24,255,0.2);color:#bb18ff">⬡</div>
+            <div class="shop-info"><div class="shop-name">Hexagon Crystal</div>
+            <div class="shop-desc">Six-sided prism.</div></div>
+            <button class="shop-buy" id="buy-shape-hexagon">60 coins</button>
+        </div>
+        <div class="shop-card" id="card-shape-heart">
+            <div class="shop-icon" style="background:rgba(255,64,129,0.2);color:#ff4081">💗</div>
+            <div class="shop-info"><div class="shop-name">Heart Crystal</div>
+            <div class="shop-desc">Spread the love.</div></div>
+            <button class="shop-buy" id="buy-shape-heart">40 coins</button>
+        </div>
+        <div class="shop-card" id="card-shape-lightning">
+            <div class="shop-icon" style="background:rgba(255,230,0,0.2);color:#ffe600">⚡</div>
+            <div class="shop-info"><div class="shop-name">Lightning Crystal</div>
+            <div class="shop-desc">Electrifying bolt shape.</div></div>
+            <button class="shop-buy" id="buy-shape-lightning">40 coins</button>
+        </div>
+        <div class="shop-card" id="card-shape-crescent">
+            <div class="shop-icon" style="background:rgba(180,220,255,0.2);color:#b4dcff">🌙</div>
+            <div class="shop-info"><div class="shop-name">Crescent Crystal</div>
+            <div class="shop-desc">Moon-shaped prism.</div></div>
+            <button class="shop-buy" id="buy-shape-crescent">40 coins</button>
+        </div>
         <div class="shop-card" id="card-4beam">
             <div class="shop-icon" style="background:rgba(187,24,255,0.2);color:#bb18ff">+1</div>
             <div class="shop-info">
@@ -830,48 +876,6 @@ button {
             <div class="shop-info"><div class="shop-name">Nightmare Mode</div>
             <div class="shop-desc">1 life, 2x speed. Beat the Shadow King to unlock!</div></div>
             <button class="shop-buy mode-btn">Select</button>
-        </div>
-        <div class="shop-card" id="card-shape-triangle">
-            <div class="shop-icon" style="background:rgba(0,255,170,0.2);color:#00ffaa">▲</div>
-            <div class="shop-info"><div class="shop-name">Triangle Crystal</div>
-            <div class="shop-desc">Classic 3-sided prism.</div></div>
-            <button class="shop-buy" id="buy-shape-triangle">35 coins</button>
-        </div>
-        <div class="shop-card" id="card-shape-star">
-            <div class="shop-icon" style="background:rgba(255,215,0,0.2);color:#ffd700">⭐</div>
-            <div class="shop-info"><div class="shop-name">Star Crystal</div>
-            <div class="shop-desc">5-point star shape.</div></div>
-            <button class="shop-buy" id="buy-shape-star">30 coins</button>
-        </div>
-        <div class="shop-card" id="card-shape-diamond">
-            <div class="shop-icon" style="background:rgba(120,220,255,0.2);color:#78dcff">💎</div>
-            <div class="shop-info"><div class="shop-name">Diamond Crystal</div>
-            <div class="shop-desc">Classic gem shape.</div></div>
-            <button class="shop-buy" id="buy-shape-diamond">45 coins</button>
-        </div>
-        <div class="shop-card" id="card-shape-hexagon">
-            <div class="shop-icon" style="background:rgba(187,24,255,0.2);color:#bb18ff">⬡</div>
-            <div class="shop-info"><div class="shop-name">Hexagon Crystal</div>
-            <div class="shop-desc">Six-sided prism.</div></div>
-            <button class="shop-buy" id="buy-shape-hexagon">60 coins</button>
-        </div>
-        <div class="shop-card" id="card-shape-heart">
-            <div class="shop-icon" style="background:rgba(255,64,129,0.2);color:#ff4081">💗</div>
-            <div class="shop-info"><div class="shop-name">Heart Crystal</div>
-            <div class="shop-desc">Spread the love.</div></div>
-            <button class="shop-buy" id="buy-shape-heart">40 coins</button>
-        </div>
-        <div class="shop-card" id="card-shape-lightning">
-            <div class="shop-icon" style="background:rgba(255,230,0,0.2);color:#ffe600">⚡</div>
-            <div class="shop-info"><div class="shop-name">Lightning Crystal</div>
-            <div class="shop-desc">Electrifying bolt shape.</div></div>
-            <button class="shop-buy" id="buy-shape-lightning">40 coins</button>
-        </div>
-        <div class="shop-card" id="card-shape-crescent">
-            <div class="shop-icon" style="background:rgba(180,220,255,0.2);color:#b4dcff">🌙</div>
-            <div class="shop-info"><div class="shop-name">Crescent Crystal</div>
-            <div class="shop-desc">Moon-shaped prism.</div></div>
-            <button class="shop-buy" id="buy-shape-crescent">40 coins</button>
         </div>
         <div class="shop-card" id="card-trail-rainbow">
             <div class="shop-icon" style="background:rgba(255,215,0,0.2);color:#ffd700">🌈</div>
