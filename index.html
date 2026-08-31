@@ -877,6 +877,12 @@ button {
             <div class="shop-desc">1 life, 2x speed. Beat the Shadow King to unlock!</div></div>
             <button class="shop-buy mode-btn">Select</button>
         </div>
+        <div class="shop-card" id="card-trail-none">
+            <div class="shop-icon" style="background:rgba(120,130,150,0.2);color:#9aa5b8">🚫</div>
+            <div class="shop-info"><div class="shop-name">No Trail</div>
+            <div class="shop-desc">Clean crystal — no trail at all. Free!</div></div>
+            <button class="shop-buy" id="buy-trail-none">Free</button>
+        </div>
         <div class="shop-card" id="card-trail-rainbow">
             <div class="shop-icon" style="background:rgba(255,215,0,0.2);color:#ffd700">🌈</div>
             <div class="shop-info"><div class="shop-name">Rainbow Trail</div>
@@ -1728,7 +1734,8 @@ function drawCrystal() {
         ctx.font = 'bold 13px Segoe UI, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
-        const label = getAvatar() + ' ' + SETTINGS.username;
+        const av = getAvatar();
+        const label = av ? av + ' ' + SETTINGS.username : SETTINGS.username;
         const ty = crystal.y - crystal.size * 1.9;
         // Soft dark backing for readability
         const tw = ctx.measureText(label).width;
@@ -3634,7 +3641,8 @@ function drawScoreCard() {
     ctx.fillText('SPECTRUM SLICE', W / 2, y + 44);
     ctx.font = '700 13px Segoe UI, sans-serif';
     ctx.fillStyle = '#8888bb';
-    ctx.fillText(getAvatar() + '  ' + (SETTINGS.username || 'Player') + '  •  Lv ' + getLevelInfo().level + ' ' + getLevelInfo().title, W / 2, y + 68);
+    const hdrAv = getAvatar();
+    ctx.fillText((hdrAv ? hdrAv + '  ' : '') + (SETTINGS.username || 'Player') + '  •  Lv ' + getLevelInfo().level + ' ' + getLevelInfo().title, W / 2, y + 68);
     // Avatar badge on the score card, left of the big score
     ctx.font = '38px sans-serif';
     ctx.textBaseline = 'middle';
@@ -3642,8 +3650,10 @@ function drawScoreCard() {
     ctx.font = '900 44px Segoe UI, sans-serif';
     const scoreW = ctx.measureText(scoreLabel).width;
     const avX = W / 2 - scoreW / 2 - 30;
-    ctx.font = '38px sans-serif';
-    ctx.fillText(getAvatar(), avX, y + 112);
+    if (hdrAv) {
+        ctx.font = '38px sans-serif';
+        ctx.fillText(hdrAv, avX, y + 112);
+    }
     ctx.textBaseline = 'alphabetic';
     // Score big
     ctx.font = '900 44px Segoe UI, sans-serif';
@@ -3929,17 +3939,20 @@ function triggerVictorySpin() {
 }
 
 // ─── Avatars ───
-const AVATARS = ['🧊','🔥','⚡','🌟','🦊','🐼','🚀','👾','🦄','🌊'];
+const AVATARS = ['🧊','🔥','⚡','🌟','🦊','🐼','🚀','👾','🦄','🌊']; // '' (empty) = no avatar
 function getAvatar() {
-    return localStorage.getItem('ss_avatar') || '🧊';
+    // '' (empty) means No Avatar — must not fall back to default
+    const v = localStorage.getItem('ss_avatar');
+    return v === null ? '🧊' : v;
 }
 function renderAvatarPicker() {
     const el = document.getElementById('avatar-picker');
     if (!el) return;
     const cur = getAvatar();
+    const noneBtn = '<button class="avatar-btn' + (cur === '' ? ' selected' : '') + '" data-avatar="">🚫 None</button>';
     el.innerHTML = AVATARS.map(a =>
         '<button class="avatar-btn' + (a === cur ? ' selected' : '') + '" data-avatar="' + a + '">' + a + '</button>'
-    ).join('');
+    ).join('') + noneBtn;
     el.querySelectorAll('.avatar-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
             localStorage.setItem('ss_avatar', btn.getAttribute('data-avatar'));
@@ -5179,6 +5192,7 @@ function init() {
     addTouchClick('buy-shape-star', function() { buyCosmetic('star'); });
     addTouchClick('buy-shape-diamond', function() { buyCosmetic('diamond'); });
     addTouchClick('buy-shape-hexagon', function() { buyCosmetic('hexagon'); });
+    addTouchClick('buy-trail-none', function() { buyCosmetic('none'); });
     addTouchClick('buy-trail-rainbow', function() { buyCosmetic('rainbow'); });
     addTouchClick('buy-trail-fire', function() { buyCosmetic('fire'); });
     addTouchClick('buy-trail-sparkle', function() { buyCosmetic('sparkle'); });
