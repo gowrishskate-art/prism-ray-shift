@@ -1022,11 +1022,6 @@ button {
     </div>
 
     <button class="btn primary" id="settings-save-btn">Save</button>
-    <div class="settings-section" style="margin-top:14px">
-        <div class="settings-label">Accessibility</div>
-        <button class="btn" id="colorblind-toggle">🎨 Colorblind Mode: OFF</button>
-        <button class="btn" id="announcer-toggle" style="margin-top:8px">🔊 Voice Announcer: ON</button>
-    </div>
     <div class="settings-section">
         <div class="settings-label">Sound</div>
         <div class="settings-slider-row"><span>Music</span><input type="range" id="music-vol" min="0" max="100" value="35"></div>
@@ -2282,17 +2277,6 @@ function drawShadowCreature(e) {
         return;
     }
 
-    // Colorblind helper: distinct symbol per color drawn on body
-    if (COLORBLIND) {
-        ctx.save();
-        ctx.rotate(-e.rotation); // keep symbols upright
-        ctx.fillStyle = c.hex;
-        ctx.font = 'bold ' + Math.max(11, s * 0.8) + 'px sans-serif';
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(['R', 'G', 'B'][e.color] || '?', 0, 0);
-        ctx.restore();
-    }
-
     // Shadow body — jagged blob (normal)
     ctx.beginPath();
     const points = 8;
@@ -2486,7 +2470,6 @@ function killEnemy(idx, color, isBossKill) {
         gems.push({ x: e.x, y: e.y, vx: 0, vy: 0, life: 12, size: 12 });
         createConfetti(e.x, e.y, 90);   // rainbow confetti storm
         createConfetti(W / 2, H / 3, 60);
-        announce('Legendary!');
         showWaveBanner('⭐ LEGENDARY PRISM! ⭐', '+100 coins + free gem!');
         game.flashAlpha = 0.5;
         game.shake = 15;
@@ -2563,8 +2546,6 @@ function killEnemy(idx, color, isBossKill) {
         trackStat('bosses', 1);
         missionStat('bossKills', 1);
         triggerVictorySpin();
-        announce(e.isShadowKing ? 'You defeated the Shadow King! Legend!' : 'Boss destroyed!');
-        if (e.isShadowKing) announce('Victory!');
     } else {
         sfxKill(e.color);
         game.shake = Math.max(game.shake, 4);
@@ -2579,8 +2560,6 @@ function killEnemy(idx, color, isBossKill) {
     // Show combo
     if (game.combo >= 3) {
         showCombo(game.combo);
-        if (game.combo === 10) announce('Rampage!');
-        else if (game.combo === 20) announce('Unstoppable!');
     }
 
     enemies.splice(idx, 1);
@@ -2860,7 +2839,6 @@ function updateWaves(dt) {
         game.flashAlpha = 0.15;
         game.shake = Math.max(game.shake, 5);
         missionStat('wave', game.wave, true);
-        if (game.wave % 10 === 0) announce('Wave ' + game.wave + '!');
         updateHUD();
         }
     }
@@ -3718,13 +3696,6 @@ const BG_THEMES = [
 
 let MUSIC_VOL = parseFloat(localStorage.getItem('ss_musicVol') || '0.35');
 let SFX_VOL = parseFloat(localStorage.getItem('ss_sfxVol') || '0.8');
-const COLORBLIND = localStorage.getItem('ss_colorblind') === 'true';
-function toggleColorblind() {
-    const newVal = !(localStorage.getItem('ss_colorblind') === 'true');
-    localStorage.setItem('ss_colorblind', newVal.toString());
-    location.reload();
-}
-
 const COSMETICS = {
     shape: localStorage.getItem('ss_shape') || 'arrow',
     trail: localStorage.getItem('ss_trail') || 'none',
@@ -3935,17 +3906,6 @@ function crystalShapePath(s) {
 
 
 // ─── Victory spin + announcer voice ───
-let announcerEnabled = localStorage.getItem('ss_announcer') !== 'off';
-function announce(text) {
-    if (!announcerEnabled || !('speechSynthesis' in window)) return;
-    try {
-        // Never queue: skip if something is already speaking (prevents spam freeze)
-        if (speechSynthesis.speaking || speechSynthesis.pending) return;
-        const u = new SpeechSynthesisUtterance(text);
-        u.rate = 1.1; u.pitch = 1.2; u.volume = Math.min(1, SFX_VOL + 0.2);
-        speechSynthesis.speak(u);
-    } catch (err) { /* ignore */ }
-}
 function triggerVictorySpin() {
     crystal.spinTimer = 0.8; // drawCrystal reads this for a 720° flourish
 }
@@ -5157,28 +5117,6 @@ function init() {
     addTouchClick('settings-save-btn', saveSettingsFromUI);
     addTouchClick('settings-shop-btn', openShop);
     addTouchClick('settings-ach-btn', openAchievements);
-
-    // Announcer voice toggle
-    const anBtn = document.getElementById('announcer-toggle');
-    if (anBtn) {
-        const syncAnn = function() {
-            anBtn.textContent = '🔊 Voice Announcer: ' + (announcerEnabled ? 'ON' : 'OFF');
-        };
-        syncAnn();
-        addTouchClickDirect(anBtn, function() {
-            announcerEnabled = !announcerEnabled;
-            localStorage.setItem('ss_announcer', announcerEnabled ? 'on' : 'off');
-            syncAnn();
-            if (announcerEnabled) announce('Voice on!');
-        });
-    }
-
-    // Colorblind toggle (reloads page to apply)
-    const cbBtn = document.getElementById('colorblind-toggle');
-    if (cbBtn) {
-        cbBtn.textContent = '🎨 Colorblind Mode: ' + (localStorage.getItem('ss_colorblind') === 'true' ? 'ON' : 'OFF');
-        addTouchClickDirect(cbBtn, toggleColorblind);
-    }
 
     // Volume sliders
     const mv = document.getElementById('music-vol');
