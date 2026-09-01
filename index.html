@@ -871,6 +871,12 @@ button {
             <div class="shop-desc">60 seconds, 4x shadows — max kills!</div></div>
             <button class="shop-buy mode-btn">Select</button>
         </div>
+        <div class="shop-card mode-shop-card" data-mode="kids">
+            <div class="shop-icon" style="background:rgba(255,150,220,0.2);color:#ff96dc">🧒</div>
+            <div class="shop-info"><div class="shop-name">Kids Mode</div>
+            <div class="shop-desc">Shadows dart 2x faster, 5 per 10s — fast fun!</div></div>
+            <button class="shop-buy mode-btn">Select</button>
+        </div>
         <div class="shop-card mode-shop-card" data-mode="nightmare">
             <div class="shop-icon" style="background:rgba(255,24,69,0.2);color:#ff1845">💀</div>
             <div class="shop-info"><div class="shop-name">Nightmare Mode</div>
@@ -2871,7 +2877,8 @@ function updateWaves(dt) {
     // Spawn shadows at configurable rate (shadowRate per 10 seconds)
     game.shadowSpawnAccum += dt;
     const rushBoost = gameMode === 'rush' ? 4 : 1;
-    const spawnInterval = 10 / (game.shadowRate * diff().rateMult * rushBoost);
+    const effRate = gameMode === 'kids' ? 5 : game.shadowRate;   // Kids: fixed 5 per 10s
+    const spawnInterval = 10 / (effRate * diff().rateMult * rushBoost);
     while (game.shadowSpawnAccum >= spawnInterval) {
         game.shadowSpawnAccum -= spawnInterval;
         if (enemies.filter(e => !e.isBoss).length < 20) {
@@ -3610,10 +3617,14 @@ function setDifficulty(d) {
     renderShop();
 }
 function diff() {
-    // Nightmare mode multiplies on top of chosen difficulty
+    // Mode multipliers on top of chosen difficulty
     const base = DIFFICULTIES[difficulty];
     if (gameMode === 'nightmare') {
         return { lives: 1, speedMult: base.speedMult * 2, rateMult: base.rateMult * 2, name: 'Nightmare' };
+    }
+    if (gameMode === 'kids') {
+        // Kids: shadows dart 2x faster, fixed 5 shadows per 10 seconds
+        return { lives: base.lives, speedMult: base.speedMult * 2, rateMult: 1, name: 'Kids' };
     }
     return base;
 }
@@ -4009,6 +4020,7 @@ const GAME_MODES = {
     classic:   { name: 'Classic',    icon: '🎮' },
     zen:       { name: 'Zen',        icon: '😌' },
     rush:      { name: 'Rush',       icon: '⏱' },
+    kids:      { name: 'Kids',       icon: '🧒' },
     nightmare: { name: 'Nightmare',  icon: '💀' },
 };
 function setGameMode(mode) {
