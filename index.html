@@ -678,6 +678,41 @@ button {
     border-bottom:1px solid rgba(125,255,200,0.25); padding-bottom:4px;
 }
 
+
+/* ─── NEGOTIATOR DEAL UI ─── */
+#negotiator-ui {
+    position: fixed; inset: 0; display: none;
+    align-items: flex-end; justify-content: center;
+    z-index: 60; pointer-events: none;
+    padding-bottom: 90px;
+}
+#negotiator-ui.active { display: flex; }
+.neg-card {
+    pointer-events: auto;
+    background: rgba(18,12,40,0.95);
+    border: 2px solid #ffd700;
+    border-radius: 16px;
+    padding: 16px 20px;
+    max-width: 420px; width: 90%;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(255,215,0,0.3);
+}
+.neg-text { color: #ffe98a; font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+.neg-buttons { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.neg-hint { color: #9a8fc2; font-size: 11px; margin-top: 10px; }
+
+
+#bank-hud.at-risk { color: #ff8844 !important; animation: almost-glow 0.9s ease infinite alternate; }
+#bank-btn.active { display: block !important; }
+
+
+#hotseat-ui {
+    position: fixed; inset: 0; display: none;
+    align-items: center; justify-content: center;
+    z-index: 70; background: rgba(3,0,16,0.7); pointer-events: none;
+}
+#hotseat-ui.active { display: flex; pointer-events: auto; }
+
 </style>
 </head>
 <body>
@@ -692,6 +727,8 @@ button {
     <div class="hud-box" id="hud-coins"><div class="hud-label">Coins</div><div class="hud-val">0</div></div>
     <div class="hud-box" id="hud-username"><div class="hud-val">&nbsp;</div></div>
     <div class="hud-box" id="hud-kills"><div class="hud-label">Kills</div><div class="hud-val">0</div></div>
+    <div class="hud-box" id="bank-hud-box"><div class="hud-label">Bank</div><div class="hud-val" id="bank-hud">🏦 0 | 👝 0</div></div>
+    <button id="bank-btn" style="position:fixed;bottom:76px;left:16px;z-index:30;display:none;background:rgba(255,215,0,0.15);border:2px solid #ffd700;color:#ffd700;border-radius:12px;padding:10px 14px;font-weight:bold;cursor:pointer">🏦 BANK (B)</button>
     <div id="wave-progress"><div id="wave-progress-fill"></div><div id="wave-progress-text">WAVE 1 — 0/6</div></div>
  </div>
 <div id="combo-display"></div>
@@ -723,6 +760,31 @@ button {
     <div class="daily-coins" id="daily-coins-amt">+5 🪙</div>
     <div class="daily-streak" id="daily-streak-txt">Day 1 streak</div>
     <button class="daily-claim" id="daily-claim-btn">Claim!</button>
+</div>
+
+<!-- NEGOTIATOR DEAL UI -->
+<div id="negotiator-ui">
+    <div class="neg-card">
+        <div id="neg-deal-text" class="neg-text">🤝 "Spare me..."</div>
+        <div class="neg-buttons">
+            <button class="btn primary" id="neg-accept-btn">🤝 SPARE</button>
+            <button class="btn" id="neg-fight-btn">⚔ FIGHT (60 coins, risky!)</button>
+        </div>
+        <div class="neg-hint">Spare = safe coins, but it returns stronger · Fight = win 60, lose = GAME OVER</div>
+    </div>
+</div>
+
+<!-- HOT-SEAT DILEMMA UI -->
+<div id="hotseat-ui">
+    <div class="neg-card" style="border-color:#ff96dc">
+        <div class="wc-title">🎙 HOT-SEAT DILEMMA</div>
+        <div id="hotseat-p1" class="neg-text">Pick SECRETLY, then pass!</div>
+        <div class="neg-buttons">
+            <button class="btn primary" id="hotseat-share-btn">🤝 SHARE</button>
+            <button class="btn" id="hotseat-steal-btn">🗡 STEAL</button>
+        </div>
+        <div class="neg-hint">Both share: +8 each · One steals: stealer wins · Both steal: nothing</div>
+    </div>
 </div>
 
 <!-- TITLE SCREEN -->
@@ -1811,6 +1873,11 @@ function drawBeam() {
 // LIGHT SPLITTING — RAY COMPUTATION
 // ═══════════════════════════════════════════════════════════════
 function computeRays() {
+    // commons drain: each firing frame costs shared light energy
+    if (crystal.inBeam && activeRays.length > 0 && !game.tutorialActive) {
+        lightPool.waveBeamsFired += 0.016; // measured in beam-seconds
+        lightBeamDrain(activeRays.length * 0.055);
+    }
     activeRays = [];
     if (!crystal.inBeam) return;
 
@@ -1932,6 +1999,7 @@ function spawnEnemy(isBoss) {
         else if (game.wave >= 9 && r < 0.40) variant = 'shielder';
         else if (game.wave >= 11 && r < 0.46) variant = 'healer';
         else if (game.wave >= 13 && r < 0.53) variant = 'phantom';
+        else if (game.wave >= 16 && r < 0.58) variant = 'mimic';
 
         const baseSpeed = (28 + game.wave * 2.5 + Math.random() * 12) * 1.5 * diff().speedMult;
         const enemy = {
@@ -1977,6 +2045,13 @@ function spawnEnemy(isBoss) {
             enemy.speed = baseSpeed * 1.1;
             enemy.phaseTimer = Math.random() * 4;
             enemy.visible = true;
+        } else if (variant === 'mimic') {
+            enemy.size = 22 * SHADOW_SCALE;
+            enemy.speed = baseSpeed * 0.9;
+            // fakeColor flashes for the first 2.5s; real color hidden after
+            enemy.fakeColor = Math.floor(Math.random() * 3);
+            while (enemy.fakeColor === colorIdx) enemy.fakeColor = Math.floor(Math.random() * 3);
+            enemy.revealTimer = 2.5;
         }
         enemies.push(enemy);
     }
@@ -2016,6 +2091,10 @@ function updateEnemies(dt) {
                 }
             }
         }
+        // Mimic: fake color flashes, then it hides its true color
+        if (e.variant === 'mimic' && e.revealTimer > 0) {
+            e.revealTimer -= dt;
+        }
         // Phantom: fades invisible every few seconds
         if (e.variant === 'phantom') {
             e.phaseTimer += dt;
@@ -2041,6 +2120,18 @@ function updateEnemies(dt) {
         }
         // Shadow King special behavior
         if (e.isShadowKing) updateShadowKing(e, dt);
+        if (e.isTwin) updateTwin(e, dt);
+        // Negotiator behavior
+        if (e.isNegotiator) {
+            const ndx = crystal.x - e.x, ndy = crystal.y - e.y;
+            const ndist = Math.hypot(ndx, ndy);
+            if (ndist > 1) { e.vx = (ndx / ndist) * e.speed * (e.dealRefused ? 1 : 0.35); e.vy = (ndy / ndist) * e.speed * (e.dealRefused ? 1 : 0.35); }
+            // Reached the crystal after refusing the deal = instant game over
+            if (e.dealRefused && ndist < e.size * 0.7 + crystal.size * 0.5) {
+                negotiatorWins();
+                return;
+            }
+        }
 
         // Check collision with crystal (damage player)
         const cd = Math.hypot(crystal.x - e.x, crystal.y - e.y);
@@ -2061,7 +2152,11 @@ function drawEnemies() {
         ctx.translate(e.x, e.y);
         ctx.rotate(e.rotation);
 
-        if (e.isShadowKing) {
+        if (e.isTwin) {
+            drawTwin(e);
+        } else if (e.isNegotiator) {
+            drawNegotiator(e);
+        } else if (e.isShadowKing) {
             drawShadowKing(e);
         } else if (e.isBoss) {
             drawBoss(e);
@@ -2220,6 +2315,38 @@ function drawShadowCreature(e) {
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillStyle = '#ffffff';
         ctx.fillText('⭐', 0, 0);
+        return;
+    }
+    if (e.variant === 'mimic') {
+        // Mimic: same blob as normal but border may LIE about its color
+        const hidden = e.revealTimer > 0;
+        const shownColor = hidden ? RAY_COLORS[e.fakeColor].hex : c.hex;
+        stampGlow(0, 0, shownColor, s * 2, 0.35);
+        ctx.beginPath();
+        const mp = 8;
+        for (let i = 0; i <= mp; i++) {
+            const a = (i / mp) * Math.PI * 2;
+            const r = s * (0.7 + 0.3 * Math.sin(e.wobble + i * 1.7));
+            const px = Math.cos(a) * r, py = Math.sin(a) * r;
+            if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(8,4,16,0.92)';
+        ctx.fill();
+        ctx.strokeStyle = shownColor; ctx.lineWidth = 6; ctx.globalAlpha = 0.45; ctx.stroke();
+        ctx.globalAlpha = 1; ctx.lineWidth = 2.5; ctx.stroke();
+        // telltale: flickering '?' — the ONLY honest hint
+        if (hidden) {
+            ctx.fillStyle = 'rgba(255,255,255,' + (0.4 + 0.4 * Math.sin(game.time * 8)) + ')';
+            ctx.font = 'bold ' + Math.max(10, s * 0.7) + 'px sans-serif';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('?', 0, 0);
+        }
+        ctx.fillStyle = shownColor;
+        ctx.beginPath();
+        ctx.arc(-s * 0.2, -s * 0.1, 2.5, 0, Math.PI * 2);
+        ctx.arc(s * 0.2, -s * 0.1, 2.5, 0, Math.PI * 2);
+        ctx.fill();
         return;
     }
     if (e.variant === 'shielder') {
@@ -2433,6 +2560,22 @@ function checkRayCollisions() {
                 if (ray.colorIdx === 0) e.hitR = 1;
                 else if (ray.colorIdx === 1) e.hitG = 1;
                 else if (ray.colorIdx === 2) e.hitB = 1;
+                // ─── TWIN: shields absorb beams; simultaneous different-color = damage ───
+                if (e.isTwin) {
+                    const res = twinRayCheck(e, ray, hitR);
+                    if (res === 'dead') killEnemy(i, '#7dffc8', true);
+                    continue;
+                }
+                // ─── NEGOTIATOR: immune while offering a deal; chippable once you fight ───
+                if (e.isNegotiator) {
+                    if (!e.dealRefused) { continue; }   // can't shoot a diplomat mid-offer
+                    if (ray.colorIdx === 0 && !e._chipR) { e._chipR = true; e.hp -= 1; e.hitFlash = 0.2; }
+                    if (ray.colorIdx === 1 && !e._chipG) { e._chipG = true; e.hp -= 1; e.hitFlash = 0.2; }
+                    if (ray.colorIdx === 2 && !e._chipB) { e._chipB = true; e.hp -= 1; e.hitFlash = 0.2; }
+                    setTimeout(function() { e._chipR = e._chipG = e._chipB = false; }, 120);
+                    if (e.hp <= 0) killEnemy(i, '#ffd700', true);
+                    continue;
+                }
                 // ─── SHADOW KING: every matched beam chips HP ───
                 if (e.isShadowKing) {
                     if (ray.colorIdx === 0 && !e._chipR) { e._chipR = true; e.hp -= 1; e.hitFlash = 0.2; }
@@ -2453,6 +2596,20 @@ function checkRayCollisions() {
                 // LEGENDARY Rainbow Prism: ANY beam color kills it
                 killEnemy(i, 'hsl(' + (game.time * 120 % 360) + ',100%,60%)');
             } else {
+                // Mimic: while hidden, a FAKE-color hit calls the bluff (reveals, no kill);
+                // a TRUE-color hit kills it outright even while hidden
+                if (e.variant === 'mimic' && e.revealTimer > 0) {
+                    if (ray.colorIdx === e.fakeColor) {
+                        e.revealTimer = 0; // called the bluff — real color now shown
+                        addFloatingText(e.x, e.y - 22, 'BLUFF! Real: ' + RAY_COLORS[e.color].name, '#ffffff');
+                        createExplosion(e.x, e.y, '#ffffff', 6);
+                        continue;
+                    }
+                    if (ray.colorIdx === e.color) {
+                        killEnemy(i, RAY_COLORS[e.color].hex);
+                    }
+                    continue;
+                }
                 // Color match required
                 if (ray.colorIdx === e.color) {
                     // Shielder: absorbs first hit with its shield color, then shield breaks
@@ -2491,11 +2648,15 @@ function killEnemy(idx, color, isBossKill) {
         return; // survives this hit
     }
 
+    // ─── Negotiator defeated in fair fight ───
+    if (e.isNegotiator && e.dealRefused) {
+        negotiatorKilled(e);
+    }
+
     // ─── LEGENDARY Rainbow Prism: 100 coins + guaranteed gem ───
     if (e.rainbowPrism) {
-        game.coins += 100;
-        localStorage.setItem('ss_coins', game.coins.toString());
-        addFloatingText(e.x, e.y - 30, '+100 COINS!', '#ffd700');
+        pouchAdd(100);
+        addFloatingText(e.x, e.y - 30, '+100 COINS! (pouch)', '#ffd700');
         addFloatingText(e.x, e.y - 52, '⭐ LEGENDARY! ⭐', '#ff88ff');
         // guaranteed gem drop
         gems.push({ x: e.x, y: e.y, vx: 0, vy: 0, life: 12, size: 12 });
@@ -2535,6 +2696,8 @@ function killEnemy(idx, color, isBossKill) {
 
     game.kills++;
     game.enemiesKilledThisWave++;
+    lightPool.waveKills++;
+    lightPool.energy = Math.min(100, lightPool.energy + 2); // each kill recharges a little
     trackWeeklyKill();
     missionStat('kills', 1);
     if (e.golden) missionStat('goldKills', 1);
@@ -2844,12 +3007,20 @@ function updateWaves(dt) {
                 // Quota met at 100 → the King descends
                 if (!enemies.some(e => e.isShadowKing)) spawnShadowKing();
             } else if (!enemies.some(e => e.isShadowKing)) {
-                // King defeated → real victory
-                game.coins += 50;
-                localStorage.setItem('ss_coins', game.coins.toString());
-                game.victory = true;
-                game.shadowKing = false;
-                endGame();
+                // King defeated → real victory (or wager win)
+                if (game.wagerActive) {
+                    wagerWon();
+                    // chain continues: offer again from the game-over screen
+                    game.victory = true;
+                    game.shadowKing = false;
+                    endGame();
+                } else {
+                    game.coins += 50;
+                    localStorage.setItem('ss_coins', game.coins.toString());
+                    game.victory = true;
+                    game.shadowKing = false;
+                    endGame();
+                }
                 return;
             }
             // King alive → wave HOLDS here (no advance, no banner spam)
@@ -2866,10 +3037,17 @@ function updateWaves(dt) {
             if (game.lives < 5) { game.lives++; waveSub = '+1 LIFE BONUS!'; }
         }
         if (game.wave === 99) waveSub = 'Final wave! Face the SHADOW KING!';
+        const lwBonus = lightWaveBonus();
+        if (lwBonus > 0) {
+            pouchAdd(lwBonus);
+            setTimeout(function() { addFloatingText(W/2, H*0.4, '⚡ EFFICIENCY BONUS +' + lwBonus, '#7dd8ff'); }, 700);
+        }
         showWaveBanner(waveText, waveSub);
         game.flashAlpha = 0.15;
         game.shake = Math.max(game.shake, 5);
+        lightPoolReset();
         missionStat('wave', game.wave, true);
+        if (game.wave % 5 === 0) setTimeout(openHotseat, 1600);
         updateHUD();
         }
     }
@@ -2888,7 +3066,11 @@ function updateWaves(dt) {
 
     // Boss in EVERY wave
     if (game.bossTimer <= 0 && enemies.filter(e => e.isBoss).length === 0) {
-        if (isMegaBossWave(game.wave)) {
+        if (game.wave >= 6 && game.wave % 4 === 2) {
+            spawnNegotiator();          // the deal-maker every 4th wave
+        } else if (game.wave >= 9 && game.wave % 6 === 3) {
+            spawnSchellingTwin();       // dual-shield coordinator
+        } else if (isMegaBossWave(game.wave)) {
             spawnMegaBoss();
         } else {
             spawnEnemy(true);
@@ -3238,6 +3420,8 @@ function render(dt) {
     // Crystal
     drawCrystal();
     drawPet();
+    drawBankRing();
+    drawLightPoolBar();
 
     // Particles
     drawParticles();
@@ -3353,6 +3537,7 @@ function gameLoop(timestamp) {
     updateCoins(dt);
     petCoinMagnet(dt);
     updateBottles(dt);
+    updateBank(dt);
     updateGems(dt);
     updateParticles(dt);
     updateFloatingTexts(dt);
@@ -3499,6 +3684,9 @@ function startGame() {
     game.endless = false;
     game.shadowKing = false;
     game.rushTimeLeft = 60;
+    coinBank.pouch = 0; coinBank.banked = 0; coinBank.banking = 0;
+    lightPoolReset();
+    updateBankHUD();
     game.megaKillsNeeded = game.megaKillThreshold;
     game.time = 0; game.playTime = 0; game.shake = 0; game.flashAlpha = 0;
     game.paused = false;
@@ -3530,6 +3718,7 @@ function startGame() {
     document.getElementById('achievements-screen').classList.remove('active');
     document.getElementById('hud').classList.add('active');
     document.getElementById('pause-btn').classList.add('active');
+    var bb = document.getElementById('bank-btn'); if (bb) bb.classList.add('active');
     document.getElementById('exit-btn').classList.add('active');
     document.getElementById('dir-controls').classList.add('active');
     document.getElementById('music-bar').classList.remove('active');
@@ -3544,6 +3733,10 @@ function startGame() {
 }
 
 function endGame() {
+    hideNegotiatorUI();
+    if (game.wagerActive && !game.victory) wagerLost();
+    const pouchLost = bankPayout();
+    if (pouchLost > 0) setTimeout(function() { addFloatingText(W/2, H/2 + 40, '👝 LOST ' + pouchLost + ' unbanked coins!', '#ff8844'); }, 500);
     const won = game.victory;
     game.state = 'gameover';
     game.showScoreCard = true;
@@ -3587,14 +3780,15 @@ function endGame() {
     showScreen('gameover');
     document.getElementById('hud').classList.remove('active');
     document.getElementById('pause-btn').classList.remove('active');
+    var bb2 = document.getElementById('bank-btn'); if (bb2) bb2.classList.remove('active');
     document.getElementById('exit-btn').classList.remove('active');
     document.getElementById('dir-controls').classList.remove('active');
     document.getElementById('combo-display').classList.remove('active');
     hideMusicBar();
     stopMusic();
 
-    // Victory at wave 100: offer Endless Mode
-    if (won) offerEndlessMode();
+    // Victory at wave 100: offer Endless Mode + Double-or-Nothing
+    if (won) { offerEndlessMode(); showDoubleOrNothing(); }
 }
 
 
@@ -4210,6 +4404,427 @@ function renderWeeklyChallenge() {
 }
 
 
+
+
+
+
+
+
+// ═══════════════════════════════════════════════════════════════
+// HOT-SEAT DILEMMA — every 5th wave, SHARE or STEAL (pass-and-play)
+// Both SHARE: +8 coins each · One STEALs: stealer takes +15, sharer 0
+// Both STEAL: nothing for anyone (classic prisoner's dilemma payoffs)
+// ═══════════════════════════════════════════════════════════════
+const hotSeat = {
+    waveNum: 0,
+    lastChoices: JSON.parse(localStorage.getItem('ss_hotseat') || '{}'), // name -> share/steal counts
+};
+function hotseatSave() {
+    localStorage.setItem('ss_hotseat', JSON.stringify(hotSeat.lastChoices));
+}
+let hotseatPending = null; // { choice: 'share'|'steal' }
+function openHotseat() {
+    const ui = document.getElementById('hotseat-ui');
+    if (!ui || game.paused) return;
+    game.paused = true;
+    const name1 = SETTINGS.username || 'Player 1';
+    const name2 = 'Next Player';
+    document.getElementById('hotseat-p1').textContent = name1 + ' — pick SECRETLY, then pass!';
+    ui.classList.add('active');
+    hotseatPending = null;
+}
+function hotseatChoose(choice) {
+    const ui = document.getElementById('hotseat-ui');
+    if (!ui.classList.contains('active')) return;
+    if (!hotseatPending) {
+        hotseatPending = { p1: choice };
+        document.getElementById('hotseat-p1').textContent = 'Pass the device... 👉 Next player picks!';
+        document.getElementById('hotseat-share-btn').textContent = '🤝 SHARE (+8 each if both share)';
+        document.getElementById('hotseat-steal-btn').textContent = '🗡 STEAL (+15 if other shares)';
+    } else {
+        // both picked — resolve
+        const p1 = hotseatPending.p1, p2 = choice;
+        let msg;
+        const n1 = (SETTINGS.username || 'Player');
+        if (p1 === 'share' && p2 === 'share') {
+            pouchAdd(8);
+            msg = '🤝 BOTH SHARED! +8 coins each!';
+            createConfetti(W / 2, H / 3, 30);
+        } else if (p1 === 'steal' && p2 === 'share') {
+            msg = '🗡 ' + n1 + ' STOLE everything! (+15 would be banked by them next run)';
+            // record the betrayal for family lore
+            hotSeat.lastChoices[n1] = (hotSeat.lastChoices[n1] || 0) + 1;
+            hotseatSave();
+        } else if (p1 === 'share' && p2 === 'steal') {
+            msg = '🗡 The other player STOLE! You get nothing...';
+            hotSeat.lastChoices['Guest'] = (hotSeat.lastChoices['Guest'] || 0) + 1;
+            hotseatSave();
+        } else {
+            msg = '💀 BOTH STOLE — nobody gets anything!';
+        }
+        ui.classList.remove('active');
+        game.paused = false;
+        showWaveBanner('🎙 HOT-SEAT RESULT', msg);
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SCHELLING TWIN — dual-shield boss (coordination / focal points)
+// Two shields (left/right); each absorbs one color. To damage it,
+// two DIFFERENT beams must strike the two shields at the same time.
+// ═══════════════════════════════════════════════════════════════
+function spawnSchellingTwin() {
+    enemies.push({
+        x: W / 2, y: -70, vx: 0, vy: 0,
+        size: 46 * SHADOW_SCALE, hp: 10, maxHp: 10,
+        color: -1, isBoss: true, isTwin: true,
+        hitR: 0, hitG: 0, hitB: 0,
+        rotation: 0, wobble: Math.random() * Math.PI * 2,
+        speed: (18 + game.wave) * 1.5 * diff().speedMult,
+        shieldLHit: false, shieldRHit: false, shieldLColor: 0, shieldRColor: 1,
+    });
+    // shields get random distinct colors each spawn
+    const a = Math.floor(Math.random() * 3);
+    let b = Math.floor(Math.random() * 3);
+    while (b === a) b = Math.floor(Math.random() * 3);
+    const t = enemies[enemies.length - 1];
+    t.shieldLColor = a; t.shieldRColor = b;
+    showWaveBanner('🔀 THE TWIN', 'Hit BOTH shields with their colors — at the SAME time!');
+}
+function updateTwin(e, dt) {
+    // slow advance
+    const dx = crystal.x - e.x, dy = crystal.y - e.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist > 120) { e.vx = (dx / dist) * e.speed * 0.7; e.vy = (dy / dist) * e.speed * 0.7; }
+    else { e.vx *= 0.9; e.vy *= 0.9; }
+    // simultaneous-hit check: both shields lit this frame -> damage; flags decay fast
+    if (e.shieldLHit && e.shieldRHit) {
+        e.hp -= 1;
+        e.shieldLHit = false; e.shieldRHit = false;
+        addFloatingText(e.x, e.y - 30, 'SYNC HIT!', '#7dffc8');
+        createExplosion(e.x, e.y, '#7dffc8', 10);
+    }
+    e._twinDecay = (e._twinDecay || 0) + dt;
+    if (e._twinDecay > 0.15) { e.shieldLHit = false; e.shieldRHit = false; e._twinDecay = 0; }
+}
+function drawTwin(e) {
+    const s = e.size;
+    stampGlow(0, 0, '#7dffc8', s * 2.4, 0.2);
+    // two joined hexagonal bodies
+    for (const side of [-1, 1]) {
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+            const a = (i / 6) * Math.PI * 2 + 0.5;
+            const px = side * s * 0.55 + Math.cos(a) * s * 0.5;
+            const py = Math.sin(a) * s * 0.5;
+            if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(6,16,14,0.95)';
+        ctx.fill();
+        ctx.strokeStyle = '#7dffc8'; ctx.lineWidth = 3; ctx.stroke();
+    }
+    // left/right shields in their colors — flash when hit
+    const drawShield = (side, colorIdx, hit) => {
+        ctx.beginPath();
+        ctx.arc(0, 0, s * 1.15, side === -1 ? Math.PI * 0.75 : -Math.PI * 0.25, side === -1 ? Math.PI * 1.25 : Math.PI * 0.25);
+        ctx.strokeStyle = RAY_COLORS[colorIdx].hex;
+        ctx.lineWidth = hit ? 10 : 6;
+        ctx.globalAlpha = hit ? 1 : 0.75;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+    };
+    drawShield(-1, e.shieldLColor, e.shieldLHit);
+    drawShield(1, e.shieldRColor, e.shieldRHit);
+    // eyes
+    ctx.fillStyle = '#7dffc8';
+    ctx.beginPath();
+    ctx.arc(-s * 0.55, -s * 0.1, 3, 0, Math.PI * 2);
+    ctx.arc(s * 0.55, -s * 0.1, 3, 0, Math.PI * 2);
+    ctx.fill();
+}
+function twinRayCheck(e, ray, hitDist) {
+    // which side of the boss does this beam cross?
+    const dx = ray.dx, dy = ray.dy;
+    // beam's perpendicular side relative to boss center
+    const cross = (e.x - ray.ox) * dy - (e.y - ray.oy) * dx;
+    const side = cross >= 0 ? -1 : 1; // left or right shield
+    if (side === -1 && ray.colorIdx === e.shieldLColor) e.shieldLHit = true;
+    if (side === 1 && ray.colorIdx === e.shieldRColor) e.shieldRHit = true;
+    if (e.hp <= 0) return 'dead';
+    return 'absorbed';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LIGHT ENERGY — shared commons pool for the wave
+// ═══════════════════════════════════════════════════════════════
+const lightPool = { energy: 100, waveKills: 0, waveBeamsFired: 0 };
+function lightPoolReset() {
+    lightPool.energy = 100;
+    lightPool.waveKills = 0;
+    lightPool.waveBeamsFired = 0;
+}
+function lightBeamDrain(n) {
+    // each active beam frame drains a trickle of shared energy
+    lightPool.energy = Math.max(0, lightPool.energy - n);
+}
+function lightEfficiency() {
+    // kills per beam-fire: 1.0 = perfect (every shot hit)
+    return lightPool.waveBeamsFired > 0 ? Math.min(1, lightPool.waveKills / lightPool.waveBeamsFired) : 1;
+}
+function lightWaveBonus() {
+    // Wave-end bonus scales with how efficiently the commons was used
+    const eff = lightEfficiency();
+    if (eff >= 0.8) return 5;   // sniper
+    if (eff >= 0.5) return 3;   // good
+    return eff >= 0.3 ? 1 : 0;  // wasteful = nothing (commons drained)
+}
+function drawLightPoolBar() {
+    if (game.state !== 'playing' || game.tutorialActive) return;
+    const bw = 110, bh = 7;
+    const bx = W - bw - 12, by = 12;
+    ctx.save();
+    ctx.fillStyle = 'rgba(5,2,15,0.6)';
+    ctx.fillRect(bx - 2, by - 2, bw + 4, bh + 4);
+    ctx.fillStyle = 'rgba(40,30,80,0.9)';
+    ctx.fillRect(bx, by, bw, bh);
+    const pct = lightPool.energy / 100;
+    ctx.fillStyle = pct > 0.5 ? '#7dd8ff' : (pct > 0.2 ? '#ffd700' : '#ff1845');
+    ctx.fillRect(bx, by, bw * pct, bh);
+    ctx.fillStyle = '#9ab8d8';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('⚡' + Math.round(lightPool.energy), bx, by + bh + 10);
+    ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DOUBLE OR NOTHING — wager the King's prize (50, 75, 100, 125...)
+// ═══════════════════════════════════════════════════════════════
+let wagerStreak = parseInt(localStorage.getItem('ss_wagerStreak') || '0', 10);
+function wagerPot() {
+    // 50, 75, 100, 125... = 50 + 25 per consecutive win
+    return 50 + wagerStreak * 25;
+}
+function showDoubleOrNothing() {
+    // Called on Shadow King victory: offer wager on a rematch
+    const goBtns = document.querySelector('.go-buttons');
+    if (!goBtns) return;
+    const old = document.getElementById('wager-btn');
+    if (old) old.remove();
+    const pot = wagerPot();
+    const btn = document.createElement('button');
+    btn.className = 'btn';
+    btn.id = 'wager-btn';
+    btn.textContent = '🎲 DOUBLE or NOTHING (' + pot + ' coins)';
+    addTouchClickDirect(btn, function() {
+        // Wager: 2x difficulty rematch, win = pot, lose = prize forfeited
+        hideWagerBtn();
+        wagerStreak++;  // next pot grows
+        localStorage.setItem('ss_wagerStreak', wagerStreak.toString());
+        game.wagerActive = true;
+        game.state = 'playing';
+        game.showScoreCard = false;
+        game.victory = false;
+        game.shadowKing = false;
+        game.wave = 100;
+        game.enemiesKilledThisWave = 0;
+        game.waveEnemyCount = 5 + Math.floor(game.wave * 1.5);
+        enemies.length = 0;
+        spawnShadowKing();
+        // rematch is HARDER: king gets +50% hp per wager step
+        const king = enemies.find(e => e.isShadowKing);
+        if (king) { king.hp = 30 + wagerStreak * 15; king.maxHp = king.hp; }
+        showWaveBanner('🎲 WAGER REMATCH!', 'Win: +' + (50 + wagerStreak * 25) + ' coins. Lose: prize forfeited!');
+        document.getElementById('hud').classList.add('active');
+        document.getElementById('pause-btn').classList.add('active');
+    });
+    goBtns.appendChild(btn);
+}
+function hideWagerBtn() {
+    const b = document.getElementById('wager-btn');
+    if (b) b.remove();
+}
+function wagerWon() {
+    const pot = wagerPot();
+    game.coins += pot;
+    localStorage.setItem('ss_coins', game.coins.toString());
+    addFloatingText(W / 2, H / 3, '🎲 WAGER WON! +' + pot, '#ffd700');
+    createConfetti(W / 2, H / 3, 70);
+    game.wagerActive = false;
+}
+function wagerLost() {
+    // Prize forfeited, streak resets
+    wagerStreak = 0;
+    localStorage.setItem('ss_wagerStreak', '0');
+    game.wagerActive = false;
+    showWaveBanner('💸 WAGER LOST', 'Streak resets to 50...');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// COIN BANK — push-your-luck pouch (optimal stopping)
+// ═══════════════════════════════════════════════════════════════
+const coinBank = { pouch: 0, banking: 0, banked: 0 };
+function pouchAdd(n) {
+    coinBank.pouch += n;
+    updateBankHUD();
+}
+function startBanking() {
+    if (coinBank.banking > 0 || coinBank.pouch <= 0 || game.state !== 'playing' || game.paused) return;
+    coinBank.banking = 3; // 3 vulnerable seconds
+    addFloatingText(crystal.x, crystal.y - 46, 'BANKING...', '#ffd700');
+}
+function updateBank(dt) {
+    if (coinBank.banking <= 0) return;
+    coinBank.banking -= dt;
+    // draw ring is handled in render; when done:
+    if (coinBank.banking <= 0) {
+        coinBank.banked += coinBank.pouch;
+        addFloatingText(crystal.x, crystal.y - 46, '+' + coinBank.pouch + ' BANKED!', '#ffd700');
+        createConfetti(crystal.x, crystal.y, 15);
+        coinBank.pouch = 0;
+        updateBankHUD();
+    }
+}
+function bankPayout() {
+    // on game end: banked coins are safe, pouch coins are LOST
+    if (coinBank.banked > 0) {
+        game.coins += coinBank.banked;
+        localStorage.setItem('ss_coins', game.coins.toString());
+    }
+    const lost = coinBank.pouch;
+    coinBank.pouch = 0; coinBank.banked = 0; coinBank.banking = 0;
+    lightPoolReset();
+    return lost;
+}
+function updateBankHUD() {
+    const el = document.getElementById('bank-hud');
+    if (!el) return;
+    el.textContent = '🏦 ' + coinBank.banked + ' | 👝 ' + coinBank.pouch;
+    el.classList.toggle('at-risk', coinBank.pouch > 0);
+}
+function lightIntensity() {
+    // beams dim as the commons depletes (visual feedback)
+    return Math.max(0.35, lightPool.energy / 100);
+}
+
+function drawBankRing() {
+    if (coinBank.banking <= 0) return;
+    const p = 1 - (coinBank.banking / 3);
+    ctx.save();
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(crystal.x, crystal.y, crystal.size * 2.2, -Math.PI / 2, -Math.PI / 2 + p * Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// THE NEGOTIATOR — prisoner's-dilemma boss with reputation memory
+// ═══════════════════════════════════════════════════════════════
+const NEGOTIATOR = {
+    spareStreak: parseInt(localStorage.getItem('ss_negSpareStreak') || '0', 10),
+    betrayals: parseInt(localStorage.getItem('ss_negBetrayals') || '0', 10),
+    failStreak: parseInt(localStorage.getItem('ss_negFailStreak') || '0', 10),
+    offerWave: 0,
+};
+function negSave() {
+    localStorage.setItem('ss_negSpareStreak', NEGOTIATOR.spareStreak);
+    localStorage.setItem('ss_negBetrayals', NEGOTIATOR.betrayals);
+    localStorage.setItem('ss_negFailStreak', NEGOTIATOR.failStreak);
+}
+function negotiatorDeal() {
+    // Cooperate payout improves with trust: 30 base +10 per spare streak (max 60)
+    if (NEGOTIATOR.failStreak > 0) {
+        // After a failed fight, pity deal: 10 + 5 per previous fail (10, 15, 20...)
+        return 10 + (NEGOTIATOR.failStreak - 1) * 5;
+    }
+    return Math.min(60, 30 + NEGOTIATOR.spareStreak * 10);
+}
+function negotiatorAppears() { return NEGOTIATOR.betrayals < 3; } // 3+ betrayals = attacks on sight
+function spawnNegotiator() {
+    enemies.push({
+        x: W / 2, y: -70, vx: 0, vy: 0,
+        size: 40 * SHADOW_SCALE, hp: 6, maxHp: 6,
+        color: -1, isBoss: true, isNegotiator: true,
+        hitR: 0, hitG: 0, hitB: 0,
+        rotation: 0, wobble: Math.random() * Math.PI * 2,
+        speed: (20 + game.wave) * 1.5 * diff().speedMult,
+        dealRefused: false,
+    });
+    if (negotiatorAppears()) {
+        const deal = negotiatorDeal();
+        showNegotiatorUI(deal);
+        showWaveBanner('🤝 THE NEGOTIATOR', 'Accept the deal... or FIGHT for 60!');
+    } else {
+        showWaveBanner('😠 NEGOTIATOR (NO DEALS)', 'You betrayed too many — it attacks!');
+    }
+}
+function showNegotiatorUI(deal) {
+    const wrap = document.getElementById('negotiator-ui');
+    if (!wrap) return;
+    document.getElementById('neg-deal-text').textContent =
+        '🤝 "Spare me and I drop ' + deal + ' coins — I return next wave stronger."';
+    document.getElementById('neg-accept-btn').textContent = '🤝 SPARE (' + deal + ' coins)';
+    wrap.classList.add('active');
+}
+function hideNegotiatorUI() {
+    const wrap = document.getElementById('negotiator-ui');
+    if (wrap) wrap.classList.remove('active');
+}
+// COOPERATE path
+function negotiatorSpare() {
+    const e = enemies.find(en => en.isNegotiator);
+    const deal = negotiatorDeal();
+    if (e) {
+        pouchAdd(deal);
+        addFloatingText(e.x, e.y - 30, '+' + deal + ' COINS (pouch)', '#ffd700');
+        createConfetti(e.x, e.y, 25);
+        // remove peacefully
+        enemies.splice(enemies.indexOf(e), 1);
+        game.enemiesKilledThisWave++; // counts toward wave quota
+    }
+    NEGOTIATOR.spareStreak++;
+    NEGOTIATOR.failStreak = 0;
+    negSave();
+    hideNegotiatorUI();
+    showWaveBanner('🤝 DEAL ACCEPTED', '+' + deal + ' coins. It returns stronger...');
+}
+// DEFECT path — fight begins; if it reaches the crystal, GAME OVER + pity next time
+function negotiatorFight() {
+    hideNegotiatorUI();
+    const e = enemies.find(en => en.isNegotiator);
+    if (!e) return;
+    e.dealRefused = true;
+    e.hp = 6; e.maxHp = 6;
+    e.speed *= 1.6;                       // stronger after refusing the deal
+    showWaveBanner('⚔ FIGHT!', 'Kill it for 60 coins — or it ends your run!');
+    // Betrayal memory: refusing a deal counts if you had been offered trust
+    NEGOTIATOR.spareStreak = 0;
+    NEGOTIATOR.betrayals++;
+    negSave();
+}
+function negotiatorKilled(e) {
+    // Won the fight
+    pouchAdd(60);
+    addFloatingText(e.x, e.y - 30, '+60 COINS!', '#ffd700');
+    createConfetti(e.x, e.y, 50);
+    NEGOTIATOR.failStreak = 0;
+    NEGOTIATOR.spareStreak = 0;
+    negSave();
+    showWaveBanner('🏆 FIGHT WON!', 'Winner takes all: +60 coins');
+}
+function negotiatorWins() {
+    // Player FAILED the fight: entire game lost + pity deal degrades
+    NEGOTIATOR.failStreak++;
+    NEGOTIATOR.spareStreak = 0;
+    negSave();
+    showWaveBanner('💀 THE NEGOTIATOR WINS', 'Your run ends here...');
+    game.lives = 0;
+    endGame();
+}
+
 // ═══════════════════════════════════════════════════════════════
 // SHADOW KING — final boss at wave 100 (3 phases, HP bar)
 // ═══════════════════════════════════════════════════════════════
@@ -4290,6 +4905,36 @@ function drawShadowKing(e) {
     ctx.moveTo(s * 0.35, -s * 0.15); ctx.lineTo(s * 0.1, -s * 0.05); ctx.lineTo(s * 0.35, s * 0.08); ctx.closePath();
     ctx.fill();
 }
+
+function drawNegotiator(e) {
+    const s = e.size;
+    stampGlow(0, 0, '#ffd700', s * 2.6, 0.22);
+    // blob body
+    ctx.beginPath();
+    const pts = 10;
+    for (let i = 0; i <= pts; i++) {
+        const a = (i / pts) * Math.PI * 2;
+        const r = s * (0.8 + 0.15 * Math.sin(e.wobble + i * 1.8));
+        const px = Math.cos(a) * r, py = Math.sin(a) * r;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(20,14,2,0.95)';
+    ctx.fill();
+    const borderColor = e.dealRefused ? '#ff1845' : '#ffd700';
+    ctx.strokeStyle = borderColor; ctx.lineWidth = 9; ctx.globalAlpha = 0.5; ctx.stroke();
+    ctx.globalAlpha = 1; ctx.lineWidth = 4; ctx.stroke();
+    // eyes: shifty while talking, angry when fighting
+    ctx.fillStyle = e.dealRefused ? '#ff1845' : '#ffd700';
+    ctx.beginPath();
+    ctx.arc(-s * 0.3 + (e.dealRefused ? 0 : Math.sin(e.wobble * 3) * s * 0.08), -s * 0.1, 3, 0, Math.PI * 2);
+    ctx.arc(s * 0.3 - (e.dealRefused ? 0 : Math.sin(e.wobble * 3) * s * 0.08), -s * 0.1, 3, 0, Math.PI * 2);
+    ctx.fill();
+    // deal hat 🤝 emblem / crossed swords when refused
+    ctx.font = 'bold ' + Math.max(12, s * 0.7) + 'px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(e.dealRefused ? '⚔' : '🤝', 0, s * 0.35);
+}
 function drawKingHPBar() {
     const king = enemies.find(e => e.isShadowKing);
     if (!king) return;
@@ -4366,6 +5011,7 @@ function offerEndlessMode() {
         if (goBtns.contains(btn)) goBtns.removeChild(btn);
         document.getElementById('hud').classList.add('active');
         document.getElementById('pause-btn').classList.add('active');
+    var bb = document.getElementById('bank-btn'); if (bb) bb.classList.add('active');
         startMusic();
     });
     goBtns.appendChild(btn);
@@ -4729,6 +5375,7 @@ function goToTitle() {
     document.getElementById('achievements-screen').classList.remove('active');
     document.getElementById('hud').classList.remove('active');
     document.getElementById('pause-btn').classList.remove('active');
+    var bb2 = document.getElementById('bank-btn'); if (bb2) bb2.classList.remove('active');
     document.getElementById('exit-btn').classList.remove('active');
     document.getElementById('dir-controls').classList.remove('active');
     document.getElementById('tutorial-overlay').classList.remove('active');
@@ -5232,6 +5879,7 @@ function init() {
             e.preventDefault();
         }
         if (k === 'escape' || k === 'p') togglePause();
+        if (k === 'b') startBanking();
         if (k === ' ') initAudio();
     });
     window.addEventListener('keyup', e => {
@@ -5265,6 +5913,11 @@ function init() {
     // Pause + Exit buttons
     addTouchClick('pause-btn', togglePause);
     addTouchClick('exit-btn', exitGame);
+    addTouchClick('neg-accept-btn', negotiatorSpare);
+    addTouchClick('bank-btn', startBanking);
+    addTouchClick('hotseat-share-btn', function() { hotseatChoose('share'); });
+    addTouchClick('hotseat-steal-btn', function() { hotseatChoose('steal'); });
+    addTouchClick('neg-fight-btn', negotiatorFight);
 
     // Show total time played on title screen
     updateTitleTime();
