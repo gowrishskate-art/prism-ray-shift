@@ -706,13 +706,6 @@ button {
 #bank-btn.active { display: block !important; }
 
 
-#hotseat-ui {
-    position: fixed; inset: 0; display: none;
-    align-items: center; justify-content: center;
-    z-index: 70; background: rgba(3,0,16,0.7); pointer-events: none;
-}
-#hotseat-ui.active { display: flex; pointer-events: auto; }
-
 </style>
 </head>
 <body>
@@ -774,19 +767,6 @@ button {
     </div>
 </div>
 
-<!-- HOT-SEAT DILEMMA UI -->
-<div id="hotseat-ui">
-    <div class="neg-card" style="border-color:#ff96dc">
-        <div class="wc-title">🎙 HOT-SEAT DILEMMA</div>
-        <div id="hotseat-p1" class="neg-text">Pick SECRETLY, then pass!</div>
-        <div class="neg-buttons">
-            <button class="btn primary" id="hotseat-share-btn">🤝 SHARE</button>
-            <button class="btn" id="hotseat-steal-btn">🗡 STEAL</button>
-        </div>
-        <div class="neg-hint">Both share: +8 each · One steals: stealer wins · Both steal: nothing</div>
-    </div>
-</div>
-
 <!-- TITLE SCREEN -->
 <div id="title-screen" class="screen active">
     <div class="title-logo" id="title-logo" style="cursor:pointer">Spectrum Slice</div>
@@ -842,43 +822,43 @@ button {
             <div class="shop-icon" style="background:rgba(0,255,170,0.2);color:#00ffaa">▲</div>
             <div class="shop-info"><div class="shop-name">Triangle Crystal</div>
             <div class="shop-desc">Classic 3-sided prism.</div></div>
-            <button class="shop-buy" id="buy-shape-triangle">35 coins</button>
+            <button class="shop-buy" id="buy-shape-triangle">105 coins</button>
         </div>
         <div class="shop-card" id="card-shape-star">
             <div class="shop-icon" style="background:rgba(255,215,0,0.2);color:#ffd700">⭐</div>
             <div class="shop-info"><div class="shop-name">Star Crystal</div>
             <div class="shop-desc">5-point star shape.</div></div>
-            <button class="shop-buy" id="buy-shape-star">30 coins</button>
+            <button class="shop-buy" id="buy-shape-star">90 coins</button>
         </div>
         <div class="shop-card" id="card-shape-diamond">
             <div class="shop-icon" style="background:rgba(120,220,255,0.2);color:#78dcff">💎</div>
             <div class="shop-info"><div class="shop-name">Diamond Crystal</div>
             <div class="shop-desc">Classic gem shape.</div></div>
-            <button class="shop-buy" id="buy-shape-diamond">45 coins</button>
+            <button class="shop-buy" id="buy-shape-diamond">135 coins</button>
         </div>
         <div class="shop-card" id="card-shape-hexagon">
             <div class="shop-icon" style="background:rgba(187,24,255,0.2);color:#bb18ff">⬡</div>
             <div class="shop-info"><div class="shop-name">Hexagon Crystal</div>
             <div class="shop-desc">Six-sided prism.</div></div>
-            <button class="shop-buy" id="buy-shape-hexagon">60 coins</button>
+            <button class="shop-buy" id="buy-shape-hexagon">180 coins</button>
         </div>
         <div class="shop-card" id="card-shape-heart">
             <div class="shop-icon" style="background:rgba(255,64,129,0.2);color:#ff4081">💗</div>
             <div class="shop-info"><div class="shop-name">Heart Crystal</div>
             <div class="shop-desc">Spread the love.</div></div>
-            <button class="shop-buy" id="buy-shape-heart">40 coins</button>
+            <button class="shop-buy" id="buy-shape-heart">120 coins</button>
         </div>
         <div class="shop-card" id="card-shape-lightning">
             <div class="shop-icon" style="background:rgba(255,230,0,0.2);color:#ffe600">⚡</div>
             <div class="shop-info"><div class="shop-name">Lightning Crystal</div>
             <div class="shop-desc">Electrifying bolt shape.</div></div>
-            <button class="shop-buy" id="buy-shape-lightning">40 coins</button>
+            <button class="shop-buy" id="buy-shape-lightning">120 coins</button>
         </div>
         <div class="shop-card" id="card-shape-crescent">
             <div class="shop-icon" style="background:rgba(180,220,255,0.2);color:#b4dcff">🌙</div>
             <div class="shop-info"><div class="shop-name">Crescent Crystal</div>
             <div class="shop-desc">Moon-shaped prism.</div></div>
-            <button class="shop-buy" id="buy-shape-crescent">40 coins</button>
+            <button class="shop-buy" id="buy-shape-crescent">120 coins</button>
         </div>
         <div class="shop-card" id="card-4beam">
             <div class="shop-icon" style="background:rgba(187,24,255,0.2);color:#bb18ff">+1</div>
@@ -955,73 +935,73 @@ button {
             <div class="shop-icon" style="background:rgba(255,215,0,0.2);color:#ffd700">🌈</div>
             <div class="shop-info"><div class="shop-name">Rainbow Trail</div>
             <div class="shop-desc">Colorful trail behind crystal.</div></div>
-            <button class="shop-buy" id="buy-trail-rainbow">40 coins</button>
+            <button class="shop-buy" id="buy-trail-rainbow">120 coins</button>
         </div>
         <div class="shop-card" id="card-trail-fire">
             <div class="shop-icon" style="background:rgba(255,120,0,0.2);color:#ff7800">🔥</div>
             <div class="shop-info"><div class="shop-name">Fire Trail</div>
             <div class="shop-desc">Blazing flame trail.</div></div>
-            <button class="shop-buy" id="buy-trail-fire">40 coins</button>
+            <button class="shop-buy" id="buy-trail-fire">120 coins</button>
         </div>
         <div class="shop-card" id="card-trail-sparkle">
             <div class="shop-icon" style="background:rgba(255,255,200,0.2);color:#fff8c0">✨</div>
             <div class="shop-info"><div class="shop-name">Sparkle Trail</div>
             <div class="shop-desc">Twinkling stardust trail.</div></div>
-            <button class="shop-buy" id="buy-trail-sparkle">40 coins</button>
+            <button class="shop-buy" id="buy-trail-sparkle">120 coins</button>
         </div>
         <div class="shop-card" id="card-pet-firefly">
             <div class="shop-icon" style="background:rgba(255,230,109,0.2);color:#ffe66d">✨</div>
             <div class="shop-info"><div class="shop-name">Firefly Pet</div>
             <div class="shop-desc">Tiny glowing buddy. Collects coins!</div></div>
-            <button class="shop-buy" id="buy-pet-firefly">45 coins</button>
+            <button class="shop-buy" id="buy-pet-firefly">135 coins</button>
         </div>
         <div class="shop-card" id="card-pet-sprite">
             <div class="shop-icon" style="background:rgba(125,255,200,0.2);color:#7dffc8">⭐</div>
             <div class="shop-info"><div class="shop-name">Star Sprite Pet</div>
             <div class="shop-desc">Lucky star companion. Collects coins!</div></div>
-            <button class="shop-buy" id="buy-pet-sprite">55 coins</button>
+            <button class="shop-buy" id="buy-pet-sprite">165 coins</button>
         </div>
         <div class="shop-card" id="card-pet-comet">
             <div class="shop-icon" style="background:rgba(154,216,255,0.2);color:#9ad8ff">☄</div>
             <div class="shop-info"><div class="shop-name">Comet Pet</div>
             <div class="shop-desc">Speedy ice comet. Collects coins!</div></div>
-            <button class="shop-buy" id="buy-pet-comet">65 coins</button>
+            <button class="shop-buy" id="buy-pet-comet">195 coins</button>
         </div>
         <div class="shop-card" id="card-theme-aurora">
             <div class="shop-icon" style="background:rgba(80,255,180,0.2);color:#50ffb4">🌌</div>
             <div class="shop-info"><div class="shop-name">Aurora Theme</div>
             <div class="shop-desc">Northern lights background.</div></div>
-            <button class="shop-buy" id="buy-theme-aurora">50 coins</button>
+            <button class="shop-buy" id="buy-theme-aurora">150 coins</button>
         </div>
         <div class="shop-card" id="card-theme-sunset">
             <div class="shop-icon" style="background:rgba(255,150,80,0.2);color:#ff9650">🌅</div>
             <div class="shop-info"><div class="shop-name">Sunset Theme</div>
             <div class="shop-desc">Warm evening glow.</div></div>
-            <button class="shop-buy" id="buy-theme-sunset">50 coins</button>
+            <button class="shop-buy" id="buy-theme-sunset">150 coins</button>
         </div>
         <div class="shop-card" id="card-theme-diwali">
             <div class="shop-icon" style="background:rgba(255,150,30,0.2);color:#ff961e">🪔</div>
             <div class="shop-info"><div class="shop-name">Diwali Theme</div>
             <div class="shop-desc">Festival of lights diyas.</div></div>
-            <button class="shop-buy" id="buy-theme-diwali">50 coins</button>
+            <button class="shop-buy" id="buy-theme-diwali">150 coins</button>
         </div>
         <div class="shop-card" id="card-theme-christmas">
             <div class="shop-icon" style="background:rgba(80,220,120,0.2);color:#50dc78">🎄</div>
             <div class="shop-info"><div class="shop-name">Christmas Theme</div>
             <div class="shop-desc">Falling snow + pine tint.</div></div>
-            <button class="shop-buy" id="buy-theme-christmas">50 coins</button>
+            <button class="shop-buy" id="buy-theme-christmas">150 coins</button>
         </div>
         <div class="shop-card" id="card-shadow10">
             <div class="shop-icon" style="background:rgba(43,255,126,0.2);color:#2bff7e">10</div>
             <div class="shop-info"><div class="shop-name">Normal: 10 Shadows / 10s</div>
             <div class="shop-desc">Default rate. Balanced.</div></div>
-            <button class="shop-buy" id="buy-shadow10">10 coins</button>
+            <button class="shop-buy" id="buy-shadow10">30 coins</button>
         </div>
         <div class="shop-card" id="card-shadow15">
             <div class="shop-icon" style="background:rgba(255,136,0,0.2);color:#ff8800">15</div>
             <div class="shop-info"><div class="shop-name">Fast: 15 Shadows / 10s</div>
             <div class="shop-desc">More shadows. Faster action!</div></div>
-            <button class="shop-buy" id="buy-shadow15">20 coins</button>
+            <button class="shop-buy" id="buy-shadow15">60 coins</button>
         </div>
     </div>
     <div class="shop-section-title">🎯 DAILY REWARDS</div>
@@ -1138,17 +1118,18 @@ function computeShadowScale() {
     const minDim = Math.min(window.screen.width, window.screen.height);
     // iPad: explicit iPad UA, or modern iPadOS (reports as Mac with touch points)
     const isIPad = /iPad/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
-    // Other tablets: touch device with large-ish square-ish screen
-    const isTablet = isIPad || (isTouch && maxDim >= 900 && minDim >= 600);
-    if (isTablet) {
-        SHADOW_SCALE = 1 / 1.5;   // iPad: 1.5x smaller
+    // Other tablets: touch device with a large screen
+    const isBigTouch = isTouch && maxDim >= 900 && minDim >= 600;
+    if (isIPad || isBigTouch) {
+        SHADOW_SCALE = 1 / 1.5;
     } else if (isTouch) {
-        SHADOW_SCALE = 0.6;       // Phone: 2.5x smaller, then 0.5x bigger
+        // phones
+        SHADOW_SCALE = 0.6;
     } else {
-        SHADOW_SCALE = 1;         // Laptop/desktop: normal
+        SHADOW_SCALE = 1;
     }
-    return SHADOW_SCALE;
 }
+
 
 // ─── PERSISTENT SHOP DATA ───
 const SHOP_DATA = {
@@ -3047,7 +3028,6 @@ function updateWaves(dt) {
         game.shake = Math.max(game.shake, 5);
         lightPoolReset();
         missionStat('wave', game.wave, true);
-        if (game.wave % 5 === 0) setTimeout(openHotseat, 1600);
         updateHUD();
         }
     }
@@ -3899,32 +3879,32 @@ function shareScore() {
 // ═══════════════════════════════════════════════════════════════
 const CRYSTAL_SHAPES = [
     { id: 'arrow',     name: 'Arrow',     cost: 0 },
-    { id: 'triangle',  name: 'Triangle',  cost: 35 },
-    { id: 'star',      name: 'Star',      cost: 30 },
-    { id: 'diamond',   name: 'Diamond',   cost: 45 },
-    { id: 'hexagon',   name: 'Hexagon',   cost: 60 },
-    { id: 'heart',     name: 'Heart',     cost: 40 },
-    { id: 'lightning', name: 'Lightning', cost: 40 },
-    { id: 'crescent',  name: 'Crescent',  cost: 40 },
+    { id: 'triangle',  name: 'Triangle',  cost: 105 },
+    { id: 'star',      name: 'Star',      cost: 90 },
+    { id: 'diamond',   name: 'Diamond',   cost: 135 },
+    { id: 'hexagon',   name: 'Hexagon',   cost: 180 },
+    { id: 'heart',     name: 'Heart',     cost: 120 },
+    { id: 'lightning', name: 'Lightning', cost: 120 },
+    { id: 'crescent',  name: 'Crescent',  cost: 120 },
 ];
 const CRYSTAL_TRAILS = [
     { id: 'none',     name: 'None',      cost: 0 },
-    { id: 'rainbow',  name: 'Rainbow',   cost: 40 },
-    { id: 'fire',     name: 'Fire',      cost: 40 },
-    { id: 'sparkle',  name: 'Sparkle',   cost: 40 },
+    { id: 'rainbow',  name: 'Rainbow',   cost: 120 },
+    { id: 'fire',     name: 'Fire',      cost: 120 },
+    { id: 'sparkle',  name: 'Sparkle',   cost: 120 },
 ];
 const PETS = [
     { id: 'nopet',    name: 'No Pet',    cost: 0 },
-    { id: 'firefly',  name: 'Firefly',   cost: 45 },
-    { id: 'sprite',   name: 'Star Sprite', cost: 55 },
-    { id: 'comet',    name: 'Comet',     cost: 65 },
+    { id: 'firefly',  name: 'Firefly',   cost: 135 },
+    { id: 'sprite',   name: 'Star Sprite', cost: 165 },
+    { id: 'comet',    name: 'Comet',     cost: 195 },
 ];
 const BG_THEMES = [
     { id: 'space',    name: 'Deep Space', cost: 0 },
-    { id: 'aurora',   name: 'Aurora',     cost: 50 },
-    { id: 'sunset',   name: 'Sunset',     cost: 50 },
-    { id: 'diwali',   name: 'Diwali',     cost: 50 },
-    { id: 'christmas',name: 'Christmas',  cost: 50 },
+    { id: 'aurora',   name: 'Aurora',    cost: 150 },
+    { id: 'sunset',   name: 'Sunset',    cost: 150 },
+    { id: 'diwali',   name: 'Diwali',    cost: 150 },
+    { id: 'christmas',   name: 'Christmas',    cost: 150 },
 ];
 
 let MUSIC_VOL = parseFloat(localStorage.getItem('ss_musicVol') || '0.35');
@@ -4411,64 +4391,6 @@ function renderWeeklyChallenge() {
 
 
 // ═══════════════════════════════════════════════════════════════
-// HOT-SEAT DILEMMA — every 5th wave, SHARE or STEAL (pass-and-play)
-// Both SHARE: +8 coins each · One STEALs: stealer takes +15, sharer 0
-// Both STEAL: nothing for anyone (classic prisoner's dilemma payoffs)
-// ═══════════════════════════════════════════════════════════════
-const hotSeat = {
-    waveNum: 0,
-    lastChoices: JSON.parse(localStorage.getItem('ss_hotseat') || '{}'), // name -> share/steal counts
-};
-function hotseatSave() {
-    localStorage.setItem('ss_hotseat', JSON.stringify(hotSeat.lastChoices));
-}
-let hotseatPending = null; // { choice: 'share'|'steal' }
-function openHotseat() {
-    const ui = document.getElementById('hotseat-ui');
-    if (!ui || game.paused) return;
-    game.paused = true;
-    const name1 = SETTINGS.username || 'Player 1';
-    const name2 = 'Next Player';
-    document.getElementById('hotseat-p1').textContent = name1 + ' — pick SECRETLY, then pass!';
-    ui.classList.add('active');
-    hotseatPending = null;
-}
-function hotseatChoose(choice) {
-    const ui = document.getElementById('hotseat-ui');
-    if (!ui.classList.contains('active')) return;
-    if (!hotseatPending) {
-        hotseatPending = { p1: choice };
-        document.getElementById('hotseat-p1').textContent = 'Pass the device... 👉 Next player picks!';
-        document.getElementById('hotseat-share-btn').textContent = '🤝 SHARE (+8 each if both share)';
-        document.getElementById('hotseat-steal-btn').textContent = '🗡 STEAL (+15 if other shares)';
-    } else {
-        // both picked — resolve
-        const p1 = hotseatPending.p1, p2 = choice;
-        let msg;
-        const n1 = (SETTINGS.username || 'Player');
-        if (p1 === 'share' && p2 === 'share') {
-            pouchAdd(8);
-            msg = '🤝 BOTH SHARED! +8 coins each!';
-            createConfetti(W / 2, H / 3, 30);
-        } else if (p1 === 'steal' && p2 === 'share') {
-            msg = '🗡 ' + n1 + ' STOLE everything! (+15 would be banked by them next run)';
-            // record the betrayal for family lore
-            hotSeat.lastChoices[n1] = (hotSeat.lastChoices[n1] || 0) + 1;
-            hotseatSave();
-        } else if (p1 === 'share' && p2 === 'steal') {
-            msg = '🗡 The other player STOLE! You get nothing...';
-            hotSeat.lastChoices['Guest'] = (hotSeat.lastChoices['Guest'] || 0) + 1;
-            hotseatSave();
-        } else {
-            msg = '💀 BOTH STOLE — nobody gets anything!';
-        }
-        ui.classList.remove('active');
-        game.paused = false;
-        showWaveBanner('🎙 HOT-SEAT RESULT', msg);
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════
 // SCHELLING TWIN — dual-shield boss (coordination / focal points)
 // Two shields (left/right); each absorbs one color. To damage it,
 // two DIFFERENT beams must strike the two shields at the same time.
@@ -4608,7 +4530,7 @@ function wagerPot() {
 }
 function showDoubleOrNothing() {
     // Called on Shadow King victory: offer wager on a rematch
-    const goBtns = document.querySelector('.go-buttons');
+    const goBtns = document.getElementById('gameover-screen');
     if (!goBtns) return;
     const old = document.getElementById('wager-btn');
     if (old) old.remove();
@@ -4618,9 +4540,11 @@ function showDoubleOrNothing() {
     btn.id = 'wager-btn';
     btn.textContent = '🎲 DOUBLE or NOTHING (' + pot + ' coins)';
     addTouchClickDirect(btn, function() {
-        // Wager: 2x difficulty rematch, win = pot, lose = prize forfeited
+        // Wager: the 50-coin prize goes ON THE TABLE — lose = it's gone (net 0)
         hideWagerBtn();
-        wagerStreak++;  // next pot grows
+        game.coins = Math.max(0, game.coins - 50);   // prize deducted, at stake now
+        localStorage.setItem('ss_coins', game.coins.toString());
+        wagerStreak++;
         localStorage.setItem('ss_wagerStreak', wagerStreak.toString());
         game.wagerActive = true;
         game.state = 'playing';
@@ -4654,11 +4578,11 @@ function wagerWon() {
     game.wagerActive = false;
 }
 function wagerLost() {
-    // Prize forfeited, streak resets
+    // Prize forfeited — you went back to 0 for the run; streak resets
     wagerStreak = 0;
     localStorage.setItem('ss_wagerStreak', '0');
     game.wagerActive = false;
-    showWaveBanner('💸 WAGER LOST', 'Streak resets to 50...');
+    showWaveBanner('💸 WAGER LOST', 'Prize gone — back to 0. Next wager: 50.');
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -4988,8 +4912,7 @@ function spawnMegaBoss() {
 let endlessUnlocked = localStorage.getItem('ss_endlessUnlocked') === 'true';
 function offerEndlessMode() {
     if (!game.victory) return;
-    // Called from endGame victory path — show choice overlay
-    const goBtns = document.querySelector('.go-buttons');
+    const goBtns = document.getElementById('gameover-screen');
     if (!goBtns) return;
     if (document.getElementById('endless-btn')) return; // already added
     const btn = document.createElement('button');
@@ -5202,7 +5125,7 @@ function renderAchievements() {
 // SHOP
 // ═══════════════════════════════════════════════════════════════
 // Shadow rate costs
-const SHADOW_RATES = { 10: 10, 15: 20 };
+const SHADOW_RATES = { 10: 30, 15: 60 };
 
 function buyShadowRate(rate) {
     var cost = SHADOW_RATES[rate];
@@ -5915,8 +5838,6 @@ function init() {
     addTouchClick('exit-btn', exitGame);
     addTouchClick('neg-accept-btn', negotiatorSpare);
     addTouchClick('bank-btn', startBanking);
-    addTouchClick('hotseat-share-btn', function() { hotseatChoose('share'); });
-    addTouchClick('hotseat-steal-btn', function() { hotseatChoose('steal'); });
     addTouchClick('neg-fight-btn', negotiatorFight);
 
     // Show total time played on title screen
