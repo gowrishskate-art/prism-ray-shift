@@ -702,9 +702,6 @@ button {
 .neg-hint { color: #9a8fc2; font-size: 11px; margin-top: 10px; }
 
 
-#bank-hud.at-risk { color: #ff8844 !important; animation: almost-glow 0.9s ease infinite alternate; }
-#bank-btn.active { display: block !important; }
-
 
 </style>
 </head>
@@ -720,8 +717,6 @@ button {
     <div class="hud-box" id="hud-coins"><div class="hud-label">Coins</div><div class="hud-val">0</div></div>
     <div class="hud-box" id="hud-username"><div class="hud-val">&nbsp;</div></div>
     <div class="hud-box" id="hud-kills"><div class="hud-label">Kills</div><div class="hud-val">0</div></div>
-    <div class="hud-box" id="bank-hud-box"><div class="hud-label">Bank</div><div class="hud-val" id="bank-hud">🏦 0 | 👝 0</div></div>
-    <button id="bank-btn" style="position:fixed;bottom:76px;left:16px;z-index:30;display:none;background:rgba(255,215,0,0.15);border:2px solid #ffd700;color:#ffd700;border-radius:12px;padding:10px 14px;font-weight:bold;cursor:pointer">🏦 BANK (B)</button>
     <div id="wave-progress"><div id="wave-progress-fill"></div><div id="wave-progress-text">WAVE 1 — 0/6</div></div>
  </div>
 <div id="combo-display"></div>
@@ -3400,7 +3395,6 @@ function render(dt) {
     // Crystal
     drawCrystal();
     drawPet();
-    drawBankRing();
     drawLightPoolBar();
 
     // Particles
@@ -3517,7 +3511,6 @@ function gameLoop(timestamp) {
     updateCoins(dt);
     petCoinMagnet(dt);
     updateBottles(dt);
-    updateBank(dt);
     updateGems(dt);
     updateParticles(dt);
     updateFloatingTexts(dt);
@@ -3664,9 +3657,7 @@ function startGame() {
     game.endless = false;
     game.shadowKing = false;
     game.rushTimeLeft = 60;
-    coinBank.pouch = 0; coinBank.banked = 0; coinBank.banking = 0;
     lightPoolReset();
-    updateBankHUD();
     game.megaKillsNeeded = game.megaKillThreshold;
     game.time = 0; game.playTime = 0; game.shake = 0; game.flashAlpha = 0;
     game.paused = false;
@@ -3698,7 +3689,6 @@ function startGame() {
     document.getElementById('achievements-screen').classList.remove('active');
     document.getElementById('hud').classList.add('active');
     document.getElementById('pause-btn').classList.add('active');
-    var bb = document.getElementById('bank-btn'); if (bb) bb.classList.add('active');
     document.getElementById('exit-btn').classList.add('active');
     document.getElementById('dir-controls').classList.add('active');
     document.getElementById('music-bar').classList.remove('active');
@@ -3715,8 +3705,6 @@ function startGame() {
 function endGame() {
     hideNegotiatorUI();
     if (game.wagerActive && !game.victory) wagerLost();
-    const pouchLost = bankPayout();
-    if (pouchLost > 0) setTimeout(function() { addFloatingText(W/2, H/2 + 40, '👝 LOST ' + pouchLost + ' unbanked coins!', '#ff8844'); }, 500);
     const won = game.victory;
     game.state = 'gameover';
     game.showScoreCard = true;
@@ -3760,7 +3748,6 @@ function endGame() {
     showScreen('gameover');
     document.getElementById('hud').classList.remove('active');
     document.getElementById('pause-btn').classList.remove('active');
-    var bb2 = document.getElementById('bank-btn'); if (bb2) bb2.classList.remove('active');
     document.getElementById('exit-btn').classList.remove('active');
     document.getElementById('dir-controls').classList.remove('active');
     document.getElementById('combo-display').classList.remove('active');
@@ -4585,63 +4572,11 @@ function wagerLost() {
     showWaveBanner('💸 WAGER LOST', 'Prize gone — back to 0. Next wager: 50.');
 }
 
-// ═══════════════════════════════════════════════════════════════
-// COIN BANK — push-your-luck pouch (optimal stopping)
-// ═══════════════════════════════════════════════════════════════
-const coinBank = { pouch: 0, banking: 0, banked: 0 };
+// ─── Coin payout helper (bank removed — pays directly) ───
 function pouchAdd(n) {
-    coinBank.pouch += n;
-    updateBankHUD();
-}
-function startBanking() {
-    if (coinBank.banking > 0 || coinBank.pouch <= 0 || game.state !== 'playing' || game.paused) return;
-    coinBank.banking = 3; // 3 vulnerable seconds
-    addFloatingText(crystal.x, crystal.y - 46, 'BANKING...', '#ffd700');
-}
-function updateBank(dt) {
-    if (coinBank.banking <= 0) return;
-    coinBank.banking -= dt;
-    // draw ring is handled in render; when done:
-    if (coinBank.banking <= 0) {
-        coinBank.banked += coinBank.pouch;
-        addFloatingText(crystal.x, crystal.y - 46, '+' + coinBank.pouch + ' BANKED!', '#ffd700');
-        createConfetti(crystal.x, crystal.y, 15);
-        coinBank.pouch = 0;
-        updateBankHUD();
-    }
-}
-function bankPayout() {
-    // on game end: banked coins are safe, pouch coins are LOST
-    if (coinBank.banked > 0) {
-        game.coins += coinBank.banked;
-        localStorage.setItem('ss_coins', game.coins.toString());
-    }
-    const lost = coinBank.pouch;
-    coinBank.pouch = 0; coinBank.banked = 0; coinBank.banking = 0;
-    lightPoolReset();
-    return lost;
-}
-function updateBankHUD() {
-    const el = document.getElementById('bank-hud');
-    if (!el) return;
-    el.textContent = '🏦 ' + coinBank.banked + ' | 👝 ' + coinBank.pouch;
-    el.classList.toggle('at-risk', coinBank.pouch > 0);
-}
-function lightIntensity() {
-    // beams dim as the commons depletes (visual feedback)
-    return Math.max(0.35, lightPool.energy / 100);
-}
-
-function drawBankRing() {
-    if (coinBank.banking <= 0) return;
-    const p = 1 - (coinBank.banking / 3);
-    ctx.save();
-    ctx.strokeStyle = '#ffd700';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.arc(crystal.x, crystal.y, crystal.size * 2.2, -Math.PI / 2, -Math.PI / 2 + p * Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
+    game.coins += n;
+    localStorage.setItem('ss_coins', game.coins.toString());
+    updateHUD();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -4934,7 +4869,6 @@ function offerEndlessMode() {
         if (goBtns.contains(btn)) goBtns.removeChild(btn);
         document.getElementById('hud').classList.add('active');
         document.getElementById('pause-btn').classList.add('active');
-    var bb = document.getElementById('bank-btn'); if (bb) bb.classList.add('active');
         startMusic();
     });
     goBtns.appendChild(btn);
@@ -5298,7 +5232,6 @@ function goToTitle() {
     document.getElementById('achievements-screen').classList.remove('active');
     document.getElementById('hud').classList.remove('active');
     document.getElementById('pause-btn').classList.remove('active');
-    var bb2 = document.getElementById('bank-btn'); if (bb2) bb2.classList.remove('active');
     document.getElementById('exit-btn').classList.remove('active');
     document.getElementById('dir-controls').classList.remove('active');
     document.getElementById('tutorial-overlay').classList.remove('active');
@@ -5802,7 +5735,6 @@ function init() {
             e.preventDefault();
         }
         if (k === 'escape' || k === 'p') togglePause();
-        if (k === 'b') startBanking();
         if (k === ' ') initAudio();
     });
     window.addEventListener('keyup', e => {
@@ -5837,7 +5769,6 @@ function init() {
     addTouchClick('pause-btn', togglePause);
     addTouchClick('exit-btn', exitGame);
     addTouchClick('neg-accept-btn', negotiatorSpare);
-    addTouchClick('bank-btn', startBanking);
     addTouchClick('neg-fight-btn', negotiatorFight);
 
     // Show total time played on title screen
