@@ -626,14 +626,6 @@ button {
 .mission-row.done { border-color: #4ade80; }
 .mission-desc { color: #e8e2ff; font-size: 14px; margin-bottom: 2px; }
 .mission-meta { color: #9a8fc2; font-size: 12px; margin-bottom: 6px; }
-.wheel-result {
-    font-size: 26px;
-    font-weight: bold;
-    color: #ffd700;
-    margin: 12px 0;
-    min-height: 34px;
-}
-.wheel-result.spinning { animation: almost-glow 0.3s ease infinite alternate; }
 
 
 /* ─── MODE PICKER ─── */
@@ -743,9 +735,9 @@ button {
 
 <!-- DAILY REWARD POPUP -->
 <div id="daily-popup">
-    <div class="daily-title">🎁 Daily Reward!</div>
-    <div class="daily-sub">Come back every day for bigger bonuses</div>
-    <div class="daily-coins" id="daily-coins-amt">+5 🪙</div>
+    <div class="daily-title">🔥 Daily Streak!</div>
+    <div class="daily-sub">Play every day to grow your streak</div>
+    <div class="daily-coins" id="daily-coins-amt">🔥</div>
     <div class="daily-streak" id="daily-streak-txt">Day 1 streak</div>
     <button class="daily-claim" id="daily-claim-btn">Claim!</button>
 </div>
@@ -1004,16 +996,6 @@ button {
         <div class="wc-title">🎯 Daily Missions</div>
         <div class="family-sub" style="margin-bottom:10px">3 fresh missions every day!</div>
         <div id="missions-list"></div>
-    </div>
-    <div class="rewards-hub-section" style="text-align:center">
-        <div class="wc-title">🎡 Fortune Wheel</div>
-        <div class="family-sub">One free spin every day — up to 100 coins!</div>
-        <div id="wheel-result" class="wheel-result">Ready to spin!</div>
-        <button class="btn primary" id="wheel-spin-btn">🎡 SPIN THE WHEEL</button>
-    </div>
-    <div class="rewards-hub-section">
-        <div class="wc-title">🎯 Weekly Challenge</div>
-        <div id="weekly-challenge-box"></div>
     </div>
     <div class="rewards-hub-section">
         <div class="wc-title">😀 Your Avatar</div>
@@ -1849,11 +1831,6 @@ function drawBeam() {
 // LIGHT SPLITTING — RAY COMPUTATION
 // ═══════════════════════════════════════════════════════════════
 function computeRays() {
-    // commons drain: each firing frame costs shared light energy
-    if (crystal.inBeam && activeRays.length > 0 && !game.tutorialActive) {
-        lightPool.waveBeamsFired += 0.016; // measured in beam-seconds
-        lightBeamDrain(activeRays.length * 0.055);
-    }
     activeRays = [];
     if (!crystal.inBeam) return;
 
@@ -2672,8 +2649,6 @@ function killEnemy(idx, color, isBossKill) {
 
     game.kills++;
     game.enemiesKilledThisWave++;
-    lightPool.waveKills++;
-    lightPool.energy = Math.min(100, lightPool.energy + 2); // each kill recharges a little
     trackWeeklyKill();
     missionStat('kills', 1);
     if (e.golden) missionStat('goldKills', 1);
@@ -3013,15 +2988,9 @@ function updateWaves(dt) {
             if (game.lives < 5) { game.lives++; waveSub = '+1 LIFE BONUS!'; }
         }
         if (game.wave === 99) waveSub = 'Final wave! Face the SHADOW KING!';
-        const lwBonus = lightWaveBonus();
-        if (lwBonus > 0) {
-            pouchAdd(lwBonus);
-            setTimeout(function() { addFloatingText(W/2, H*0.4, '⚡ EFFICIENCY BONUS +' + lwBonus, '#7dd8ff'); }, 700);
-        }
         showWaveBanner(waveText, waveSub);
         game.flashAlpha = 0.15;
         game.shake = Math.max(game.shake, 5);
-        lightPoolReset();
         missionStat('wave', game.wave, true);
         updateHUD();
         }
@@ -3395,7 +3364,7 @@ function render(dt) {
     // Crystal
     drawCrystal();
     drawPet();
-    drawLightPoolBar();
+    drawStreakBadge();
 
     // Particles
     drawParticles();
@@ -3657,7 +3626,6 @@ function startGame() {
     game.endless = false;
     game.shadowKing = false;
     game.rushTimeLeft = 60;
-    lightPoolReset();
     game.megaKillsNeeded = game.megaKillThreshold;
     game.time = 0; game.playTime = 0; game.shake = 0; game.flashAlpha = 0;
     game.paused = false;
@@ -4105,6 +4073,31 @@ function crystalShapePath(s) {
 
 
 
+
+// ─── Daily streak badge (top-right, during gameplay) ───
+function drawStreakBadge() {
+    if (game.state !== 'playing') return;
+    const streak = getDailyData().streak;
+    if (streak <= 0) return;
+    ctx.save();
+    const bx = W - 14, by = 30;
+    ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+    ctx.font = 'bold 16px Segoe UI, sans-serif';
+    const label = '🔥 ' + streak + ' day' + (streak === 1 ? '' : 's');
+    const tw = ctx.measureText(label).width;
+    // backing pill
+    ctx.fillStyle = 'rgba(10,6,24,0.75)';
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(bx - tw - 22, by - 6, tw + 16, 28, 14) : ctx.rect(bx - tw - 22, by - 6, tw + 16, 28);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,150,50,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = '#ffaa66';
+    ctx.fillText(label, bx - 8, by);
+    ctx.restore();
+}
+
 // ─── Victory spin ───
 function triggerVictorySpin() {
     crystal.spinTimer = 0.8; // drawCrystal reads this for a 720° flourish
@@ -4273,54 +4266,6 @@ function renderMissions() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// FORTUNE WHEEL — 1 free spin per day
-// ═══════════════════════════════════════════════════════════════
-const WHEEL_SEGMENTS = [5, 10, 15, 25, 50, 100, 25, 15]; // clockwise
-function canSpinWheel() {
-    return localStorage.getItem('ss_wheelDay') !== todayKey();
-}
-function spinFortuneWheel() {
-    if (!canSpinWheel()) {
-        alert('You already spun today! Come back tomorrow 🎡');
-        return;
-    }
-    localStorage.setItem('ss_wheelDay', todayKey());
-    const idx = Math.floor(Math.random() * WHEEL_SEGMENTS.length);
-    const prize = WHEEL_SEGMENTS[idx];
-    game.coins += prize;
-    localStorage.setItem('ss_coins', game.coins.toString());
-    // animated banner sequence
-    const el = document.getElementById('wheel-result');
-    if (el) {
-        el.textContent = '🎡 Spinning...';
-        el.classList.add('spinning');
-        let ticks = 0;
-        const iv = setInterval(function() {
-            ticks++;
-            el.textContent = '🎡 ' + WHEEL_SEGMENTS[(idx + ticks) % WHEEL_SEGMENTS.length] + ' coins?';
-            if (ticks >= 12) {
-                clearInterval(iv);
-                el.classList.remove('spinning');
-                el.textContent = '🎉 ' + prize + ' COINS!' + (prize >= 50 ? ' JACKPOT!' : '');
-                createConfetti(W/2, H*0.35, prize >= 50 ? 60 : 25);
-            }
-        }, 160);
-    }
-    renderWheelState();
-}
-function renderWheelState() {
-    const btn = document.getElementById('wheel-spin-btn');
-    if (!btn) return;
-    if (canSpinWheel()) {
-        btn.textContent = '🎡 SPIN THE WHEEL';
-        btn.classList.add('affordable'); btn.classList.remove('disabled');
-    } else {
-        btn.textContent = '🎡 Come back tomorrow';
-        btn.classList.add('disabled'); btn.classList.remove('affordable');
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════
 // WEEKLY CHALLENGE — kill target this week (resets Monday)
 // ═══════════════════════════════════════════════════════════════
 function weekNumber(d) {
@@ -4462,49 +4407,6 @@ function twinRayCheck(e, ray, hitDist) {
     if (side === 1 && ray.colorIdx === e.shieldRColor) e.shieldRHit = true;
     if (e.hp <= 0) return 'dead';
     return 'absorbed';
-}
-
-// ═══════════════════════════════════════════════════════════════
-// LIGHT ENERGY — shared commons pool for the wave
-// ═══════════════════════════════════════════════════════════════
-const lightPool = { energy: 100, waveKills: 0, waveBeamsFired: 0 };
-function lightPoolReset() {
-    lightPool.energy = 100;
-    lightPool.waveKills = 0;
-    lightPool.waveBeamsFired = 0;
-}
-function lightBeamDrain(n) {
-    // each active beam frame drains a trickle of shared energy
-    lightPool.energy = Math.max(0, lightPool.energy - n);
-}
-function lightEfficiency() {
-    // kills per beam-fire: 1.0 = perfect (every shot hit)
-    return lightPool.waveBeamsFired > 0 ? Math.min(1, lightPool.waveKills / lightPool.waveBeamsFired) : 1;
-}
-function lightWaveBonus() {
-    // Wave-end bonus scales with how efficiently the commons was used
-    const eff = lightEfficiency();
-    if (eff >= 0.8) return 5;   // sniper
-    if (eff >= 0.5) return 3;   // good
-    return eff >= 0.3 ? 1 : 0;  // wasteful = nothing (commons drained)
-}
-function drawLightPoolBar() {
-    if (game.state !== 'playing' || game.tutorialActive) return;
-    const bw = 110, bh = 7;
-    const bx = W - bw - 12, by = 12;
-    ctx.save();
-    ctx.fillStyle = 'rgba(5,2,15,0.6)';
-    ctx.fillRect(bx - 2, by - 2, bw + 4, bh + 4);
-    ctx.fillStyle = 'rgba(40,30,80,0.9)';
-    ctx.fillRect(bx, by, bw, bh);
-    const pct = lightPool.energy / 100;
-    ctx.fillStyle = pct > 0.5 ? '#7dd8ff' : (pct > 0.2 ? '#ffd700' : '#ff1845');
-    ctx.fillRect(bx, by, bw * pct, bh);
-    ctx.fillStyle = '#9ab8d8';
-    ctx.font = '9px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText('⚡' + Math.round(lightPool.energy), bx, by + bh + 10);
-    ctx.restore();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -4901,15 +4803,13 @@ function canClaimDaily() {
 function claimDaily() {
     if (!canClaimDaily()) return null;
     const d = getDailyData();
-    // Continue streak if claimed within 2 days, else reset
+    // Continue streak if visited within 2 days, else reset
     if (Date.now() - d.lastClaim < DAY_MS * 2) d.streak = Math.min(d.streak + 1, 7);
     else d.streak = 1;
-    const coins = DAILY_COINS[d.streak - 1];
+    // Streak ONLY — no coin reward for daily visits
     localStorage.setItem('ss_dailyLast', Date.now().toString());
     localStorage.setItem('ss_dailyStreak', d.streak.toString());
-    game.coins += coins;
-    localStorage.setItem('ss_coins', game.coins.toString());
-    return { coins: coins, streak: d.streak };
+    return { coins: 0, streak: d.streak };
 }
 
 function daysUntilDaily() {
@@ -5010,7 +4910,7 @@ function showDailyPopupIfReady() {
     const d = getDailyData();
     const nextStreak = (Date.now() - d.lastClaim < DAY_MS * 2) ? Math.min(d.streak + 1, 7) : 1;
     const coins = DAILY_COINS[nextStreak - 1];
-    document.getElementById('daily-coins-amt').textContent = '+' + coins + ' coins';
+    document.getElementById('daily-coins-amt').textContent = '🔥';
     document.getElementById('daily-streak-txt').textContent = 'Day ' + nextStreak + ' streak';
     document.getElementById('daily-popup').classList.add('active');
 }
@@ -5084,7 +4984,6 @@ function openShop() {
     renderShop();
     renderModePicker();
     renderMissions();
-    renderWheelState();
     renderWeeklyChallenge();
     renderAvatarPicker();
 }
@@ -5654,7 +5553,6 @@ function init() {
     addTouchClick('playagain-btn', startGame);
     addTouchClick('menu-btn', goToTitle);
     addTouchClick('settings-btn-title', openSettings);
-    addTouchClick('wheel-spin-btn', spinFortuneWheel);
 
     // Game mode picker (shop cards)
     document.querySelectorAll('.mode-shop-card').forEach(function(card) {
