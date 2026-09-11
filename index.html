@@ -3364,7 +3364,6 @@ function render(dt) {
     // Crystal
     drawCrystal();
     drawPet();
-    drawStreakBadge();
 
     // Particles
     drawParticles();
@@ -4073,30 +4072,6 @@ function crystalShapePath(s) {
 
 
 
-
-// ─── Daily streak badge (top-right, during gameplay) ───
-function drawStreakBadge() {
-    if (game.state !== 'playing') return;
-    const streak = getDailyData().streak;
-    if (streak <= 0) return;
-    ctx.save();
-    const bx = W - 14, by = 30;
-    ctx.textAlign = 'right'; ctx.textBaseline = 'top';
-    ctx.font = 'bold 16px Segoe UI, sans-serif';
-    const label = '🔥 ' + streak + ' day' + (streak === 1 ? '' : 's');
-    const tw = ctx.measureText(label).width;
-    // backing pill
-    ctx.fillStyle = 'rgba(10,6,24,0.75)';
-    ctx.beginPath();
-    ctx.roundRect ? ctx.roundRect(bx - tw - 22, by - 6, tw + 16, 28, 14) : ctx.rect(bx - tw - 22, by - 6, tw + 16, 28);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255,150,50,0.5)';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    ctx.fillStyle = '#ffaa66';
-    ctx.fillText(label, bx - 8, by);
-    ctx.restore();
-}
 
 // ─── Victory spin ───
 function triggerVictorySpin() {
