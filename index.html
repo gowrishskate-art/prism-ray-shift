@@ -254,23 +254,6 @@ body.no-touch #dir-controls { display: none !important; }
 
 
 /* ─── PACKAGE B UI: daily reward, level bar, achievements ─── */
-#daily-popup {
-    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    z-index: 30; background: rgba(10,6,30,0.95); border: 2px solid rgba(255,215,0,0.5);
-    border-radius: 20px; padding: 26px 34px; text-align: center; display: none;
-    box-shadow: 0 0 40px rgba(255,180,0,0.25); backdrop-filter: blur(10px);
-    max-width: 90vw;
-}
-#daily-popup.active { display: block; animation: tutFadeIn 0.4s ease; }
-.daily-title { font-size: 22px; font-weight: 900; color: #ffd700; margin-bottom: 6px; }
-.daily-sub { font-size: 13px; color: #9999bb; margin-bottom: 14px; }
-.daily-coins { font-size: 40px; font-weight: 900; color: #ffd700; margin-bottom: 4px; }
-.daily-streak { font-size: 13px; color: #ffb347; margin-bottom: 18px; }
-.daily-claim {
-    padding: 12px 34px; font-size: 17px; font-weight: 800; border-radius: 30px;
-    background: linear-gradient(135deg, #b8860b, #ffd700); color: #000;
-    border: none; cursor: pointer; touch-action: manipulation;
-}
 
 /* Level bar on title */
 .title-level-box {
@@ -740,14 +723,6 @@ button {
 </div>
 
 <!-- DAILY REWARD POPUP -->
-<div id="daily-popup">
-    <div class="daily-title">🔥 Daily Streak!</div>
-    <div class="daily-sub">Play every day to grow your streak</div>
-    <div class="daily-coins" id="daily-coins-amt">🔥</div>
-    <div class="daily-streak" id="daily-streak-txt">Day 1 streak</div>
-    <button class="daily-claim" id="daily-claim-btn">Claim!</button>
-</div>
-
 <!-- NEGOTIATOR DEAL UI -->
 <div id="negotiator-ui">
     <div class="neg-card">
@@ -3678,6 +3653,8 @@ function startGame() {
 
 function endGame() {
     hideNegotiatorUI();
+    claimDaily();   // streak advances once per day, only when a game is played
+    updateLevelBar();
     if (game.wagerActive && !game.victory) wagerLost();
     const won = game.victory;
     game.state = 'gameover';
@@ -4783,12 +4760,12 @@ function canClaimDaily() {
 }
 
 function claimDaily() {
-    if (!canClaimDaily()) return null;
+    // Called when a game ENDS: advances the streak once per day.
+    // No coins, no popup — just the streak for actually playing.
     const d = getDailyData();
-    // Continue streak if visited within 2 days, else reset
+    if (Date.now() - d.lastClaim < DAY_MS) return null;   // already counted today
     if (Date.now() - d.lastClaim < DAY_MS * 2) d.streak = Math.min(d.streak + 1, 7);
     else d.streak = 1;
-    // Streak ONLY — no coin reward for daily visits
     localStorage.setItem('ss_dailyLast', Date.now().toString());
     localStorage.setItem('ss_dailyStreak', d.streak.toString());
     return { coins: 0, streak: d.streak };
@@ -4887,23 +4864,7 @@ function getLevelInfo() {
 
 
 // ─── Daily reward popup ───
-function showDailyPopupIfReady() {
-    if (!canClaimDaily()) return;
-    const d = getDailyData();
-    const nextStreak = (Date.now() - d.lastClaim < DAY_MS * 2) ? Math.min(d.streak + 1, 7) : 1;
-    const coins = DAILY_COINS[nextStreak - 1];
-    document.getElementById('daily-coins-amt').textContent = '🔥';
-    document.getElementById('daily-streak-txt').textContent = 'Day ' + nextStreak + ' streak';
-    document.getElementById('daily-popup').classList.add('active');
-}
 
-function claimDailyUI() {
-    const res = claimDaily();
-    if (!res) return;
-    document.getElementById('daily-popup').classList.remove('active');
-    createConfetti(W / 2, H / 2, 30);
-    updateTitleTime(); // refresh displays
-}
 
 // ─── Level bar on title ───
 function updateLevelBar() {
@@ -5575,7 +5536,6 @@ function init() {
         });
     }
     addTouchClick('ach-back-btn', goToTitle);
-    addTouchClick('daily-claim-btn', claimDailyUI);
     addTouchClick('settings-back-btn', goToTitle);
     addTouchClick('shop-back-btn', goToTitle);
     addTouchClick('lb-back-btn', goToTitle);
@@ -5660,7 +5620,6 @@ function init() {
     // Show total time played on title screen
     updateTitleTime();
     updateLevelBar();
-    showDailyPopupIfReady();
 
 
     // ─── Logo gift: 20 taps in 7 seconds = +50 coins (once per day) ───
