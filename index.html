@@ -695,6 +695,12 @@ button {
 
 
 
+
+.title-streak {
+    color: #ffaa66; font-size: 15px; font-weight: 700;
+    margin-top: 6px; letter-spacing: 0.5px;
+}
+
 </style>
 </head>
 <body>
@@ -765,6 +771,7 @@ button {
             <span class="title-level-name" id="title-level-name">Rookie</span>
             <span class="title-level-num" id="title-level-num">Lv 1</span>
         </div>
+        <div class="title-streak" id="title-streak">🔥 0 day streak</div>
         <div class="title-level-bar"><div class="title-level-fill" id="title-level-fill" style="width:0%"></div></div>
     </div>
     <div class="title-music-label">🎵 Choose Your Music:</div>
@@ -4904,6 +4911,12 @@ function updateLevelBar() {
     document.getElementById('title-level-name').textContent = info.title;
     document.getElementById('title-level-num').textContent = 'Lv ' + info.level + ' • ' + info.intoLevel + '/' + info.needed + ' XP';
     document.getElementById('title-level-fill').style.width = Math.min(100, (info.intoLevel / info.needed) * 100) + '%';
+    // Daily streak on the home screen
+    const streakEl = document.getElementById('title-streak');
+    if (streakEl) {
+        const st = getDailyData().streak;
+        streakEl.textContent = st > 0 ? '🔥 ' + st + ' day' + (st === 1 ? '' : 's') + ' streak' : '🔥 Start your streak today!';
+    }
 }
 
 // ─── Achievements screen ───
