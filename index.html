@@ -679,11 +679,6 @@ button {
 
 
 
-.title-streak {
-    color: #ffaa66; font-size: 15px; font-weight: 700;
-    margin-top: 6px; letter-spacing: 0.5px;
-}
-
 </style>
 </head>
 <body>
@@ -746,7 +741,6 @@ button {
             <span class="title-level-name" id="title-level-name">Rookie</span>
             <span class="title-level-num" id="title-level-num">Lv 1</span>
         </div>
-        <div class="title-streak" id="title-streak">🔥 0 day streak</div>
         <div class="title-level-bar"><div class="title-level-fill" id="title-level-fill" style="width:0%"></div></div>
     </div>
     <div class="title-music-label">🎵 Choose Your Music:</div>
@@ -3653,8 +3647,6 @@ function startGame() {
 
 function endGame() {
     hideNegotiatorUI();
-    claimDaily();   // streak advances once per day, only when a game is played
-    updateLevelBar();
     if (game.wagerActive && !game.victory) wagerLost();
     const won = game.victory;
     game.state = 'gameover';
@@ -4744,39 +4736,6 @@ function addTouchClickDirect(el, handler) {
 // ═══════════════════════════════════════════════════════════════
 
 // ─── DAILY LOGIN REWARDS ───
-const DAY_MS = 24 * 60 * 60 * 1000;
-const DAILY_COINS = [5, 8, 12, 18, 25, 35, 50]; // day 1..7 then stays at 50
-
-function getDailyData() {
-    return {
-        lastClaim: parseInt(localStorage.getItem('ss_dailyLast') || '0', 10),
-        streak: parseInt(localStorage.getItem('ss_dailyStreak') || '0', 10),
-    };
-}
-
-function canClaimDaily() {
-    const d = getDailyData();
-    return Date.now() - d.lastClaim >= DAY_MS;
-}
-
-function claimDaily() {
-    // Called when a game ENDS: advances the streak once per day.
-    // No coins, no popup — just the streak for actually playing.
-    const d = getDailyData();
-    if (Date.now() - d.lastClaim < DAY_MS) return null;   // already counted today
-    if (Date.now() - d.lastClaim < DAY_MS * 2) d.streak = Math.min(d.streak + 1, 7);
-    else d.streak = 1;
-    localStorage.setItem('ss_dailyLast', Date.now().toString());
-    localStorage.setItem('ss_dailyStreak', d.streak.toString());
-    return { coins: 0, streak: d.streak };
-}
-
-function daysUntilDaily() {
-    const d = getDailyData();
-    const left = DAY_MS - (Date.now() - d.lastClaim);
-    return left <= 0 ? 0 : left / DAY_MS;
-}
-
 // ─── ACHIEVEMENTS ───
 const ACHIEVEMENTS = [
     { id: 'kill1',    name: 'First Blood',       desc: 'Kill your first shadow',           reward: 1,  goal: 1,   stat: 'kills' },
@@ -4790,7 +4749,6 @@ const ACHIEVEMENTS = [
     { id: 'boss10',   name: 'Boss Breaker',      desc: 'Defeat 10 bosses',                 reward: 10, goal: 10,  stat: 'bosses' },
     { id: 'score5k',  name: 'High Roller',       desc: 'Score 5,000 in one game',          reward: 2,  goal: 5000,   stat: 'bestScore' },
     { id: 'score25k', name: 'Star Player',       desc: 'Score 25,000 in one game',         reward: 7, goal: 25000,  stat: 'bestScore' },
-    { id: 'score100k',name: 'Legend of Light',   desc: 'Score 100,000 in one game',        reward: 25, goal: 100000, stat: 'bestScore' },
     { id: 'combo10',  name: 'Chain Reaction',    desc: 'Get a 10x combo',                  reward: 4,  goal: 10,  stat: 'bestCombo' },
     { id: 'combo25',  name: 'Unstoppable',       desc: 'Get a 25x combo',                  reward: 10, goal: 25,  stat: 'bestCombo' },
     { id: 'mega3',    name: 'Rainbow Rider',     desc: 'Trigger mega beam 3 times',        reward: 4,  goal: 3,   stat: 'megaCount' },
@@ -4846,7 +4804,7 @@ function checkAchievements() {
 // ─── XP LEVELS ───
 const LEVEL_TITLES = [
     'Rookie', 'Spark', 'Prism Apprentice', 'Beam Rider', 'Light Weaver',
-    'Spectrum Knight', 'Radiant Ace', 'Prism Master', 'Luminary', 'Legend of Light'
+    'Spectrum Knight', 'Radiant Ace', 'Prism Master', 'Luminary', 'Legend'
 ];
 function xpForLevel(lv) { return Math.floor(100 * Math.pow(1.35, lv - 1)); }
 function getXP() { return parseInt(localStorage.getItem('ss_xp') || '0', 10); }
@@ -4872,12 +4830,6 @@ function updateLevelBar() {
     document.getElementById('title-level-name').textContent = info.title;
     document.getElementById('title-level-num').textContent = 'Lv ' + info.level + ' • ' + info.intoLevel + '/' + info.needed + ' XP';
     document.getElementById('title-level-fill').style.width = Math.min(100, (info.intoLevel / info.needed) * 100) + '%';
-    // Daily streak on the home screen
-    const streakEl = document.getElementById('title-streak');
-    if (streakEl) {
-        const st = getDailyData().streak;
-        streakEl.textContent = st > 0 ? '🔥 ' + st + ' day' + (st === 1 ? '' : 's') + ' streak' : '🔥 Start your streak today!';
-    }
 }
 
 // ─── Achievements screen ───
