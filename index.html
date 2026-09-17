@@ -1920,8 +1920,7 @@ function spawnEnemy(isBoss) {
         // Splitter: splits into 2 minis (from wave 7), Golden: rare bonus coins
         let variant = 'normal';
         const r = Math.random();
-        if (Math.random() < 0.001) variant = 'rainbowprism';   // LEGENDARY: 1 in 1000
-        else if (r < 0.04) variant = 'golden';
+        if (r < 0.04) variant = 'golden';
         else if (game.wave >= 3 && r < 0.15) variant = 'speedster';
         else if (game.wave >= 5 && r < 0.25) variant = 'tank';
         else if (game.wave >= 7 && r < 0.33) variant = 'splitter';
@@ -1952,11 +1951,6 @@ function spawnEnemy(isBoss) {
         } else if (variant === 'splitter') {
             enemy.size = 24 * SHADOW_SCALE;
             enemy.isParent = true;
-        } else if (variant === 'rainbowprism') {
-            enemy.size = 22 * SHADOW_SCALE;
-            enemy.speed = baseSpeed * 0.85;      // drifts majestically
-            enemy.rainbowPrism = true;
-            enemy.hue = 0;
         } else if (variant === 'golden') {
             enemy.size = 17 * SHADOW_SCALE;
             enemy.speed = baseSpeed * 1.3;
@@ -2207,77 +2201,6 @@ function drawShadowCreature(e) {
         ctx.fillText('$', 0, 1);
         return;
     }
-    if (e.rainbowPrism) {
-        // LEGENDARY Rainbow Prism Shadow: cycling colors, any beam kills it
-        e.hue = (e.hue + 2) % 360;
-        const hue1 = e.hue, hue2 = (e.hue + 120) % 360, hue3 = (e.hue + 240) % 360;
-        // triple-color aura
-        stampGlow(0, 0, 'hsl(' + hue1 + ',100%,60%)', s * 2.6, 0.3);
-        // prismatic diamond body with animated border
-        ctx.beginPath();
-        ctx.moveTo(s * 1.3, 0);
-        ctx.lineTo(0, -s * 1.05);
-        ctx.lineTo(-s * 1.3, 0);
-        ctx.lineTo(0, s * 1.05);
-        ctx.closePath();
-        const bodyGrad = ctx.createLinearGradient(-s, 0, s, 0);
-        bodyGrad.addColorStop(0, 'hsla(' + hue1 + ',100%,55%,0.9)');
-        bodyGrad.addColorStop(0.5, 'hsla(' + hue2 + ',100%,55%,0.9)');
-        bodyGrad.addColorStop(1, 'hsla(' + hue3 + ',100%,55%,0.9)');
-        ctx.fillStyle = bodyGrad;
-        ctx.fill();
-        // bright white core flash
-        const flash = 0.4 + 0.6 * Math.abs(Math.sin(game.time * 4));
-        stampGlow(0, 0, '#ffffff', s * 1.2, flash * 0.6);
-        // orbiting sparkles
-        for (let sp = 0; sp < 5; sp++) {
-            const a = game.time * 3 + (sp / 5) * Math.PI * 2;
-            const sxp = Math.cos(a) * s * 1.8, syp = Math.sin(a) * s * 1.8;
-            ctx.fillStyle = 'hsl(' + ((e.hue + sp * 72) % 360) + ',100%,70%)';
-            ctx.beginPath();
-            ctx.arc(sxp, syp, 2.5, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        // crown-worthy label
-        ctx.rotate(-e.rotation);
-        ctx.font = 'bold ' + Math.max(10, s * 0.55) + 'px sans-serif';
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText('⭐', 0, 0);
-        return;
-    }
-    if (e.variant === 'mimic') {
-        // Mimic: same blob as normal but border may LIE about its color
-        const hidden = e.revealTimer > 0;
-        const shownColor = hidden ? RAY_COLORS[e.fakeColor].hex : c.hex;
-        stampGlow(0, 0, shownColor, s * 2, 0.35);
-        ctx.beginPath();
-        const mp = 8;
-        for (let i = 0; i <= mp; i++) {
-            const a = (i / mp) * Math.PI * 2;
-            const r = s * (0.7 + 0.3 * Math.sin(e.wobble + i * 1.7));
-            const px = Math.cos(a) * r, py = Math.sin(a) * r;
-            if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-        }
-        ctx.closePath();
-        ctx.fillStyle = 'rgba(8,4,16,0.92)';
-        ctx.fill();
-        ctx.strokeStyle = shownColor; ctx.lineWidth = 6; ctx.globalAlpha = 0.45; ctx.stroke();
-        ctx.globalAlpha = 1; ctx.lineWidth = 2.5; ctx.stroke();
-        // telltale: flickering '?' — the ONLY honest hint
-        if (hidden) {
-            ctx.fillStyle = 'rgba(255,255,255,' + (0.4 + 0.4 * Math.sin(game.time * 8)) + ')';
-            ctx.font = 'bold ' + Math.max(10, s * 0.7) + 'px sans-serif';
-            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText('?', 0, 0);
-        }
-        ctx.fillStyle = shownColor;
-        ctx.beginPath();
-        ctx.arc(-s * 0.2, -s * 0.1, 2.5, 0, Math.PI * 2);
-        ctx.arc(s * 0.2, -s * 0.1, 2.5, 0, Math.PI * 2);
-        ctx.fill();
-        return;
-    }
     if (e.variant === 'shielder') {
         // Shielder: body + crescent shield arc on the crystal-facing side
         const ang = Math.atan2(crystal.y - e.y, crystal.x - e.x);
@@ -2521,9 +2444,6 @@ function checkRayCollisions() {
                 if (e.hitR > 0.3 && e.hitG > 0.3 && e.hitB > 0.3) {
                     killEnemy(i, '#ffffff', true);
                 }
-            } else if (e.rainbowPrism) {
-                // LEGENDARY Rainbow Prism: ANY beam color kills it
-                killEnemy(i, 'hsl(' + (game.time * 120 % 360) + ',100%,60%)');
             } else {
                 // Mimic: while hidden, a FAKE-color hit calls the bluff (reveals, no kill);
                 // a TRUE-color hit kills it outright even while hidden
@@ -2580,21 +2500,6 @@ function killEnemy(idx, color, isBossKill) {
     // ─── Negotiator defeated in fair fight ───
     if (e.isNegotiator && e.dealRefused) {
         negotiatorKilled(e);
-    }
-
-    // ─── LEGENDARY Rainbow Prism: 100 coins + guaranteed gem ───
-    if (e.rainbowPrism) {
-        pouchAdd(100);
-        addFloatingText(e.x, e.y - 30, '+100 COINS! (pouch)', '#ffd700');
-        addFloatingText(e.x, e.y - 52, '⭐ LEGENDARY! ⭐', '#ff88ff');
-        // guaranteed gem drop
-        gems.push({ x: e.x, y: e.y, vx: 0, vy: 0, life: 12, size: 12 });
-        createConfetti(e.x, e.y, 90);   // rainbow confetti storm
-        createConfetti(W / 2, H / 3, 60);
-        showWaveBanner('⭐ LEGENDARY PRISM! ⭐', '+100 coins + free gem!');
-        game.flashAlpha = 0.5;
-        game.shake = 15;
-        trackStat('legendaryKills', 1);
     }
 
     // ─── Golden: bonus coins ───
