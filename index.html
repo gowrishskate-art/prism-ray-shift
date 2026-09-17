@@ -1184,8 +1184,59 @@ function openSettings() {
     document.getElementById('settings-beam3').value = SETTINGS.beam3;
 }
 
+
+// ─── Username registry (per device): one person per name ───
+function getUserRegistry() {
+    return JSON.parse(localStorage.getItem('ss_userRegistry') || '{}'); // { name: ownerKey }
+}
+function saveUserRegistry(reg) {
+    localStorage.setItem('ss_userRegistry', JSON.stringify(reg));
+}
+function myUserKey() {
+    // stable per-browser identity (so siblings on the same device are distinct saves,
+    // but each person's own browser keeps their claim)
+    let k = localStorage.getItem('ss_userKey');
+    if (!k) {
+        k = 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        localStorage.setItem('ss_userKey', k);
+    }
+    return k;
+}
+function isUsernameTaken(name) {
+    if (!name) return false;
+    const reg = getUserRegistry();
+    const owner = reg[name.toLowerCase()];
+    return owner !== undefined && owner !== myUserKey();
+}
+// Returns true if the name was claimed successfully (or already ours)
+function claimUsername(newName, oldName) {
+    const reg = getUserRegistry();
+    const key = myUserKey();
+    const nl = newName.toLowerCase();
+    const ol = (oldName || '').toLowerCase();
+    // free our previous name if we're changing it
+    if (ol && ol !== nl && reg[ol] === key) {
+        delete reg[ol];
+    }
+    const owner = reg[nl];
+    if (owner !== undefined && owner !== key) return false; // someone else owns it
+    reg[nl] = key;
+    saveUserRegistry(reg);
+    return true;
+}
+
 function saveSettingsFromUI() {
-    SETTINGS.username = document.getElementById('settings-username').value.trim() || 'Player';
+    var newName = document.getElementById('settings-username').value.trim() || 'Player';
+    var oldName = SETTINGS.username || '';
+    // One person per username: block names taken by someone else
+    if (isUsernameTaken(newName)) {
+        var btn0 = document.getElementById('settings-save-btn');
+        btn0.textContent = '❌ Username already taken!';
+        setTimeout(function() { btn0.textContent = 'Save'; }, 2000);
+        return; // don't save anything
+    }
+    claimUsername(newName, oldName);
+    SETTINGS.username = newName;
     SETTINGS.crystalColor = document.getElementById('settings-crystal-color').value;
     SETTINGS.beam1 = document.getElementById('settings-beam1').value;
     SETTINGS.beam2 = document.getElementById('settings-beam2').value;
@@ -1199,6 +1250,7 @@ function saveSettingsFromUI() {
 
 // Apply on load
 applySettings();
+if (SETTINGS.username && SETTINGS.username !== 'Player') claimUsername(SETTINGS.username, '');
 computeShadowScale();
 
 
