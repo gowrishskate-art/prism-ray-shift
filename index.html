@@ -3713,7 +3713,7 @@ function drawScoreCard() {
     ctx.font = '700 13px Segoe UI, sans-serif';
     ctx.fillStyle = '#8888bb';
     const hdrAv = getAvatar();
-    ctx.fillText((hdrAv ? hdrAv + '  ' : '') + (SETTINGS.username || 'Player') + '  •  Lv ' + getLevelInfo().level + ' ' + getLevelInfo().title, W / 2, y + 68);
+    ctx.fillText((hdrAv ? hdrAv + '  ' : '') + (SETTINGS.username || 'Player') + '  •  Lv ' + getLevelInfo().level + (getLevelInfo().title ? ' ' + getLevelInfo().title : ''), W / 2, y + 68);
     // Avatar badge on the score card, left of the big score
     ctx.font = '38px sans-serif';
     ctx.textBaseline = 'middle';
@@ -4760,7 +4760,7 @@ function checkAchievements() {
 // ─── XP LEVELS ───
 const LEVEL_TITLES = [
     'Rookie', 'Spark', 'Prism Apprentice', 'Beam Rider', 'Light Weaver',
-    'Spectrum Knight', 'Radiant Ace', 'Prism Master', 'Luminary', 'Prism Sovereign'
+    'Spectrum Knight', 'Radiant Ace', 'Prism Master', 'Luminary', ''
 ];
 function xpForLevel(lv) { return Math.floor(100 * Math.pow(1.35, lv - 1)); }
 function getXP() { return parseInt(localStorage.getItem('ss_xp') || '0', 10); }
@@ -4783,7 +4783,7 @@ function getLevelInfo() {
 // ─── Level bar on title ───
 function updateLevelBar() {
     const info = getLevelInfo();
-    document.getElementById('title-level-name').textContent = info.title;
+    document.getElementById('title-level-name').textContent = info.title || '';
     document.getElementById('title-level-num').textContent = 'Lv ' + info.level + ' • ' + info.intoLevel + '/' + info.needed + ' XP';
     document.getElementById('title-level-fill').style.width = Math.min(100, (info.intoLevel / info.needed) * 100) + '%';
 }
