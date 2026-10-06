@@ -4783,6 +4783,9 @@ function getLevelInfo() {
 // ─── Level bar on title ───
 function updateLevelBar() {
     const info = getLevelInfo();
+    // Lv 10 (max): show NOTHING — no name, no Lv/XP text, no bar
+    document.getElementById('title-level-box').style.display = (info.level >= 10) ? 'none' : '';
+    if (info.level >= 10) return;
     document.getElementById('title-level-name').textContent = info.title || '';
     document.getElementById('title-level-num').textContent = 'Lv ' + info.level + ' • ' + info.intoLevel + '/' + info.needed + ' XP';
     document.getElementById('title-level-fill').style.width = Math.min(100, (info.intoLevel / info.needed) * 100) + '%';
