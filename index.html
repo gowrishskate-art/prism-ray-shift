@@ -1311,6 +1311,7 @@ function saveWorld(mode, board) {
         rest.length = WL_MAX;
         board = rest.concat(mine);
     }
+    board.sort(function(a, b) { return b.score - a.score; });
     localStorage.setItem(wlKey(mode), JSON.stringify(board));
 }
 function wlUserKey() {
@@ -1336,17 +1337,31 @@ function submitWorldScore(mode, name, kills, score) {
 }
 // Seed 40 demo players once per mode so the board is alive on first view
 const WL_DEMO_NAMES = ['ShadowSlayer99','PrismQueen','BeamMaster','NeonVortex','LunarCrystal','SpectrumX','RayBlitz','NovaStrike','GhostPhoton','EclipseKing','VoidWalker','StarCrusher','ZenithArc','PulseHunter','QuantumFox','BlazeRefract','HyperPrism','DarkLumen','SolsticeRay','MythicGlint','AstroShard','CryoBeam','FreqWarden','GleamReaper','HaloDrift','IonSurge','JetstreamZ','KiloLux','LumoSage','MirageBend','OrbitTrance','PyroGlisten','QuasarJr','RuneSpectra','SolarFlick','TwilightBend','UltraRefract','VioletHaze','WispCatcher','XRayYeti'];
+const WL_NAME_A = ['Shadow','Prism','Neon','Lunar','Solar','Void','Nova','Cyber','Crystal','Quantum','Turbo','Mega','Ultra','Astro','Pixel','Robo','Ninja','Dragon','Ghost','Storm'];
+const WL_NAME_B = ['Slayer','Master','Blaster','Rider','Hunter','Star','Beam','Flare','Strike','Wave','Force','Fang','Pulse','Blade','Spark','Surge','Drift','Breaker','Reaper','Zapper'];
 function seedWorldIfNeeded(mode) {
-    if (loadWorld(mode).length > 0) return;
+    // Fill the board up to 4000 players (tops up old small boards too).
+    const board = loadWorld(mode);
+    if (board.length >= WL_MAX) return;
+    const mine = board.filter(function(e) { return e.key === wlUserKey() && !e.demo; });
     const mult = { classic: 1, rush: 0.55, kids: 0.8, nightmare: 0.35 }[mode] || 1;
-    const board = [];
-    for (let i = 0; i < WL_DEMO_NAMES.length; i++) {
-        let sc = Math.round((300000 * Math.pow(0.9, i) * mult + (i * 7919) % 900) / 50) * 50;
-        sc = Math.max(150, Math.min(300000, sc));
+    const gen = [];
+    for (let i = 0; gen.length + mine.length < WL_MAX && i < WL_MAX; i++) {
+        let name, sc;
+        if (i < WL_DEMO_NAMES.length) {
+            name = WL_DEMO_NAMES[i];
+            sc = Math.round((300000 * Math.pow(0.9, i) * mult + (i * 7919) % 900) / 50) * 50;
+            sc = Math.max(150, Math.min(300000, sc));
+        } else {
+            name = WL_NAME_A[i % 20] + WL_NAME_B[(i * 7 + 3) % 20] + (Math.floor(i / 20) + 1);
+            const t = (i - 40) / (WL_MAX - 40);
+            sc = Math.round(5400 * Math.pow(1 - t, 1.35)) + 40 - (i % 30);
+            sc = Math.max(50, Math.min(5600, sc));
+        }
         const kl = Math.max(1, Math.round(sc / 40 + ((i * 13) % 9 - 4) * 10));
-        board.push({ key: 'demo_' + mode + '_' + i, name: WL_DEMO_NAMES[i], kills: kl, score: sc, demo: true });
+        gen.push({ key: 'demo_' + mode + '_' + i, name: name, kills: kl, score: sc, demo: true });
     }
-    saveWorld(mode, board);
+    saveWorld(mode, mine.concat(gen));
 }
 function wlEscape(s) {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -1365,6 +1380,7 @@ function renderWorldBoard() {
         t.classList.toggle('active', t.getAttribute('data-mode') === wlMode);
     });
     const board = loadWorld(wlMode);
+    board.sort(function(a, b) { return b.score - a.score; });
     const myKey = wlUserKey();
     const rankMap = new Map();
     board.forEach(function(e, i) { rankMap.set(e, i + 1); });
