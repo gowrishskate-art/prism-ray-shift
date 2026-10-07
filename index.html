@@ -291,10 +291,45 @@ body.no-touch #dir-controls { display: none !important; }
     justify-content: flex-start;
     padding: 30px 20px 50px;
 }
+/**/
 #leaderboard-screen {
     background: radial-gradient(ellipse at 50% 30%, #0a0828 0%, #050018 50%, #030010 100%);
-    overflow-y: auto; padding: 30px 20px;
+    overflow-y: auto; padding: 24px 16px 50px;
+    justify-content: flex-start; align-items: center;
 }
+.wl-tabs { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 12px; }
+.wl-tab {
+    background: rgba(80,60,180,0.25); border: 2px solid rgba(140,110,255,0.4);
+    color: #cabfff; font-weight: 800; font-size: 13px; padding: 8px 14px;
+    border-radius: 12px; cursor: pointer;
+}
+.wl-tab.active { background: linear-gradient(135deg,#7b5cff,#b44dff); color: #fff; border-color: #c9b6ff; }
+.wl-search {
+    width: 100%; max-width: 420px; padding: 11px 14px; font-size: 15px; font-weight: 600;
+    color: #fff; background: rgba(20,14,60,0.8); border: 2px solid rgba(140,110,255,0.45);
+    border-radius: 12px; outline: none; margin-bottom: 10px;
+}
+.wl-search:focus { border-color: #b44dff; box-shadow: 0 0 12px rgba(180,77,255,0.4); }
+.wl-you { width: 100%; max-width: 480px; margin-bottom: 8px; }
+.wl-you-chip {
+    background: linear-gradient(135deg, rgba(255,215,0,0.16), rgba(255,140,0,0.16));
+    border: 2px solid #ffd700; border-radius: 12px; color: #ffe27a;
+    padding: 10px 14px; font-size: 14px; font-weight: 600;
+}
+.wl-board { width: 100%; max-width: 480px; }
+.wl-row {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(30,22,80,0.55); border: 1px solid rgba(140,110,255,0.25);
+    border-radius: 10px; padding: 9px 12px; margin-bottom: 6px;
+}
+.wl-row.me { border: 2px solid #ffd700; background: rgba(70,50,10,0.45); }
+.wl-rank { min-width: 74px; font-weight: 900; color: #ffd75e; font-size: 14px; }
+.wl-name { flex: 1; font-weight: 800; color: #e8e2ff; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wl-kills { min-width: 86px; text-align: right; color: #9fd8ff; font-size: 12.5px; font-weight: 700; }
+.wl-score { min-width: 92px; text-align: right; color: #b6ff9e; font-size: 14px; font-weight: 900; }
+.wl-search-note { color: #cabfff; font-weight: 700; font-size: 13px; margin: 4px 2px 8px; }
+.lb-empty { color: #9a90c8; text-align: center; padding: 18px 0; font-weight: 600; }
+
 #shop-screen {
     background: radial-gradient(ellipse at 50% 30%, #0a0828 0%, #050018 50%, #030010 100%);
     overflow-y: auto; padding: 30px 20px;
@@ -768,6 +803,7 @@ button {
         <div class="go-stat"><div class="go-stat-val" id="final-combo">0</div><div class="go-stat-lbl">Max Combo</div></div>
     </div>
     <button class="btn primary" id="playagain-btn">Play Again</button>
+    <button class="btn" id="worldboard-btn">🏆 Leaderboard</button>
     <button class="btn" id="share-btn-gameover">Share</button>
     <button class="btn" id="settings-btn-gameover">Settings</button>
     <button class="btn" id="menu-btn">Menu</button>
@@ -981,14 +1017,19 @@ button {
         <button class="btn" id="shop-back-btn" style="margin-top: 30px;">Back</button>
 </div>
 
-<!-- LEADERBOARD SCREEN -->
+<!-- WORLD LEADERBOARD SCREEN -->
 <div id="leaderboard-screen" class="screen">
-    <div class="shop-title">Leaderboard</div>
-    <div class="lb-best-label">Your Best Score</div>
-    <div class="lb-best-score" id="lb-best-score">0</div>
-    <div class="lb-history-label">Recent High Scores</div>
-    <div id="lb-list" class="lb-list"></div>
-    <button class="btn" id="lb-back-btn" style="margin-top: 30px;">Back</button>
+    <div class="shop-title" style="font-size:clamp(28px,6vw,44px)">🏆 Leaderboard</div>
+    <div class="wl-tabs">
+        <button class="wl-tab" data-mode="classic">🎮 Classic</button>
+        <button class="wl-tab" data-mode="rush">⏱ Rush</button>
+        <button class="wl-tab" data-mode="kids">🧒 Kids</button>
+        <button class="wl-tab" data-mode="nightmare">💀 Nightmare</button>
+    </div>
+    <input type="text" id="wl-search" class="wl-search" placeholder="🔍 Search player name..." autocomplete="off">
+    <div id="wl-you" class="wl-you" style="display:none"></div>
+    <div id="wl-board" class="wl-board"></div>
+    <button class="btn" id="lb-back-btn" style="margin-top: 18px;">Back</button>
 </div>
 
 <!-- ACHIEVEMENTS SCREEN -->
@@ -1253,46 +1294,124 @@ if (SETTINGS.username && SETTINGS.username !== 'Player') claimUsername(SETTINGS.
 computeShadowScale();
 
 
-// ─── LEADERBOARD DATA (persistent) ───
-let HIGH_SCORES = JSON.parse(localStorage.getItem('ss_highscores') || '[]');
-function saveHighScores() {
-    HIGH_SCORES.sort(function(a, b) { return b.score - a.score; });
-    HIGH_SCORES = HIGH_SCORES.slice(0, 10); // keep top 10
-    localStorage.setItem('ss_highscores', JSON.stringify(HIGH_SCORES));
+// ─── WORLD LEADERBOARD (per-mode, top 4000, searchable) ───
+const WL_MAX = 4000;
+const WL_MODES = ['classic', 'rush', 'kids', 'nightmare'];
+function wlKey(mode) { return 'ss_world_' + mode; }
+function loadWorld(mode) {
+    try { return JSON.parse(localStorage.getItem(wlKey(mode)) || '[]'); } catch (e) { return []; }
 }
-function addHighScore(score, wave) {
-    if (score <= 0) return;
-    HIGH_SCORES.push({ score: score, wave: wave, date: Date.now() });
-    saveHighScores();
-}
-function getBestScore() {
-    return HIGH_SCORES.length > 0 ? HIGH_SCORES[0].score : 0;
-}
-
-function renderLeaderboard() {
-    document.getElementById('lb-best-score').textContent = getBestScore().toLocaleString();
-    var list = document.getElementById('lb-list');
-    list.innerHTML = '';
-    if (HIGH_SCORES.length === 0) {
-        list.innerHTML = '<div class="lb-empty">No scores yet — play a game!</div>';
-        return;
+function saveWorld(mode, board) {
+    board.sort(function(a, b) { return b.score - a.score; });
+    if (board.length > WL_MAX) {
+        // Cap visible board at 4000 but ALWAYS keep the local player's own
+        // entry so their rank can be shown when they're below the cutoff.
+        const mine = board.filter(function(e) { return e.key === wlUserKey() && !e.demo; });
+        const rest = board.filter(function(e) { return !(e.key === wlUserKey() && !e.demo); });
+        rest.length = WL_MAX;
+        board = rest.concat(mine);
     }
-    for (var i = 0; i < HIGH_SCORES.length; i++) {
-        var hs = HIGH_SCORES[i];
-        var row = document.createElement('div');
-        row.className = 'lb-row' + (i === 0 ? ' top1' : '');
-        row.innerHTML = '<span class="lb-rank">#' + (i + 1) + '</span>' +
-                        '<span class="lb-score-val">' + hs.score.toLocaleString() + '</span>' +
-                        '<span class="lb-wave-val">Wave ' + hs.wave + '</span>';
-        list.appendChild(row);
-    }
+    localStorage.setItem(wlKey(mode), JSON.stringify(board));
 }
-
-function openLeaderboard() {
+function wlUserKey() {
+    let k = localStorage.getItem('ss_userKey');
+    if (!k) {
+        k = 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        localStorage.setItem('ss_userKey', k);
+    }
+    return k;
+}
+function submitWorldScore(mode, name, kills, score) {
+    if (!(score > 0)) return;
+    const board = loadWorld(mode);
+    const key = wlUserKey();
+    const existing = board.find(function(e) { return e.key === key; });
+    if (existing) {
+        if (score > existing.score) { existing.score = score; existing.kills = kills; }
+        existing.name = name; existing.ts = Date.now();
+    } else {
+        board.push({ key: key, name: name, kills: kills, score: score, ts: Date.now() });
+    }
+    saveWorld(mode, board);
+}
+// Seed 40 demo players once per mode so the board is alive on first view
+const WL_DEMO_NAMES = ['ShadowSlayer99','PrismQueen','BeamMaster','NeonVortex','LunarCrystal','SpectrumX','RayBlitz','NovaStrike','GhostPhoton','EclipseKing','VoidWalker','StarCrusher','ZenithArc','PulseHunter','QuantumFox','BlazeRefract','HyperPrism','DarkLumen','SolsticeRay','MythicGlint','AstroShard','CryoBeam','FreqWarden','GleamReaper','HaloDrift','IonSurge','JetstreamZ','KiloLux','LumoSage','MirageBend','OrbitTrance','PyroGlisten','QuasarJr','RuneSpectra','SolarFlick','TwilightBend','UltraRefract','VioletHaze','WispCatcher','XRayYeti'];
+function seedWorldIfNeeded(mode) {
+    if (loadWorld(mode).length > 0) return;
+    const mult = { classic: 1, rush: 0.55, kids: 0.8, nightmare: 0.35 }[mode] || 1;
+    const board = [];
+    for (let i = 0; i < WL_DEMO_NAMES.length; i++) {
+        let sc = Math.round((300000 * Math.pow(0.9, i) * mult + (i * 7919) % 900) / 50) * 50;
+        sc = Math.max(150, Math.min(300000, sc));
+        const kl = Math.max(1, Math.round(sc / 40 + ((i * 13) % 9 - 4) * 10));
+        board.push({ key: 'demo_' + mode + '_' + i, name: WL_DEMO_NAMES[i], kills: kl, score: sc, demo: true });
+    }
+    saveWorld(mode, board);
+}
+function wlEscape(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+let wlMode = 'classic';
+function openWorldLeaderboard(mode) {
+    wlMode = (WL_MODES.indexOf(mode) >= 0) ? mode : (WL_MODES.indexOf(gameMode) >= 0 ? gameMode : 'classic');
+    seedWorldIfNeeded(wlMode);
+    document.getElementById('wl-search').value = '';
     game.state = 'leaderboard';
     showScreen('leaderboard');
-    renderLeaderboard();
+    renderWorldBoard();
 }
+function renderWorldBoard() {
+    document.querySelectorAll('.wl-tab').forEach(function(t) {
+        t.classList.toggle('active', t.getAttribute('data-mode') === wlMode);
+    });
+    const board = loadWorld(wlMode);
+    const myKey = wlUserKey();
+    const rankMap = new Map();
+    board.forEach(function(e, i) { rankMap.set(e, i + 1); });
+    const myEntry = board.find(function(e) { return e.key === myKey; });
+    const myRank = myEntry ? rankMap.get(myEntry) : 0;
+
+    const q = (document.getElementById('wl-search').value || '').trim().toLowerCase();
+    let rows, header = '';
+    if (q) {
+        rows = board.filter(function(e) { return e.name.toLowerCase().indexOf(q) >= 0; }).slice(0, 60);
+        header = '<div class="wl-search-note">Results for "' + wlEscape(q) + '"</div>';
+    } else {
+        rows = board.slice(0, WL_MAX);
+    }
+    let out = '';
+    if (rows.length === 0) {
+        out = '<div class="lb-empty">No players found.</div>';
+    } else {
+        out = rows.map(function(e) {
+            const rank = rankMap.get(e);
+            const medal = rank === 1 ? ' 🥇' : rank === 2 ? ' 🥈' : rank === 3 ? ' 🥉' : '';
+            return '<div class="wl-row' + (e.key === myKey ? ' me' : '') + '">' +
+                '<span class="wl-rank">#' + rank + medal + '</span>' +
+                '<span class="wl-name">' + wlEscape(e.name) + '</span>' +
+                '<span class="wl-kills">' + e.kills.toLocaleString() + ' kills</span>' +
+                '<span class="wl-score">' + e.score.toLocaleString() + '</span>' +
+            '</div>';
+        }).join('');
+    }
+    document.getElementById('wl-board').innerHTML = header + out;
+
+    const you = document.getElementById('wl-you');
+    if (myRank > WL_MAX) {
+        you.innerHTML = '<div class="wl-you-chip">You: <b>#' + myRank.toLocaleString() + '</b> · ' + wlEscape(myEntry.name) + ' · ' + myEntry.kills.toLocaleString() + ' kills · ' + myEntry.score.toLocaleString() + ' pts</div>';
+        you.style.display = 'block';
+    } else if (myEntry) {
+        you.style.display = 'none'; you.innerHTML = '';
+    } else {
+        you.innerHTML = '<div class="wl-you-chip">Play this mode to enter the board!</div>';
+        you.style.display = 'block';
+    }
+}
+// Personal best (all modes) for the share/challenge text
+function notePersonalBest(score) {
+    if (score > parseInt(localStorage.getItem('ss_bestScore') || '0', 10)) localStorage.setItem('ss_bestScore', String(score));
+}
+function getBestScore() { return parseInt(localStorage.getItem('ss_bestScore') || '0', 10); }
 
 // ─── CANVAS ───
 let canvas, ctx, W, H, DPR;
@@ -3635,8 +3754,12 @@ function endGame() {
     // Save total time played
     const newTotal = TOTAL_TIME_PLAYED + Math.floor(game.playTime);
     localStorage.setItem('ss_totalTime', newTotal.toString());
-    // Add to leaderboard
-    addHighScore(game.score, game.wave);
+    // Add to the world leaderboard for the current mode
+    notePersonalBest(game.score);
+    if (WL_MODES.indexOf(gameMode) >= 0) {
+        seedWorldIfNeeded(gameMode);
+        submitWorldScore(gameMode, SETTINGS.username || 'Player', game.kills, game.score);
+    }
 
     document.getElementById('final-score').textContent = game.score.toLocaleString();
     var goTitle = document.querySelector('.go-title');
@@ -5022,7 +5145,11 @@ function exitGame() {
     localStorage.setItem('ss_totalPoints', SHOP_DATA.totalPoints.toString());
     const newTotal = TOTAL_TIME_PLAYED + Math.floor(game.playTime);
     localStorage.setItem('ss_totalTime', newTotal.toString());
-    addHighScore(game.score, game.wave);
+    notePersonalBest(game.score);
+    if (WL_MODES.indexOf(gameMode) >= 0) {
+        seedWorldIfNeeded(gameMode);
+        submitWorldScore(gameMode, SETTINGS.username || 'Player', game.kills, game.score);
+    }
     game.score = 0;
     game.playTime = 0;
     goToTitle();
@@ -5476,6 +5603,11 @@ function init() {
     addTouchClick('buy-pet-sprite', function() { buyCosmetic('sprite'); });
     addTouchClick('buy-pet-comet', function() { buyCosmetic('comet'); });
     addTouchClick('share-btn-gameover', shareScore);
+    addTouchClick('worldboard-btn', function() { openWorldLeaderboard(gameMode); });
+    document.querySelectorAll('.wl-tab').forEach(function(t) {
+        t.addEventListener('click', function() { wlMode = t.getAttribute('data-mode'); seedWorldIfNeeded(wlMode); renderWorldBoard(); });
+    });
+    document.getElementById('wl-search').addEventListener('input', renderWorldBoard);
     addTouchClick('buy-shadow30', function() { buyShadowRate(30); });
 
     // Keyboard — WASD + arrows for movement, Escape/P for pause
