@@ -26,6 +26,23 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
 }
 .screen.active { display: flex; }
 
+/* ─── EXTRA HEART QUESTION ─── */
+.hq-overlay {
+    position: fixed; inset: 0; z-index: 60; display: none;
+    align-items: center; justify-content: center;
+    background: rgba(3,0,20,0.72); backdrop-filter: blur(3px);
+}
+.hq-overlay.active { display: flex; }
+.hq-card {
+    background: linear-gradient(160deg, #1c1240, #120a2e);
+    border: 3px solid #ff5577; border-radius: 22px;
+    padding: 30px 34px; text-align: center; max-width: 340px;
+    box-shadow: 0 0 40px rgba(255,85,119,0.4);
+}
+.hq-emoji { font-size: 52px; margin-bottom: 8px; }
+.hq-title { color: #ffe9f0; font-size: 19px; font-weight: 800; margin-bottom: 20px; }
+.hq-btns { display: flex; gap: 12px; justify-content: center; }
+
 /* ─── TITLE SCREEN ─── */
 #title-screen {
     background: radial-gradient(ellipse at 50% 40%, #0a0828 0%, #050018 50%, #030010 100%);
@@ -789,6 +806,18 @@ button {
         Aim the colored rays at the matching shadow creatures to vaporize them.<br>
         <strong>White bosses</strong> need all three rays at once!<br>
         Collect <strong style="color:gold">golden gems</strong> for rainbow mega-beams.
+    </div>
+</div>
+
+<!-- EXTRA HEART QUESTION -->
+<div id="heart-question" class="hq-overlay">
+    <div class="hq-card">
+        <div class="hq-emoji">❤️</div>
+        <div class="hq-title" id="hq-text">Do you want an extra heart now or later?</div>
+        <div class="hq-btns">
+            <button class="btn primary" id="hq-yes">YES</button>
+            <button class="btn" id="hq-no">NO</button>
+        </div>
     </div>
 </div>
 
@@ -3043,6 +3072,30 @@ function activateMegaMode() {
 // ═══════════════════════════════════════════════════════════════
 // WAVE SYSTEM
 // ═══════════════════════════════════════════════════════════════
+// ─── Extra-heart question (every 10 waves) ───
+let heartQuestionActive = false;
+function askHeartQuestion() {
+    if (heartQuestionActive) return;
+    heartQuestionActive = true;
+    game.paused = true;
+    const box = document.getElementById('heart-question');
+    box.classList.add('active');
+    document.getElementById('hq-text').textContent = 'Do you want an extra heart now or later?';
+}
+
+function answerHeart(yes) {
+    if (!heartQuestionActive) return;
+    heartQuestionActive = false;
+    document.getElementById('heart-question').classList.remove('active');
+    if (yes && game.lives < 5) {
+        game.lives++;
+        addFloatingText(W / 2, H / 2, '+1 ❤️ HEART!', '#ff5577');
+        createConfetti(W / 2, H / 2, 25);
+    }
+    updateHUD();
+    game.paused = false;   // resume play either way
+}
+
 function updateWaves(dt) {
     if (game.tutorialActive) return;
     game.bossTimer -= dt;
@@ -3105,7 +3158,7 @@ function updateWaves(dt) {
         let waveSub = '';
         if (game.wave % 10 === 0) {
             waveSub = 'Milestone wave!';
-            if (game.lives < 5) { game.lives++; waveSub = '+1 LIFE BONUS!'; }
+            if (game.lives < 5) askHeartQuestion();
         }
         if (game.wave === 99) waveSub = 'Final wave! Face the SHADOW KING!';
         showWaveBanner(waveText, waveSub);
@@ -3732,6 +3785,7 @@ function startGame() {
     initAudio();
     game.state = 'playing';
     game.paradeAlive = 0;
+    if (heartQuestionActive) { heartQuestionActive = false; document.getElementById('heart-question').classList.remove('active'); }
     game.score = 0; game.wave = 1; game.kills = 0; game.lives = diff().lives;
     game.combo = 0; game.maxCombo = 0; game.comboTimer = 0;
     game.waveEnemyCount = 6; game.enemiesKilledThisWave = 0;
@@ -5676,6 +5730,8 @@ function init() {
     addTouchClick('buy-pet-comet', function() { buyCosmetic('comet'); });
     addTouchClick('share-btn-gameover', shareScore);
     addTouchClick('worldboard-btn', function() { openWorldLeaderboard(gameMode); });
+    addTouchClick('hq-yes', function() { answerHeart(true); });
+    addTouchClick('hq-no', function() { answerHeart(false); });
     document.querySelectorAll('.wl-tab').forEach(function(t) {
         t.addEventListener('click', function() { wlMode = t.getAttribute('data-mode'); seedWorldIfNeeded(wlMode); renderWorldBoard(); });
     });
