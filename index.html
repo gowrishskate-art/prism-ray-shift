@@ -2093,6 +2093,7 @@ function spawnEnemy(isBoss) {
             x, y, vx: 0, vy: 0,
             size: 42 * SHADOW_SCALE, hp: 3, maxHp: 3,
             color: -1, isBoss: true,
+            bossTitle: sillyBossName(),
             hitR: 0, hitG: 0, hitB: 0,
             rotation: 0, wobble: Math.random() * Math.PI * 2,
             speed: (22 + game.wave * 1.5) * 1.5 * diff().speedMult,
@@ -2171,6 +2172,16 @@ function updateEnemies(dt) {
         const e = enemies[i];
         e.wobble += dt * 2;
 
+        // Parade shadows march straight across (no homing)
+        if (e.parade) {
+            e.x += e.vx * dt; e.y += e.vy * dt; e.rotation += dt * 1.5;
+            if (e.x > W + 60) {
+                enemies.splice(i, 1);
+                if (game.paradeAlive > 0) game.paradeAlive--;   // escaped = bonus lost
+            }
+            continue;
+        }
+
         // Move toward crystal (player must protect it)
         const dx = crystal.x - e.x, dy = crystal.y - e.y;
         const dist = Math.hypot(dx, dy);
@@ -2245,7 +2256,7 @@ function updateEnemies(dt) {
         // Check collision with crystal (damage player)
         const cd = Math.hypot(crystal.x - e.x, crystal.y - e.y);
         if (cd < e.size * 0.7 + crystal.size * 0.5) {
-            if (!e.isBoss) {
+            if (!e.isBoss && !e.parade) {
                 damagePlayer();
                 createExplosion(e.x, e.y, e.color >= 0 ? RAY_COLORS[e.color].hex : '#aa44ff', 15);
                 enemies.splice(i, 1);
@@ -2269,6 +2280,14 @@ function drawEnemies() {
             drawShadowKing(e);
         } else if (e.isBoss) {
             drawBoss(e);
+            if (e.bossTitle) {
+                ctx.save();
+                ctx.font = '800 11px Segoe UI, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = 'rgba(255,220,255,0.85)';
+                ctx.fillText(e.bossTitle, e.x, e.y - e.size - 8);
+                ctx.restore();
+            }
         } else {
             drawShadowCreature(e);
         }
@@ -2669,6 +2688,11 @@ function checkRayCollisions() {
     }
 }
 
+// ─── Silly boss names + funny game-over lines ───
+const BOSS_TITLES = ['Grumpy Glow','Sir Shadows-a-Lot','Captain Darkness','Baron von Blob','The Big Gloom','Lord Wobble','Duke of Dusk','Mega Grump','Count Spookula','General Gloom','Professor Pitch-Black','Sergeant Shadow'];
+const GO_FUNNY = ['The shadows tickled you!','Ouch! Watch out next time!','So close! Try again!','Your crystal needs a hug!','Blipped out by the shadows!','Almost sliced it!','The shadows did a victory dance!','Whoops! Too many shadows!','Even heroes take naps!','The darkness got lucky!'];
+function sillyBossName() { return BOSS_TITLES[Math.floor(Math.random() * BOSS_TITLES.length)]; }
+
 function killEnemy(idx, color, isBossKill) {
     const e = enemies[idx];
     if (!e) return;
@@ -2714,6 +2738,15 @@ function killEnemy(idx, color, isBossKill) {
         addFloatingText(e.x, e.y - 24, 'SPLIT!', '#ff7bff');
     }
 
+    if (e.parade && game.paradeAlive > 0) {
+        game.paradeAlive--;
+        if (game.paradeAlive === 0) {
+            game.coins += 50;
+            localStorage.setItem('ss_coins', game.coins.toString());
+            addFloatingText(W / 2, H * 0.4, '🎉 PARADE BONUS +50 COINS!', '#ffd700');
+            createConfetti(W / 2, H * 0.4, 40);
+        }
+    }
     game.kills++;
     game.enemiesKilledThisWave++;
     trackWeeklyKill();
@@ -2751,10 +2784,13 @@ function killEnemy(idx, color, isBossKill) {
     addFloatingText(e.x, e.y - 20, '+' + earned, color);
 
     if (isBossKill) {
+        if (e.bossTitle) addFloatingText(e.x, e.y - 52, e.bossTitle + ' defeated!', '#ffaaff');
         sfxBoss();
         game.shake = 20;
         game.flashAlpha = 0.4;
         createConfetti(e.x, e.y, 50);   // big confetti for bosses
+        game.slowMo = 2;                 // slow-mo!
+        addFloatingText(W / 2, H * 0.25, 'SLOW-MO!', '#9fd8ff');
         trackStat('bosses', 1);
         missionStat('bossKills', 1);
         triggerVictorySpin();
@@ -3048,6 +3084,23 @@ function updateWaves(dt) {
         game.wave++;
         game.enemiesKilledThisWave = 0;
         game.waveEnemyCount = 5 + Math.floor(game.wave * 1.5);
+        // ─── SHADOW PARADE: every 10 waves, a marching line of one color ───
+        if (game.wave % 10 === 0 && game.wave < 100) {
+            const pc = Math.floor(Math.random() * 3);
+            const py = H * (0.3 + Math.random() * 0.3);
+            game.paradeAlive = 0;
+            for (let pi = 0; pi < 8; pi++) {
+                enemies.push({
+                    x: -40 - pi * 52, y: py,
+                    vx: 95, vy: 0,
+                    size: 16 * SHADOW_SCALE, color: pc, isBoss: false,
+                    rotation: 0, wobble: Math.random() * 6, speed: 0, hp: 1,
+                    variant: 'normal', parade: true,
+                });
+                game.paradeAlive++;
+            }
+            showWaveBanner('🎉 SHADOW PARADE!', 'Wipe the whole line for +50 coins!');
+        }
         const waveText = game.wave % 5 === 0 ? '\u{1F525} WAVE ' + game.wave : 'WAVE ' + game.wave;
         let waveSub = '';
         if (game.wave % 5 === 0) {
@@ -3510,6 +3563,8 @@ function gameLoop(timestamp) {
     let dt = (timestamp - lastTime) / 1000;
     lastTime = timestamp;
     if (dt > 0.05) dt = 0.05; // clamp
+    // Slow-mo after boss kills (#9)
+    if (game.slowMo > 0) { game.slowMo -= dt; dt *= 0.35; }
 
     if (game.state !== 'playing' || game.paused) {
         if (game.state === 'title') renderTitleBg(dt);
@@ -3676,6 +3731,7 @@ function showScreen(id) {
 function startGame() {
     initAudio();
     game.state = 'playing';
+    game.paradeAlive = 0;
     game.score = 0; game.wave = 1; game.kills = 0; game.lives = diff().lives;
     game.combo = 0; game.maxCombo = 0; game.comboTimer = 0;
     game.waveEnemyCount = 6; game.enemiesKilledThisWave = 0;
@@ -3779,7 +3835,7 @@ function endGame() {
 
     document.getElementById('final-score').textContent = game.score.toLocaleString();
     var goTitle = document.querySelector('.go-title');
-    if (goTitle) goTitle.textContent = won ? '🏆 VICTORY!' : 'Shattered';
+    if (goTitle) goTitle.textContent = won ? '🏆 VICTORY!' : GO_FUNNY[Math.floor(Math.random() * GO_FUNNY.length)];
     document.getElementById('final-wave').textContent = game.wave;
     document.getElementById('final-kills').textContent = game.kills;
     document.getElementById('final-combo').textContent = game.maxCombo;
@@ -4377,7 +4433,7 @@ function spawnSchellingTwin() {
     enemies.push({
         x: W / 2, y: -70, vx: 0, vy: 0,
         size: 46 * SHADOW_SCALE, hp: 10, maxHp: 10,
-        color: -1, isBoss: true, isTwin: true,
+        color: -1, isBoss: true, isTwin: true, bossTitle: sillyBossName(),
         hitR: 0, hitG: 0, hitB: 0,
         rotation: 0, wobble: Math.random() * Math.PI * 2,
         speed: (18 + game.wave) * 1.5 * diff().speedMult,
@@ -4554,7 +4610,7 @@ function spawnNegotiator() {
     enemies.push({
         x: W / 2, y: -70, vx: 0, vy: 0,
         size: 40 * SHADOW_SCALE, hp: 6, maxHp: 6,
-        color: -1, isBoss: true, isNegotiator: true,
+        color: -1, isBoss: true, isNegotiator: true, bossTitle: sillyBossName(),
         hitR: 0, hitG: 0, hitB: 0,
         rotation: 0, wobble: Math.random() * Math.PI * 2,
         speed: (20 + game.wave) * 1.5 * diff().speedMult,
@@ -4780,7 +4836,7 @@ function spawnMegaBoss() {
     enemies.push({
         x, y, vx: 0, vy: 0,
         size: 64 * SHADOW_SCALE, hp: 6, maxHp: 6,
-        color: -1, isBoss: true, isMegaBoss: true,
+        color: -1, isBoss: true, isMegaBoss: true, bossTitle: sillyBossName(),
         hitR: 0, hitG: 0, hitB: 0,
         rotation: 0, wobble: Math.random() * Math.PI * 2,
         speed: (30 + game.wave * 1.2) * 1.5 * diff().speedMult,
