@@ -3075,7 +3075,7 @@ function activateMegaMode() {
 // ─── Extra-heart question (every 10 waves) ───
 let heartQuestionActive = false;
 function askHeartQuestion() {
-    if (heartQuestionActive) return;
+    if (heartQuestionActive || game.heartsMaxedOnce) return;
     heartQuestionActive = true;
     game.paused = true;
     const box = document.getElementById('heart-question');
@@ -3091,6 +3091,7 @@ function answerHeart(yes) {
         game.lives++;
         addFloatingText(W / 2, H / 2, '+1 ❤️ HEART!', '#ff5577');
         createConfetti(W / 2, H / 2, 25);
+        if (game.lives >= 5) game.heartsMaxedOnce = true;
     }
     updateHUD();
     game.paused = false;   // resume play either way
@@ -3158,7 +3159,7 @@ function updateWaves(dt) {
         let waveSub = '';
         if (game.wave % 10 === 0) {
             waveSub = 'Milestone wave!';
-            if (game.lives < 5) askHeartQuestion();
+            if (game.lives < 5 && !game.heartsMaxedOnce) askHeartQuestion();
         }
         if (game.wave === 99) waveSub = 'Final wave! Face the SHADOW KING!';
         showWaveBanner(waveText, waveSub);
@@ -3785,6 +3786,7 @@ function startGame() {
     initAudio();
     game.state = 'playing';
     game.paradeAlive = 0;
+    game.heartsMaxedOnce = false;
     if (heartQuestionActive) { heartQuestionActive = false; document.getElementById('heart-question').classList.remove('active'); }
     game.score = 0; game.wave = 1; game.kills = 0; game.lives = diff().lives;
     game.combo = 0; game.maxCombo = 0; game.comboTimer = 0;
