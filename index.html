@@ -44,6 +44,15 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
 .hq-sub { color: #ff9db5; font-size: 13.5px; font-weight: 700; margin-bottom: 18px; }
 .hq-btns { display: flex; gap: 12px; justify-content: center; }
 
+/* ─── SPEEDRUN SPLITS + CHECKPOINT ─── */
+.go-splits { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 6px 0 2px; }
+.split-pill {
+    background: rgba(30,22,80,0.7); border: 1px solid rgba(140,110,255,0.35);
+    color: #c9bfff; font-size: 12.5px; font-weight: 700;
+    border-radius: 10px; padding: 5px 10px;
+}
+.split-pill.best { border-color: #ffd700; color: #ffe27a; }
+
 /* ─── TITLE SCREEN ─── */
 #title-screen {
     background: radial-gradient(ellipse at 50% 40%, #0a0828 0%, #050018 50%, #030010 100%);
@@ -799,6 +808,7 @@ button {
     <div class="title-music-label">🎵 Choose Your Music:</div>
     <div id="title-music-bar" class="title-music-bar"></div>
     <button class="btn primary" id="play-btn">Play</button>
+    <button class="btn" id="continue-btn" style="display:none">🚩 Continue from Wave 50</button>
     <button class="btn" id="how-btn">How to Play</button>
     <button class="btn" id="settings-btn-title">Settings</button>
     <div class="instructions" id="instr-text">
@@ -828,12 +838,14 @@ button {
     <div class="go-title">Shattered</div>
     <div class="go-score" id="final-score">0</div>
     <div class="go-label">Final Score</div>
+    <div id="go-splits" class="go-splits" style="display:none"></div>
     <div class="go-stats">
         <div class="go-stat"><div class="go-stat-val" id="final-wave">1</div><div class="go-stat-lbl">Wave</div></div>
         <div class="go-stat"><div class="go-stat-val" id="final-kills">0</div><div class="go-stat-lbl">Kills</div></div>
         <div class="go-stat"><div class="go-stat-val" id="final-combo">0</div><div class="go-stat-lbl">Max Combo</div></div>
     </div>
     <button class="btn primary" id="playagain-btn">Play Again</button>
+    <button class="btn" id="continue-btn-go" style="display:none">🚩 Continue from Wave 50</button>
     <button class="btn" id="worldboard-btn">🏆 Leaderboard</button>
     <button class="btn" id="share-btn-gameover">Share</button>
     <button class="btn" id="settings-btn-gameover">Settings</button>
@@ -952,6 +964,12 @@ button {
             <div class="shop-icon" style="background:rgba(255,24,69,0.2);color:#ff1845">💀</div>
             <div class="shop-info"><div class="shop-name">Nightmare Mode</div>
             <div class="shop-desc">1 life, 2x speed. Beat the Shadow King to unlock!</div></div>
+            <button class="shop-buy mode-btn">Select</button>
+        </div>
+        <div class="shop-card mode-shop-card" data-mode="heartquest">
+            <div class="shop-icon" style="background:rgba(255,85,119,0.2);color:#ff5577">❤️</div>
+            <div class="shop-info"><div class="shop-name">Heart Quest Mode</div>
+            <div class="shop-desc">Start with 1 heart. Answer the heart question every 10 waves to earn up to 5 more!</div></div>
             <button class="shop-buy mode-btn">Select</button>
         </div>
         <div class="shop-card" id="card-trail-none">
@@ -3100,6 +3118,85 @@ function answerHeart(yes) {
     game.paused = false;   // resume play either way
 }
 
+
+function refreshContinueButtons() {
+    const cp = loadCheckpoint();
+    const show = !!cp;
+    ['continue-btn', 'continue-btn-go'].forEach(function(id) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.style.display = show ? '' : 'none';
+            if (show) el.textContent = '🚩 Continue from Wave ' + cp.wave;
+        }
+    });
+}
+
+// ─── WAVE-50 CHECKPOINT (player-controlled pause anytime) ───
+const CP_WAVE = 50;
+function checkpointKey() { return 'ss_checkpoint_' + gameMode; }
+function saveCheckpoint() {
+    if (game.wave < CP_WAVE) return;
+    const cp = {
+        wave: game.wave, lives: game.lives, score: game.score, kills: game.kills,
+        coins: game.coins, heartsClaimed: game.heartsClaimed || 0,
+        playTime: Math.floor(game.playTime), maxCombo: game.maxCombo, mode: gameMode,
+        splits: JSON.parse(JSON.stringify(game.splits || {})),
+        savedAt: Date.now(),
+    };
+    localStorage.setItem(checkpointKey(), JSON.stringify(cp));
+    addFloatingText(W / 2, H * 0.3, '🚩 CHECKPOINT SAVED!', '#7dff9e');
+}
+function loadCheckpoint() {
+    try { return JSON.parse(localStorage.getItem(checkpointKey()) || 'null'); } catch (e) { return null; }
+}
+function clearCheckpoint() { localStorage.removeItem(checkpointKey()); }
+function hasCheckpoint() { return !!loadCheckpoint(); }
+// Resume a saved run: rebuild game state from the snapshot
+function resumeFromCheckpoint() {
+    const cp = loadCheckpoint();
+    if (!cp) return;
+    startGame();                    // fresh baseline...
+    game.resumedFromCp = true;
+    game.wave = cp.wave;
+    game.lives = cp.lives;
+    game.score = cp.score;
+    game.kills = cp.kills;
+    game.coins = cp.coins;
+    game.heartsClaimed = cp.heartsClaimed;
+    game.playTime = cp.playTime;
+    game.maxCombo = cp.maxCombo;
+    game.waveEnemyCount = 5 + Math.floor(game.wave * 1.5);
+    game.enemiesKilledThisWave = 0;
+    // speedrun splits: restore recorded split times
+    if (cp.splits) game.splits = JSON.parse(JSON.stringify(cp.splits));
+    showWaveBanner('🚩 RESUMED AT WAVE ' + cp.wave, 'Good luck!');
+    updateHUD();
+}
+// Continuation of a resumed run ends -> checkpoint consumed (one use)
+function consumeCheckpointOnEnd() {
+    if (game.resumedFromCp) clearCheckpoint();
+}
+
+// ─── SPEEDRUN TIMER: splits at waves 10 / 25 / 50 / finish ───
+const SPLIT_WAVES = [10, 25, 50];
+function splitLabel(w) { return 'W' + w; }
+function bestTimeKey(w) { return 'ss_bestSplit_' + gameMode + '_W' + w; }
+function fmtTime(t) {
+    const m = Math.floor(t / 60), s = Math.floor(t % 60);
+    return m + ':' + (s < 10 ? '0' : '') + s;
+}
+function recordSplit(wave) {
+    if (SPLIT_WAVES.indexOf(wave) < 0) return;
+    const t = game.playTime;
+    game.splits = game.splits || {};
+    game.splits[wave] = t;
+    const prev = parseFloat(localStorage.getItem(bestTimeKey(wave)) || '0');
+    if (!prev || t < prev) {
+        localStorage.setItem(bestTimeKey(wave), t.toString());
+        addFloatingText(W / 2, H * 0.22, '⏱ NEW BEST ' + splitLabel(wave) + ': ' + fmtTime(t) + '!', '#9fd8ff');
+    }
+}
+
 function updateWaves(dt) {
     if (game.tutorialActive) return;
     game.bossTimer -= dt;
@@ -3158,11 +3255,13 @@ function updateWaves(dt) {
             }
             showWaveBanner('🎉 SHADOW PARADE!', 'Wipe the whole line for +50 coins!');
         }
+        recordSplit(game.wave);          // speedrun split (10/25/50)
+        if (game.wave === CP_WAVE) saveCheckpoint();   // 🚩 checkpoint at wave 50
         const waveText = game.wave % 5 === 0 ? '\u{1F525} WAVE ' + game.wave : 'WAVE ' + game.wave;
         let waveSub = '';
         if (game.wave % 10 === 0) {
             waveSub = 'Milestone wave!';
-            if (game.heartsClaimed < 5) askHeartQuestion();
+            if (gameMode === 'heartquest' && game.heartsClaimed < 5) askHeartQuestion();
         }
         if (game.wave === 99) waveSub = 'Final wave! Face the SHADOW KING!';
         showWaveBanner(waveText, waveSub);
@@ -3742,6 +3841,10 @@ function updateHUD() {
     // Username shown during gameplay
     const unHud = document.querySelector('#hud-username .hud-val');
     if (unHud) unHud.textContent = SETTINGS.username ? '👤 ' + SETTINGS.username : '';
+    // Speedrun: next split target under the timer
+    const splitHud = document.querySelector('#hud-time .hud-val');
+    if (splitHud) splitHud.title = 'Speedrun splits at waves 10/25/50';
+
     // Kill counter
     const killHud = document.querySelector('#hud-kills .hud-val');
     if (killHud) killHud.textContent = game.kills;
@@ -3790,6 +3893,8 @@ function startGame() {
     game.state = 'playing';
     game.paradeAlive = 0;
     game.heartsClaimed = 0;
+    game.splits = {};
+    game.resumedFromCp = false;
     if (heartQuestionActive) { heartQuestionActive = false; document.getElementById('heart-question').classList.remove('active'); }
     game.score = 0; game.wave = 1; game.kills = 0; game.lives = diff().lives;
     game.combo = 0; game.maxCombo = 0; game.comboTimer = 0;
@@ -3852,6 +3957,7 @@ function startGame() {
 }
 
 function endGame() {
+    consumeCheckpointOnEnd();
     hideNegotiatorUI();
     if (game.wagerActive && !game.victory) wagerLost();
     const won = game.victory;
@@ -3898,6 +4004,18 @@ function endGame() {
     document.getElementById('final-wave').textContent = game.wave;
     document.getElementById('final-kills').textContent = game.kills;
     document.getElementById('final-combo').textContent = game.maxCombo;
+    // Speedrun splits on the game-over card
+    const sp = document.getElementById('go-splits');
+    if (game.splits && Object.keys(game.splits).length > 0) {
+        sp.style.display = '';
+        sp.innerHTML = SPLIT_WAVES.filter(function(w) { return game.splits[w] !== undefined; }).map(function(w) {
+            const t = game.splits[w];
+            const best = parseFloat(localStorage.getItem(bestTimeKey(w)) || '0');
+            const isBest = best && Math.abs(t - best) < 0.001;
+            return '<span class="split-pill' + (isBest ? ' best' : '') + '">' + splitLabel(w) + ' ⏱ ' + fmtTime(t) + (isBest ? ' 🏆' : '') + '</span>';
+        }).join('');
+    } else { sp.style.display = 'none'; }
+    refreshContinueButtons();
     showScreen('gameover');
     document.getElementById('hud').classList.remove('active');
     document.getElementById('pause-btn').classList.remove('active');
@@ -3939,6 +4057,11 @@ function diff() {
     if (gameMode === 'kids') {
         // Kids: shadows dart 2x faster, fixed 5 shadows per 10 seconds
         return { lives: base.lives, speedMult: base.speedMult * 2, rateMult: 1, name: 'Kids' };
+    }
+    if (gameMode === 'heartquest') {
+        // Heart Quest: begin with a single heart; earn the rest via the
+        // yes/no lifeline question at every 10th wave
+        return { lives: 1, speedMult: base.speedMult, rateMult: base.rateMult, name: 'Heart Quest' };
     }
     return base;
 }
@@ -4337,6 +4460,7 @@ const GAME_MODES = {
     rush:      { name: 'Rush',       icon: '⏱' },
     kids:      { name: 'Kids',       icon: '🧒' },
     nightmare: { name: 'Nightmare',  icon: '💀' },
+    heartquest: { name: 'Heart Quest', icon: '❤️' },
 };
 function setGameMode(mode) {
     if (mode === 'nightmare' && localStorage.getItem('ss_endlessUnlocked') !== 'true') {
@@ -5235,6 +5359,7 @@ function buyUpgrade(upgradeId) {
 }
 
 function goToTitle() {
+    refreshContinueButtons();
     game.state = 'title';
     // Hide ALL screens, then show title
     document.getElementById('title-screen').classList.add('active');
@@ -5271,6 +5396,7 @@ function togglePause() {
 
 function exitGame() {
     if (game.state !== 'playing') return;
+    // Player chose to leave: keep the checkpoint for next time
     // Save points + time before leaving
     SHOP_DATA.totalPoints += game.score;
     localStorage.setItem('ss_totalPoints', SHOP_DATA.totalPoints.toString());
@@ -5736,6 +5862,9 @@ function init() {
     addTouchClick('share-btn-gameover', shareScore);
     addTouchClick('worldboard-btn', function() { openWorldLeaderboard(gameMode); });
     addTouchClick('hq-yes', function() { answerHeart(true); });
+    addTouchClick('continue-btn', resumeFromCheckpoint);
+    addTouchClick('continue-btn-go', resumeFromCheckpoint);
+
     addTouchClick('hq-no', function() { answerHeart(false); });
     document.querySelectorAll('.wl-tab').forEach(function(t) {
         t.addEventListener('click', function() { wlMode = t.getAttribute('data-mode'); seedWorldIfNeeded(wlMode); renderWorldBoard(); });
