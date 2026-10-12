@@ -5257,13 +5257,11 @@ function renderShop() {
         var dcard = document.getElementById('card-' + (dkey === 'normal' ? 'normal' : dkey));
         var dbtn = document.getElementById('buy-diff-' + dkey);
         if (!dcard || !dbtn) continue;
-        if (difficulty === dkey) {
-            dcard.classList.add('active-rate'); dcard.classList.remove('locked');
-            dbtn.textContent = 'Selected'; dbtn.classList.add('disabled'); dbtn.classList.remove('affordable');
-        } else {
-            dcard.classList.remove('active-rate');
-            dbtn.textContent = 'Select'; dbtn.classList.add('affordable'); dbtn.classList.remove('disabled');
-        }
+        // Difficulty cards always show a plain 'Select' — never a selected
+        // state. Only the game mode shows selection; the difficulty is
+        // applied silently in the background.
+        dcard.classList.remove('active-rate');
+        dbtn.textContent = 'Select'; dbtn.classList.add('affordable'); dbtn.classList.remove('disabled');
     }
 
     // Cosmetic cards (shapes, trails, themes)
