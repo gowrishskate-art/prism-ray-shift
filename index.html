@@ -810,6 +810,7 @@ button {
     <button class="btn primary" id="play-btn">Play</button>
     <button class="btn" id="continue-btn" style="display:none">🚩 Continue from Wave 50</button>
     <button class="btn" id="how-btn">How to Play</button>
+    <button class="btn" id="leaderboard-btn-title">🏆 Leaderboard</button>
     <button class="btn" id="settings-btn-title">Settings</button>
     <div class="instructions" id="instr-text">
         Move your mouse to drag the <strong>Crystal Prism</strong> into the white laser beam.<br>
@@ -1397,7 +1398,9 @@ function wlEscape(s) {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 let wlMode = 'classic';
+let lbReturnState = 'title';
 function openWorldLeaderboard(mode) {
+    lbReturnState = (game.state === 'playing') ? 'playing' : 'title';
     wlMode = (WL_MODES.indexOf(mode) >= 0) ? mode : (WL_MODES.indexOf(gameMode) >= 0 ? gameMode : 'classic');
     document.getElementById('wl-search').value = '';
     game.state = 'leaderboard';
@@ -5811,7 +5814,15 @@ function init() {
     addTouchClick('ach-back-btn', goToTitle);
     addTouchClick('settings-back-btn', goToTitle);
     addTouchClick('shop-back-btn', goToTitle);
-    addTouchClick('lb-back-btn', goToTitle);
+    addTouchClick('lb-back-btn', function() {
+        if (lbReturnState === 'playing') {
+            // peeking mid-run: just close the board — the HUD/canvas never left
+            document.getElementById('leaderboard-screen').classList.remove('active');
+            game.state = 'playing';
+        } else {
+            goToTitle();
+        }
+    });
     addTouchClick('buy-4beam', function() { if (SHOP_DATA.owned.indexOf('fourBeam') >= 0) toggleUpgrade('fourBeam'); else buyUpgrade('fourBeam'); });
     addTouchClick('buy-double', function() { if (SHOP_DATA.owned.indexOf('doublePts') >= 0) toggleUpgrade('doublePts'); else buyUpgrade('doublePts'); });
     addTouchClick('buy-shadow10', function() { buyShadowRate(10); });
@@ -5841,6 +5852,7 @@ function init() {
     addTouchClick('worldboard-btn', function() { openWorldLeaderboard(gameMode); });
     addTouchClick('hq-yes', function() { answerHeart(true); });
     addTouchClick('continue-btn', resumeFromCheckpoint);
+    addTouchClick('leaderboard-btn-title', function() { openWorldLeaderboard(gameMode); });
     addTouchClick('continue-btn-go', resumeFromCheckpoint);
 
     addTouchClick('hq-no', function() { answerHeart(false); });
