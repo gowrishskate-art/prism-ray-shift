@@ -406,11 +406,7 @@ body.no-touch #dir-controls { display: none !important; }
     content: 'ACTIVE'; position: absolute; top: 10px; right: 14px;
     font-size: 11px; color: #2b9eff; font-weight: 700; letter-spacing: 1px;
 }
-.shop-card.diff-active { border-color: rgba(43,158,255,0.45); }
-.shop-card.diff-active::after {
-    content: 'IN USE'; position: absolute; top: 10px; right: 14px;
-    font-size: 11px; color: #7fb8ff; font-weight: 700; letter-spacing: 1px;
-}
+
 .shop-card.locked { opacity: 0.5; }
 .shop-icon {
     width: 64px; height: 64px; border-radius: 14px; flex-shrink: 0;
@@ -863,8 +859,8 @@ button {
     <div class="shop-title">Shop</div>
     <div class="shop-points-label">Total Points Earned</div>
     <div class="shop-points" id="shop-points">0</div>
-    <div class="shop-section-label">Upgrades</div><div class="shop-grid">
-        <div class="shop-section-title">💎 CRYSTAL SHAPES</div>
+<div class="shop-grid">
+        
         <div class="shop-card" id="card-shape-triangle">
             <div class="shop-icon" style="background:rgba(0,255,170,0.2);color:#00ffaa">▲</div>
             <div class="shop-info"><div class="shop-name">Triangle Crystal</div>
@@ -941,7 +937,7 @@ button {
             <div class="shop-desc">2 lives, fast shadows. For pros!</div></div>
             <button class="shop-buy" id="buy-diff-hard">Select</button>
         </div>
-        <div class="shop-section-title">🎮 GAME MODES</div>
+        
         <div class="shop-card mode-shop-card" data-mode="classic">
             <div class="shop-icon" style="background:rgba(140,120,255,0.2);color:#c8b8ff">🎮</div>
             <div class="shop-info"><div class="shop-name">Classic Mode</div>
@@ -1057,7 +1053,7 @@ button {
             <button class="shop-buy" id="buy-shadow15">60 coins</button>
         </div>
     </div>
-    <div class="shop-section-title">🎯 DAILY REWARDS</div>
+    
 <div class="rewards-hub-section">
         <div class="wc-title">🎯 Daily Missions</div>
         <div class="family-sub" style="margin-bottom:10px">3 fresh missions every day!</div>
@@ -5262,10 +5258,10 @@ function renderShop() {
         var dbtn = document.getElementById('buy-diff-' + dkey);
         if (!dcard || !dbtn) continue;
         if (difficulty === dkey) {
-            dcard.classList.add('diff-active'); dcard.classList.remove('active-rate'); dcard.classList.remove('locked');
-            dbtn.textContent = 'In use'; dbtn.classList.add('disabled'); dbtn.classList.remove('affordable');
+            dcard.classList.add('active-rate'); dcard.classList.remove('locked');
+            dbtn.textContent = 'Selected'; dbtn.classList.add('disabled'); dbtn.classList.remove('affordable');
         } else {
-            dcard.classList.remove('active-rate'); dcard.classList.remove('diff-active');
+            dcard.classList.remove('active-rate');
             dbtn.textContent = 'Select'; dbtn.classList.add('affordable'); dbtn.classList.remove('disabled');
         }
     }
