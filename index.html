@@ -406,6 +406,11 @@ body.no-touch #dir-controls { display: none !important; }
     content: 'ACTIVE'; position: absolute; top: 10px; right: 14px;
     font-size: 11px; color: #2b9eff; font-weight: 700; letter-spacing: 1px;
 }
+.shop-card.diff-active { border-color: rgba(43,158,255,0.45); }
+.shop-card.diff-active::after {
+    content: 'IN USE'; position: absolute; top: 10px; right: 14px;
+    font-size: 11px; color: #7fb8ff; font-weight: 700; letter-spacing: 1px;
+}
 .shop-card.locked { opacity: 0.5; }
 .shop-icon {
     width: 64px; height: 64px; border-radius: 14px; flex-shrink: 0;
@@ -920,19 +925,19 @@ button {
         </div>
         <div class="shop-card" id="card-easy">
             <div class="shop-icon" style="background:rgba(43,255,126,0.2);color:#2bff7e">😊</div>
-            <div class="shop-info"><div class="shop-name">Easy Mode</div>
+            <div class="shop-info"><div class="shop-name">Easy Difficulty</div>
             <div class="shop-desc">5 lives, slower shadows. Great for kids!</div></div>
             <button class="shop-buy" id="buy-diff-easy">Select</button>
         </div>
         <div class="shop-card" id="card-normal">
             <div class="shop-icon" style="background:rgba(43,158,255,0.2);color:#2b9eff">🎮</div>
-            <div class="shop-info"><div class="shop-name">Normal Mode</div>
+            <div class="shop-info"><div class="shop-name">Normal Difficulty</div>
             <div class="shop-desc">3 lives, standard speed.</div></div>
             <button class="shop-buy" id="buy-diff-normal">Select</button>
         </div>
         <div class="shop-card" id="card-hard">
             <div class="shop-icon" style="background:rgba(255,24,69,0.2);color:#ff1845">🔥</div>
-            <div class="shop-info"><div class="shop-name">Hard Mode</div>
+            <div class="shop-info"><div class="shop-name">Hard Difficulty</div>
             <div class="shop-desc">2 lives, fast shadows. For pros!</div></div>
             <button class="shop-buy" id="buy-diff-hard">Select</button>
         </div>
@@ -5257,10 +5262,10 @@ function renderShop() {
         var dbtn = document.getElementById('buy-diff-' + dkey);
         if (!dcard || !dbtn) continue;
         if (difficulty === dkey) {
-            dcard.classList.add('active-rate'); dcard.classList.remove('locked');
-            dbtn.textContent = 'Active'; dbtn.classList.add('disabled'); dbtn.classList.remove('affordable');
+            dcard.classList.add('diff-active'); dcard.classList.remove('active-rate'); dcard.classList.remove('locked');
+            dbtn.textContent = 'In use'; dbtn.classList.add('disabled'); dbtn.classList.remove('affordable');
         } else {
-            dcard.classList.remove('active-rate');
+            dcard.classList.remove('active-rate'); dcard.classList.remove('diff-active');
             dbtn.textContent = 'Select'; dbtn.classList.add('affordable'); dbtn.classList.remove('disabled');
         }
     }
