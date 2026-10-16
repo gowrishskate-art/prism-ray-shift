@@ -3711,6 +3711,7 @@ function gameLoop(timestamp) {
     // Slow-mo after boss kills (#9)
     if (game.slowMo > 0) { game.slowMo -= dt; dt *= 0.35; }
 
+    if (game.state === 'playing' && !game.paused && (!game._snapAt || Date.now() - game._snapAt > 2500)) { game._snapAt = Date.now(); saveRunSnapshot(); }
     if (game.state !== 'playing' || game.paused) {
         if (game.state === 'title') renderTitleBg(dt);
         return;
@@ -3872,14 +3873,72 @@ function showCombo(combo) {
 // ═══════════════════════════════════════════════════════════════
 // SCREEN MANAGEMENT
 // ═══════════════════════════════════════════════════════════════
+function rememberScreen(id) {
+    try { localStorage.setItem('ss_screen', id); } catch (e) {}
+}
+function saveRunSnapshot() {
+    if (!game || game.state !== 'playing') return;
+    try {
+        localStorage.setItem('ss_run', JSON.stringify({
+            wave: game.wave, lives: game.lives, score: game.score, kills: game.kills,
+            coins: game.coins, playTime: game.playTime, maxCombo: game.maxCombo,
+            heartsClaimed: game.heartsClaimed || 0,
+            waveEnemyCount: game.waveEnemyCount,
+            enemiesKilledThisWave: game.enemiesKilledThisWave
+        }));
+    } catch (e) {}
+}
 function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id + '-screen').classList.add('active');
+    rememberScreen(id);
+}
+function restoreScreen() {
+    var id = localStorage.getItem('ss_screen');
+    if (!id || id === 'title') return;
+    if (id === 'shop') openShop();
+    else if (id === 'settings') openSettings();
+    else if (id === 'achievements') openAchievements();
+    else if (id === 'leaderboard') openWorldLeaderboard(typeof gameMode !== 'undefined' ? gameMode : 'classic');
+    else if (id === 'gameover') {
+        showScreen('gameover');
+        game.state = 'gameover';
+        try {
+            var saved = JSON.parse(localStorage.getItem('ss_lastGameover') || 'null');
+            if (saved) {
+                document.getElementById('final-score').textContent = saved.score;
+                document.getElementById('final-wave').textContent = saved.wave;
+                document.getElementById('final-kills').textContent = saved.kills;
+                document.getElementById('final-combo').textContent = saved.combo;
+                var t = document.querySelector('.go-title');
+                if (t && saved.title) t.textContent = saved.title;
+            }
+        } catch (e) {}
+        refreshContinueButtons();
+    } else if (id === 'playing') {
+        startGame();
+        var run = null;
+        try { run = JSON.parse(localStorage.getItem('ss_run') || 'null'); } catch (e) {}
+        if (run) {
+            game.wave = run.wave || 1;
+            game.lives = run.lives;
+            game.score = run.score || 0;
+            game.kills = run.kills || 0;
+            if (run.coins != null) game.coins = run.coins;
+            game.playTime = run.playTime || 0;
+            game.maxCombo = run.maxCombo || 0;
+            game.heartsClaimed = run.heartsClaimed || 0;
+            if (run.waveEnemyCount) game.waveEnemyCount = run.waveEnemyCount;
+            game.enemiesKilledThisWave = run.enemiesKilledThisWave || 0;
+            updateHUD();
+        }
+    }
 }
 
 function startGame() {
     initAudio();
     game.state = 'playing';
+    rememberScreen('playing');
     game.paradeAlive = 0;
     game.heartsClaimed = 0;
     game.splits = {};
@@ -3992,6 +4051,13 @@ function endGame() {
     document.getElementById('final-wave').textContent = game.wave;
     document.getElementById('final-kills').textContent = game.kills;
     document.getElementById('final-combo').textContent = game.maxCombo;
+    try {
+        localStorage.setItem('ss_lastGameover', JSON.stringify({
+            score: document.getElementById('final-score').textContent,
+            wave: game.wave, kills: game.kills, combo: game.maxCombo,
+            title: goTitle ? goTitle.textContent : ''
+        }));
+    } catch (e) {}
     // Speedrun splits on the game-over card
     const sp = document.getElementById('go-splits');
     if (game.splits && Object.keys(game.splits).length > 0) {
@@ -5370,6 +5436,7 @@ function buyUpgrade(upgradeId) {
 }
 
 function goToTitle() {
+    rememberScreen('title');
     refreshContinueButtons();
     game.state = 'title';
     // Hide ALL screens, then show title
@@ -5982,6 +6049,10 @@ function init() {
     }
 
     buildTitleMusicBar();
+
+    window.addEventListener('beforeunload', saveRunSnapshot);
+    window.addEventListener('pagehide', saveRunSnapshot);
+    restoreScreen();
 
     // Start loop
     requestAnimationFrame(gameLoop);
