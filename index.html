@@ -914,7 +914,7 @@ button {
                 <div class="shop-name">Quadruple Beams</div>
                 <div class="shop-desc">Upgrade from 3 beams to 4 beams.<br>The 4th beam is purple and can hit purple-tagged shadows.</div>
             </div>
-            <button class="shop-buy" id="buy-4beam">100,000</button>
+            <button class="shop-buy" id="buy-4beam">Select</button>
         </div>
         <div class="shop-card" id="card-double">
             <div class="shop-icon" style="background:rgba(255,215,0,0.2);color:#ffd700">x2</div>
@@ -5308,6 +5308,17 @@ function renderShop() {
         const card = document.getElementById(u.cardId);
         const btn = document.getElementById(u.btnId);
 
+        if (u.id === 'fourBeam') {
+            // Button is only ever Select or Selected — no price, no ON/OFF, no badges
+            card.classList.remove('owned');
+            card.classList.remove('active-rate');
+            card.classList.remove('locked');
+            const on = owned && upgradeActive(u.id);
+            btn.textContent = on ? 'Selected' : 'Select';
+            btn.classList.toggle('disabled', on);
+            btn.classList.toggle('affordable', !on);
+            continue;
+        }
         if (owned) {
             card.classList.add('owned');
             card.classList.remove('locked');
