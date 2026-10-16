@@ -4024,11 +4024,16 @@ const DIFFICULTIES = {
     hard:   { name: 'Hard',   lives: 2, speedMult: 1.3,  rateMult: 1.4 },
 };
 let difficulty = localStorage.getItem('ss_difficulty') || 'normal';
+// Only ONE shop choice shows Selected at a time — a game mode OR a difficulty, never both.
+let shopPick = localStorage.getItem('ss_shopPick') || 'mode';
 
 function setDifficulty(d) {
     if (!DIFFICULTIES[d]) return;
     difficulty = d;
+    shopPick = 'diff';
     localStorage.setItem('ss_difficulty', d);
+    localStorage.setItem('ss_shopPick', 'diff');
+    renderModePicker();
     renderShop();
 }
 function diff() {
@@ -4451,7 +4456,9 @@ function setGameMode(mode) {
         return;
     }
     gameMode = mode;
+    shopPick = 'mode';
     localStorage.setItem('ss_gameMode', mode);
+    localStorage.setItem('ss_shopPick', 'mode');
     renderModePicker();
     renderShop();
 }
@@ -4459,12 +4466,13 @@ function nightmareUnlocked() { return localStorage.getItem('ss_endlessUnlocked')
 function renderModePicker() {
     document.querySelectorAll('.mode-shop-card').forEach(card => {
         const mode = card.getAttribute('data-mode');
-        card.classList.toggle('active-rate', gameMode === mode);
+        const on = shopPick === 'mode' && gameMode === mode;
+        card.classList.toggle('active-rate', on);
         const btn = card.querySelector('.mode-btn');
         if (btn) {
-            btn.textContent = gameMode === mode ? 'Selected' : 'Select';
-            btn.classList.toggle('disabled', gameMode === mode);
-            btn.classList.toggle('affordable', gameMode !== mode);
+            btn.textContent = on ? 'Selected' : 'Select';
+            btn.classList.toggle('disabled', on);
+            btn.classList.toggle('affordable', !on);
         }
     });
     // (title-screen mode label removed)
@@ -5257,8 +5265,10 @@ function renderShop() {
         var dcard = document.getElementById('card-' + (dkey === 'normal' ? 'normal' : dkey));
         var dbtn = document.getElementById('buy-diff-' + dkey);
         if (!dcard || !dbtn) continue;
-        // One difficulty stays Selected until another is picked
-        if (difficulty === dkey) {
+        // Selected only while a difficulty is the current shop pick.
+        // Picking a game mode clears every difficulty back to Select.
+        const diffOn = shopPick === 'diff' && difficulty === dkey;
+        if (diffOn) {
             dcard.classList.add('active-rate'); dcard.classList.remove('locked');
             dbtn.textContent = 'Selected'; dbtn.classList.add('disabled'); dbtn.classList.remove('affordable');
         } else {
