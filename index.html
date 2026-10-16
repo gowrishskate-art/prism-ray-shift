@@ -5181,22 +5181,27 @@ function renderAchievements() {
 // Shadow rate costs
 const SHADOW_RATES = { 10: 30, 15: 60 };
 
+function getOwnedRates() {
+    try { return JSON.parse(localStorage.getItem('ss_ownedRates') || '[]'); }
+    catch (e) { return []; }
+}
 function buyShadowRate(rate) {
     var cost = SHADOW_RATES[rate];
-    if (game.coins < cost) return;
-    if (game.shadowRate === rate) return;
-    game.coins -= cost;
-    localStorage.setItem('ss_coins', game.coins.toString());
+    if (cost == null) return;
+    var owned = getOwnedRates();
+    var already = owned.indexOf(rate) >= 0;
+    if (!already) {
+        if (game.coins < cost) return;
+        game.coins -= cost;
+        localStorage.setItem('ss_coins', game.coins.toString());
+        owned.push(rate);
+        localStorage.setItem('ss_ownedRates', JSON.stringify(owned));
+    }
     game.shadowRate = rate;
-    localStorage.setItem('ss_shadowRate', rate.toString());
+    localStorage.setItem('ss_shadowRate', String(rate));
     renderShop();
 }
-
-function getOwnedShadowRate() { return 4; // always 4 per 10s
-    return parseInt(localStorage.getItem('ss_shadowRate') || '10', 10);
-}
-game.shadowRate = 4; // 4 shadows per 10 seconds default
-    // default fallback already 10
+game.shadowRate = parseInt(localStorage.getItem('ss_shadowRate') || '4', 10);
 
 function openShop() {
     game.state = 'shop';
@@ -5318,9 +5323,14 @@ function renderShop() {
         var card = document.getElementById('card-' + rup.id);
         var btn = document.getElementById('buy-' + rup.id);
         if (!card || !btn) continue;
-        if (game.shadowRate === rup.r) {
-            card.classList.add('active-rate'); card.classList.remove('owned'); card.classList.remove('locked');
-            btn.textContent = 'Active'; btn.classList.add('disabled'); btn.classList.remove('affordable');
+        var ownedRates = getOwnedRates();
+        var bought = ownedRates.indexOf(rup.r) >= 0;
+        if (bought && game.shadowRate === rup.r) {
+            card.classList.add('active-rate'); card.classList.add('owned'); card.classList.remove('locked');
+            btn.textContent = 'Selected'; btn.classList.add('disabled'); btn.classList.remove('affordable');
+        } else if (bought) {
+            card.classList.add('owned'); card.classList.remove('active-rate'); card.classList.remove('locked');
+            btn.textContent = 'Select'; btn.classList.add('affordable'); btn.classList.remove('disabled');
         } else {
             card.classList.remove('owned'); card.classList.remove('active-rate');
             btn.textContent = rup.c + ' coins';
