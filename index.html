@@ -922,7 +922,7 @@ button {
                 <div class="shop-name">Double Points</div>
                 <div class="shop-desc">Every shadow kill gives <strong>250 points</strong> instead of 100.</div>
             </div>
-            <button class="shop-buy" id="buy-double">250,000</button>
+            <button class="shop-buy" id="buy-double">1,000,000</button>
         </div>
         <div class="shop-card" id="card-easy">
             <div class="shop-icon" style="background:rgba(43,255,126,0.2);color:#2bff7e">😊</div>
@@ -1224,7 +1224,7 @@ function toggleUpgrade(id) {
 
 const UPGRADES = {
     fourBeam:   { id: 'fourBeam',   cost: 100000, name: 'Quadruple Beams' },
-    doublePts:  { id: 'doublePts',  cost: 250000, name: 'Double Points' },
+    doublePts:  { id: 'doublePts',  cost: 1000000, name: 'Double Points' },
 };
 
 // ─── SETTINGS (persistent) ───
@@ -5234,7 +5234,7 @@ function renderShop() {
 
     const upgrades = [
         { id: 'fourBeam',  cardId: 'card-4beam',  btnId: 'buy-4beam',  cost: 100000 },
-        { id: 'doublePts', cardId: 'card-double', btnId: 'buy-double', cost: 250000 },
+        { id: 'doublePts', cardId: 'card-double', btnId: 'buy-double', cost: 1000000 },
     ];
 
     for (const u of upgrades) {
