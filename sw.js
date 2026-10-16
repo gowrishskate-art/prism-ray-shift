@@ -1,4 +1,4 @@
-const CACHE_NAME = 'spectrum-slice-v53';
+const CACHE_NAME = 'spectrum-slice-v54';
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 // Install — cache all assets
@@ -19,7 +19,8 @@ self.addEventListener('activate', e => {
 
 // Fetch — try network first, fall back to cache (works offline)
 self.addEventListener('fetch', e => {
+    var fresh = (e.request.mode === 'navigate') ? { cache: 'no-store' } : { cache: 'no-cache' };
     e.respondWith(
-        fetch(e.request).catch(() => caches.match(e.request).then(r => r || caches.match('./')))
+        fetch(e.request, fresh).catch(() => caches.match(e.request).then(r => r || caches.match('./')))
     );
 });
