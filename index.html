@@ -1132,7 +1132,6 @@ button {
     <div class="settings-section">
         <div class="settings-label">Sound</div>
         <div class="settings-slider-row"><span>Music</span><input type="range" id="music-vol" min="0" max="100" value="35"></div>
-        <div class="settings-slider-row"><span>SFX</span><input type="range" id="sfx-vol" min="0" max="100" value="80"></div>
     </div>
     <button class="btn" id="settings-shop-btn">Shop</button>
     <button class="btn" id="settings-ach-btn">Achievements</button>
@@ -1560,6 +1559,7 @@ function initAudio() {
 }
 
 function playTone(freq, duration, type, vol, sweep) {
+    return; // SFX removed
     if (!audioCtx) return;
     const osc = audioCtx.createOscillator();
     const g = audioCtx.createGain();
@@ -4230,7 +4230,6 @@ const BG_THEMES = [
 ];
 
 let MUSIC_VOL = parseFloat(localStorage.getItem('ss_musicVol') || '0.35');
-let SFX_VOL = parseFloat(localStorage.getItem('ss_sfxVol') || '0.8');
 const COSMETICS = {
     shape: localStorage.getItem('ss_shape') || 'arrow',
     trail: localStorage.getItem('ss_trail') || 'none',
@@ -5902,20 +5901,12 @@ function init() {
 
     // Volume sliders
     const mv = document.getElementById('music-vol');
-    const sv = document.getElementById('sfx-vol');
     if (mv) {
         mv.value = Math.round((typeof MUSIC_VOL !== 'undefined' ? MUSIC_VOL : 0.35) * 100);
         mv.addEventListener('input', function() {
             MUSIC_VOL = mv.value / 100;
             localStorage.setItem('ss_musicVol', mv.value);
             if (typeof musicGainNode !== 'undefined' && musicGainNode) musicGainNode.gain.value = MUSIC_VOL;
-        });
-    }
-    if (sv) {
-        sv.value = Math.round((typeof SFX_VOL !== 'undefined' ? SFX_VOL : 0.8) * 100);
-        sv.addEventListener('input', function() {
-            SFX_VOL = sv.value / 100;
-            localStorage.setItem('ss_sfxVol', sv.value);
         });
     }
     addTouchClick('ach-back-btn', goToTitle);
