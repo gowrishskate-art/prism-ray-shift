@@ -1600,18 +1600,20 @@ let audioCtx = null, masterGain = null;
 // AUDIO
 // ═══════════════════════════════════════════════════════════════
 function initAudio() {
-    if (audioCtx) return;
     try {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        masterGain = audioCtx.createGain();
-        masterGain.gain.value = 0.5;
-        masterGain.connect(audioCtx.destination);
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            masterGain = audioCtx.createGain();
+            masterGain.gain.value = 0.5;
+            masterGain.connect(audioCtx.destination);
+        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
     } catch(e) {}
 }
 
 function playTone(freq, duration, type, vol, sweep) {
-    return; // SFX removed
     if (!audioCtx) return;
+    if (audioCtx.state === 'suspended') audioCtx.resume();
     const osc = audioCtx.createOscillator();
     const g = audioCtx.createGain();
     osc.type = type || 'sine';
