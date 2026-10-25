@@ -1154,6 +1154,10 @@ button {
                 <div class="settings-beam-label">Beam 3</div>
                 <input type="color" id="settings-beam3" class="settings-color-picker" value="#1895ff">
             </div>
+            <div class="settings-beam-item" id="settings-beam4-item" style="display:none">
+                <div class="settings-beam-label">Beam 4</div>
+                <input type="color" id="settings-beam4" class="settings-color-picker" value="#bb18ff">
+            </div>
         </div>
         <div class="settings-hint">Shadows will match your beam colors</div>
     </div>
@@ -1249,6 +1253,7 @@ function toggleUpgrade(id) {
     UPGRADE_TOGGLES[id] = !upgradeActive(id);
     localStorage.setItem('ss_upgradeToggles', JSON.stringify(UPGRADE_TOGGLES));
     renderShop();
+    if (id === 'fourBeam') refreshBeam4Option();
 }
 
 const UPGRADES = {
@@ -1263,6 +1268,7 @@ const SETTINGS = {
     beam1: localStorage.getItem('ss_beam1') || '#ff1845',
     beam2: localStorage.getItem('ss_beam2') || '#18ff45',
     beam3: localStorage.getItem('ss_beam3') || '#1895ff',
+    beam4: localStorage.getItem('ss_beam4') || '#bb18ff',
 };
 
 function saveSettings() {
@@ -1271,6 +1277,7 @@ function saveSettings() {
     localStorage.setItem('ss_beam1', SETTINGS.beam1);
     localStorage.setItem('ss_beam2', SETTINGS.beam2);
     localStorage.setItem('ss_beam3', SETTINGS.beam3);
+    localStorage.setItem('ss_beam4', SETTINGS.beam4);
     applySettings();
 }
 
@@ -1291,11 +1298,18 @@ function applySettings() {
     RAY_COLORS[1].rgb = hexToRgb(SETTINGS.beam2);
     RAY_COLORS[2].hex = SETTINGS.beam3;
     RAY_COLORS[2].rgb = hexToRgb(SETTINGS.beam3);
-    // 4th beam (purple) keeps default unless we add a 4th picker
-    // For mega mode colors, update first 3 to match
+    RAY_COLORS[3].hex = SETTINGS.beam4;
+    RAY_COLORS[3].rgb = hexToRgb(SETTINGS.beam4);
     MEGA_COLORS[0] = SETTINGS.beam1;
     MEGA_COLORS[3] = SETTINGS.beam2;
     MEGA_COLORS[4] = SETTINGS.beam3;
+    MEGA_COLORS[5] = SETTINGS.beam4;
+}
+function refreshBeam4Option() {
+    var row = document.getElementById('settings-beam4-item');
+    if (!row) return;
+    var on = (typeof upgradeActive === 'function') && upgradeActive('fourBeam');
+    row.style.display = on ? '' : 'none';
 }
 
 function openSettings() {
@@ -1307,6 +1321,9 @@ function openSettings() {
     document.getElementById('settings-beam1').value = SETTINGS.beam1;
     document.getElementById('settings-beam2').value = SETTINGS.beam2;
     document.getElementById('settings-beam3').value = SETTINGS.beam3;
+    var b4 = document.getElementById('settings-beam4');
+    if (b4) b4.value = SETTINGS.beam4;
+    refreshBeam4Option();
 }
 
 
@@ -1366,6 +1383,8 @@ function saveSettingsFromUI() {
     SETTINGS.beam1 = document.getElementById('settings-beam1').value;
     SETTINGS.beam2 = document.getElementById('settings-beam2').value;
     SETTINGS.beam3 = document.getElementById('settings-beam3').value;
+    var b4in = document.getElementById('settings-beam4');
+    if (b4in) SETTINGS.beam4 = b4in.value;
     saveSettings();
     // Show confirmation
     var btn = document.getElementById('settings-save-btn');
