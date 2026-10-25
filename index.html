@@ -183,14 +183,8 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
     background: radial-gradient(circle, #ff6699, #ff2b5e);
     box-shadow: 0 0 8px rgba(255,40,80,0.6); }
 
-#combo-display {
-    position: fixed; top: 50%; left: 50%;
-    transform: translate(-50%, -50%); z-index: 6;
-    font-size: 60px; font-weight: 900; pointer-events: none;
-    display: none; text-align: center;
-    text-shadow: 0 0 20px currentColor;
-}
-#combo-display.active { display: block; animation: comboPop 0.5s ease; }
+#combo-display { display: none !important; }
+#combo-display.active { display: none !important; }
 @keyframes comboPop {
     0% { transform: translate(-50%,-50%) scale(0.3); opacity: 0; }
     50% { transform: translate(-50%,-50%) scale(1.2); opacity: 1; }
@@ -3112,7 +3106,7 @@ function drawParticles() {
 // FLOATING TEXT
 // ═══════════════════════════════════════════════════════════════
 function addFloatingText(x, y, text, color) {
-    floatingTexts.push({ x, y, text, color, life: 1.2, maxLife: 1.2, vy: -40, born: game.time });
+    return;
 }
 
 function textScale(t) {
@@ -4049,6 +4043,7 @@ function updateHUD() {
 }
 
 function showCombo(combo) {
+    return;
     const el = document.getElementById('combo-display');
     el.textContent = combo + 'x COMBO!';
     const colors = ['#ff1845', '#ff8800', '#ffee00', '#18ff45', '#1895ff', '#bb18ff'];
