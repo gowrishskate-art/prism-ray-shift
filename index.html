@@ -867,8 +867,6 @@ button {
     <button class="btn primary" id="playagain-btn">Play Again</button>
     <button class="btn" id="continue-btn-go" style="display:none">🚩 Continue from Wave 50</button>
     <button class="btn" id="worldboard-btn">🏆 Leaderboard</button>
-    <img id="score-card-img" alt="Score card" style="display:none;width:min(260px,86vw);max-height:220px;object-fit:contain;border-radius:16px;margin:6px auto;border:1px solid rgba(140,100,255,0.45)">
-    <button class="btn" id="share-card-btn">Share card</button>
     <button class="btn" id="share-btn-gameover">Share</button>
     <button class="btn" id="settings-btn-gameover">Settings</button>
     <button class="btn" id="menu-btn">Menu</button>
@@ -4429,6 +4427,7 @@ function buildScoreCard(name, wave, kills) {
     return cv.toDataURL('image/png');
 }
 function showScoreCard(name, wave, kills) {
+    return;
     const img = document.getElementById('score-card-img');
     if (!img) return;
     img.src = buildScoreCard(name, wave, kills);
