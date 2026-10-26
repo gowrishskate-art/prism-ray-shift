@@ -824,6 +824,7 @@ button {
     <button class="btn" id="continue-btn" style="display:none">🚩 Continue from Wave 50</button>
     <button class="btn" id="how-btn">How to Play</button>
     <button class="btn" id="leaderboard-btn-title">🏆 Leaderboard</button>
+    <button class="btn" id="shop-btn-title">Shop</button>
     <button class="btn" id="settings-btn-title">Settings</button>
     <div class="instructions" id="instr-text">
         Move your mouse to drag the <strong>Crystal Prism</strong> into the white laser beam.<br>
@@ -1153,7 +1154,6 @@ button {
         <div class="settings-label">Sound</div>
         <div class="settings-slider-row"><span>Music</span><input type="range" id="music-vol" min="0" max="100" value="35"></div>
     </div>
-    <button class="btn" id="settings-shop-btn">Shop</button>
     <button class="btn" id="settings-ach-btn">Achievements</button>
     <button class="btn" id="settings-back-btn">Back</button>
 </div>
@@ -6181,7 +6181,7 @@ function init() {
 
     addTouchClick('settings-btn-gameover', openSettings);
     addTouchClick('settings-save-btn', saveSettingsFromUI);
-    addTouchClick('settings-shop-btn', openShop);
+    addTouchClick('shop-btn-title', openShop);
     addTouchClick('settings-ach-btn', openAchievements);
 
     // Volume sliders
