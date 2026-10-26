@@ -100,10 +100,23 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
     box-shadow: 0 0 25px rgba(90,60,200,0.5);
 }
 .btn.primary:hover { box-shadow: 0 0 40px rgba(120,80,255,0.8); }
-.instructions {
-    margin-top: 40px; max-width: 520px; text-align: center;
-    color: #7777aa; font-size: 14px; line-height: 1.8;
+.instructions { display: none !important; }
+#how-screen {
+    background: radial-gradient(ellipse at 50% 30%, #0a0828 0%, #050018 50%, #030010 100%);
+    overflow-y: auto; justify-content: flex-start; align-items: stretch;
+    padding: 18px 14px 36px;
 }
+.how-wrap { max-width: 640px; width: 100%; margin: 0 auto; }
+.how-title { font-size: 28px; font-weight: 900; text-align: center; margin: 8px 0 14px; }
+.how-block {
+    margin: 0 0 14px; background: rgba(12,8,30,0.55);
+    border: 1px solid rgba(120,80,255,0.28); border-radius: 14px; padding: 12px 14px;
+}
+.how-block h2 { font-size: 16px; margin: 0 0 8px; color: #d8c8ff; }
+.how-block p, .how-block li { font-size: 15px; line-height: 1.5; color: #c8c8e8; margin: 0 0 6px; }
+.how-block ul { margin: 0; padding-left: 18px; }
+.how-block li { margin: 0 0 6px; }
+#how-screen .btn { max-width: 640px; width: 100%; }
 .instructions strong { color: #ccccee; }
 
 /* ─── GAME OVER ─── */
@@ -826,12 +839,180 @@ button {
     <button class="btn" id="leaderboard-btn-title">🏆 Leaderboard</button>
     <button class="btn" id="shop-btn-title">Shop</button>
     <button class="btn" id="settings-btn-title">Settings</button>
-    <div class="instructions" id="instr-text">
+    <div class="instructions" id="instr-text" style="display:none">
         Move your mouse to drag the <strong>Crystal Prism</strong> into the white laser beam.<br>
         The beam splits into <strong style="color:#ff3344">Red</strong>, <strong style="color:#33ff66">Green</strong>, and <strong style="color:#3399ff">Blue</strong> rays.<br>
         Aim the colored rays at the matching shadow creatures to vaporize them.<br>
         <strong>White bosses</strong> need all three rays at once!<br>
         Collect <strong style="color:gold">golden gems</strong> for rainbow mega-beams.
+    </div>
+</div>
+
+
+<div id="how-screen" class="screen">
+    <div class="how-wrap">
+        <div class="how-title">How to Play</div>
+        <button class="btn" id="how-back-btn">Back</button>
+
+        <div class="how-block">
+            <h2>The goal</h2>
+            <p>Move the crystal. Hold it on the white line so beams shoot out. Match each beam to a shadow of the same color.</p>
+            <ul>
+                <li>There are 100 waves. A boss comes in every wave.</li>
+                <li>Wave 100 is the Shadow King. Beat it and you win, plus 50 coins. Nightmare mode unlocks.</li>
+                <li>The score stops at 300,000.</li>
+                <li>Each wave asks you to clear a set number of shadows. That number grows as the waves get higher.</li>
+            </ul>
+        </div>
+
+        <div class="how-block">
+            <h2>How the crystal moves</h2>
+            <ul>
+                <li>On a computer, move the mouse. The crystal follows the mouse.</li>
+                <li>On a phone or tablet, drag your finger on the screen. The crystal follows your finger.</li>
+                <li>Dragging does not turn the beams. It only moves the crystal.</li>
+            </ul>
+        </div>
+
+        <div class="how-block">
+            <h2>How you aim</h2>
+            <ul>
+                <li>On a computer, the arrow keys turn the beam direction. W, A, S, and D do the same. Those keys do not move the crystal.</li>
+                <li>On a phone, the arrow buttons on the screen turn the direction. They do not move the crystal.</li>
+            </ul>
+        </div>
+
+        <div class="how-block">
+            <h2>The white line</h2>
+            <p>A white laser sweeps up and down the screen. That is the line.</p>
+            <ul>
+                <li>Keep the crystal on that white line. While it sits on the line, beams shoot out in the direction you are aiming.</li>
+                <li>If the crystal is off the line, the beams stop.</li>
+                <li>You start with three beams: red, green, and blue. A shadow dies when the matching color hits it.</li>
+                <li>A white boss does not die from one color. It needs the red, green, and blue beams on it together.</li>
+            </ul>
+        </div>
+
+        <div class="how-block">
+            <h2>Hearts</h2>
+            <ul>
+                <li>If a chasing shadow touches the crystal, you lose one heart.</li>
+                <li>Easy starts with 5 hearts and slower shadows. Normal starts with 3. Hard starts with 2 and faster shadows.</li>
+                <li>Zen mode never loses a heart.</li>
+                <li>Heart Quest starts with 1 heart. On waves 10, 20, 30, 40, 50, 60, 70, 80, 90, and 100 the game pauses and asks, “Do you want an extra heart now or later?” Yes gives one heart. No does not. You can say yes only 5 times. After that, the question stops.</li>
+                <li>You cannot hold more than 5 hearts.</li>
+            </ul>
+        </div>
+
+        <div class="how-block">
+            <h2>The shadows</h2>
+            <ul>
+                <li>Normal shadow: one hit of its own color.</li>
+                <li>Speedster, from wave 3: small, fast, and it zigzags.</li>
+                <li>Tank, from wave 5: big and slow. It needs two hits.</li>
+                <li>Splitter, from wave 7: when it dies, two smaller shadows come out of it.</li>
+                <li>Golden: rare and a bit faster. It pays 5 to 10 extra coins.</li>
+                <li>Shielder, from wave 9: the first hit of its color only breaks the shield. The next matching hit kills it.</li>
+                <li>Healer, from wave 11: slow. Every few seconds it heals shadows near it.</li>
+                <li>Phantom, from wave 13: it fades out and back in. You can hit it only while you can see it.</li>
+                <li>Mimic, from wave 16: for about 2.5 seconds it shows a fake color. Then the real color appears. Hit the real color.</li>
+            </ul>
+        </div>
+
+        <div class="how-block">
+            <h2>The monsters</h2>
+            <ul>
+                <li>A normal boss comes in every wave that is not a special boss wave. It is white, has 3 health, and needs red, green, and blue together. It has a silly name while it is alive.</li>
+                <li>On some waves a negotiator appears instead. It offers a deal. Spare it and you get coins. Fight it and you battle it.</li>
+                <li>On some later waves a twin boss appears. It has 10 health and a paired shield. Both colors of the pair have to be handled together.</li>
+                <li>Every 10th wave can be a mega boss: bigger, 6 health, still white, still needs all three colors.</li>
+                <li>Wave 100 is the Shadow King. It has 30 health. It is not a joke name. Beat it to win.</li>
+                <li>When a boss dies, the game slows down for a short moment.</li>
+            </ul>
+        </div>
+
+        <div class="how-block">
+            <h2>Shadow parade</h2>
+            <p>On waves 10, 20, 30, and so on, up to 90, eight shadows of one color march from left to right. They do not chase you and they do not take a heart if they touch you. Kill the whole line and you get 50 coins. If one walks off the right side, you do not get the bonus.</p>
+        </div>
+
+        <div class="how-block">
+            <h2>Bottles, gems, and coins</h2>
+            <ul>
+                <li>A blue freeze bottle can appear. If the crystal touches it, the crystal cannot move for 5 seconds. Avoid it.</li>
+                <li>A golden gem can appear. Touch it and you get a short rainbow mega-beam that hits any color.</li>
+                <li>A coin can drop. Touch it, or let a pet pick it up, and it goes into your coin count.</li>
+                <li>About every 30 kills, a coin can appear on the field.</li>
+                <li>Points and coins are different. Points are your score total. Coins are the shop money for looks and shadow speed.</li>
+            </ul>
+        </div>
+
+        <div class="how-block">
+            <h2>Score</h2>
+            <ul>
+                <li>A normal kill is 100 points. A boss kill is 500.</li>
+                <li>If Double Points is on, a normal kill is 200 and a boss kill is 1,000.</li>
+                <li>A combo makes each kill worth more, up to 5 times. The words no longer fly across the screen, but the extra points still count.</li>
+            </ul>
+        </div>
+
+        <div class="how-block">
+            <h2>Modes</h2>
+            <p>Pick one mode in the shop. It stays Selected until you pick another.</p>
+            <ul>
+                <li>Classic: 100 waves to the Shadow King.</li>
+                <li>Zen: you do not lose hearts.</li>
+                <li>Rush: 60 seconds, and shadows come much faster.</li>
+                <li>Kids: shadows move twice as fast, about 5 every 10 seconds.</li>
+                <li>Nightmare: 1 heart and twice the speed. It unlocks after you beat the Shadow King.</li>
+                <li>Heart Quest: start with 1 heart and earn more only by answering the heart question.</li>
+            </ul>
+        </div>
+
+        <div class="how-block">
+            <h2>During a game</h2>
+            <ul>
+                <li>The pause button stops the game whenever you want. Press it again to continue.</li>
+                <li>The X button leaves the run. Your score is saved.</li>
+                <li>Reach wave 50 and the game remembers a checkpoint. Next time you can continue from wave 50.</li>
+                <li>A timer records your time at waves 10, 25, and 50.</li>
+                <li>If you refresh the tab, you stay on the screen you were on, including a game in progress.</li>
+            </ul>
+        </div>
+
+        <div class="how-block">
+            <h2>The shop</h2>
+            <ul>
+                <li>Open Shop from the home screen. It is not inside Settings.</li>
+                <li>Quadruple Beams adds a fourth beam. That beam can hit a fourth shadow color. The button only says Select or Selected. Turn it off and you go back to three beams.</li>
+                <li>Double Points costs points and raises kill points, as listed above.</li>
+                <li>You can also buy a faster shadow rate: 10 shadows every 10 seconds, or 15. After you buy one, it stays Selected. Buying the other one does not put the first one back on sale.</li>
+                <li>Crystal shapes, trails, pets, and themes are looks. They do not make the beams stronger. Pets fly out and collect coins for you.</li>
+            </ul>
+        </div>
+
+        <div class="how-block">
+            <h2>What Settings does</h2>
+            <ul>
+                <li>Username: the name on the leaderboard. On one device, only one person can keep a name. If they change it, the old name is free.</li>
+                <li>Crystal color: the color of your prism.</li>
+                <li>Beam 1, Beam 2, and Beam 3: the colors of your three beams. Shadows use those same colors.</li>
+                <li>Beam 4: only shows after Quadruple Beams is on. You can paint that fourth beam. If you turn Quadruple Beams off, Beam 4 disappears from Settings. The color you picked is kept for next time.</li>
+                <li>Save: writes the name and colors.</li>
+                <li>Music: how loud the music is. Slide it left to make the music quiet.</li>
+                <li>Achievements: goals you have finished, and the coins they paid.</li>
+            </ul>
+        </div>
+
+        <div class="how-block">
+            <h2>Leaderboard</h2>
+            <p>Open it from the home screen, or after a game. It shows rank, name, kills, and score for the mode you played. You can search a name. The list goes to 4,000 places. If you are below that, your own place still shows near your name.</p>
+        </div>
+
+        <div class="how-block">
+            <h2>One last thing</h2>
+            <p>There is a secret way to receive coins once a day. This page will not tell you what that way is.</p>
+        </div>
     </div>
 </div>
 
@@ -5737,8 +5918,7 @@ function goToTitle() {
 }
 
 function showInstructions() {
-    const el = document.getElementById('instr-text');
-    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    showScreen('how');
 }
 
 function togglePause() {
@@ -6165,6 +6345,7 @@ function init() {
     }
     addTouchClick('play-btn', startGame);
     addTouchClick('how-btn', showInstructions);
+    addTouchClick('how-back-btn', goToTitle);
     addTouchClick('pause-btn', togglePause);
     addTouchClick('playagain-btn', startGame);
     addTouchClick('menu-btn', goToTitle);
