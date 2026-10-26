@@ -1915,6 +1915,8 @@ let musicState = {
 };
 
 function startMusic(trackIdx) {
+    if (trackIdx === undefined) trackIdx = titleSelectedTrack;
+    if (musicState.isPlaying && musicState.currentTrack === trackIdx) return;
     stopMusic();
     if (trackIdx < 0 || trackIdx >= MUSIC_TRACKS.length) return;
     if (!audioCtx) initAudio();
@@ -4454,7 +4456,6 @@ function endGame() {
     if (p1padOff) p1padOff.classList.remove('active');
     document.getElementById('combo-display').classList.remove('active');
     hideMusicBar();
-    stopMusic();
 
     // Victory at wave 100: offer Endless Mode + Double-or-Nothing
     if (won) { offerEndlessMode(); showDoubleOrNothing(); }
@@ -5909,7 +5910,6 @@ function goToTitle() {
     document.getElementById('tutorial-overlay').classList.remove('active');
     document.getElementById('combo-display').classList.remove('active');
     hideMusicBar();
-    stopMusic();
     // Refresh total time played (value may have changed after a game)
     const savedTime = parseInt(localStorage.getItem('ss_totalTime') || '0', 10);
     updateLevelBar();
