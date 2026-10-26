@@ -5905,6 +5905,8 @@ function goToTitle() {
     document.getElementById('leaderboard-screen').classList.remove('active');
     document.getElementById('settings-screen').classList.remove('active');
     document.getElementById('achievements-screen').classList.remove('active');
+    var howScr = document.getElementById('how-screen');
+    if (howScr) howScr.classList.remove('active');
     document.getElementById('hud').classList.remove('active');
     document.getElementById('pause-btn').classList.remove('active');
     document.getElementById('exit-btn').classList.remove('active');
