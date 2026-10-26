@@ -1043,7 +1043,6 @@ button {
     <button class="btn primary" id="playagain-btn">Play Again</button>
     <button class="btn" id="continue-btn-go" style="display:none">🚩 Continue from Wave 50</button>
     <button class="btn" id="worldboard-btn">🏆 Leaderboard</button>
-    <button class="btn" id="share-btn-gameover">Share</button>
     <button class="btn" id="settings-btn-gameover">Settings</button>
     <button class="btn" id="menu-btn">Menu</button>
 </div>
@@ -6412,7 +6411,6 @@ function init() {
     addTouchClick('buy-pet-firefly', function() { buyCosmetic('firefly'); });
     addTouchClick('buy-pet-sprite', function() { buyCosmetic('sprite'); });
     addTouchClick('buy-pet-comet', function() { buyCosmetic('comet'); });
-    addTouchClick('share-btn-gameover', shareScore);
     addTouchClick('share-card-btn', shareCard);
     setupDirBtn('p1-up', 'p1up');
     setupDirBtn('p1-down', 'p1down');
