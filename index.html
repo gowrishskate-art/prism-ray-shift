@@ -994,12 +994,6 @@ button {
             <div class="shop-desc">Start with 1 heart. Answer the heart question every 10 waves to earn up to 5 more!</div></div>
             <button class="shop-buy mode-btn">Select</button>
         
-        <div class="shop-card mode-shop-card" data-mode="duo">
-            <div class="shop-icon" style="background:rgba(80,200,255,0.2);color:#50c8ff">👥</div>
-            <div class="shop-info"><div class="shop-name">Two Players</div>
-            <div class="shop-desc">Two crystals, one phone. Left side is player 1. Right side is player 2.</div></div>
-            <button class="shop-buy mode-btn">Select</button>
-        </div>
 </div>
         <div class="shop-card" id="card-trail-none">
             <div class="shop-icon" style="background:rgba(120,130,150,0.2);color:#9aa5b8">🚫</div>
@@ -4780,6 +4774,7 @@ function petCoinMagnet(dt) {
 // GAME MODES — Zen (no death), Rush (60s), Nightmare (unlocked)
 // ═══════════════════════════════════════════════════════════════
 let gameMode = localStorage.getItem('ss_gameMode') || 'classic';
+if (gameMode === 'duo') { gameMode = 'classic'; localStorage.setItem('ss_gameMode', 'classic'); }
 const GAME_MODES = {
     classic:   { name: 'Classic',    icon: '🎮' },
     zen:       { name: 'Zen',        icon: '😌' },
@@ -4787,7 +4782,6 @@ const GAME_MODES = {
     kids:      { name: 'Kids',       icon: '🧒' },
     nightmare: { name: 'Nightmare',  icon: '💀' },
     heartquest: { name: 'Heart Quest', icon: '❤️' },
-    duo:       { name: 'Two Players', icon: '👥' },
 };
 function setGameMode(mode) {
     if (mode === 'nightmare' && localStorage.getItem('ss_endlessUnlocked') !== 'true') {
