@@ -152,6 +152,10 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
 }
 .hud-label { font-size: 10px; color: #7a7aaf; text-transform: uppercase; letter-spacing: 1.5px; }
 .hud-val { font-size: 22px; color: #fff; }
+#hud-score {
+    position: fixed; left: 16px; bottom: 16px; z-index: 6;
+    pointer-events: none;
+}
 #hud-score .hud-val { color: #ffd700; }
 #hud-wave .hud-val { color: #2b9eff; }
 #hud-time .hud-val { color: #ffaa00; }
@@ -4051,7 +4055,7 @@ function render(dt) {
         ctx.font = 'bold 12px Segoe UI, sans-serif';
         ctx.textAlign = 'left';
         ctx.fillStyle = `rgba(255,215,0,${0.4 + progress * 0.4})`;
-        ctx.fillText(`MEGA in ${game.megaKillsNeeded} kills`, 16, 18);
+        ctx.fillText(`MEGA in ${game.megaKillsNeeded} kills`, 16, 96);
         ctx.restore();
     }
 }
