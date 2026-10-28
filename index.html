@@ -958,7 +958,7 @@ button {
 
         <div class="how-block">
             <h2>Shadow parade</h2>
-            <p>On waves 10, 20, 30, and so on, up to 90, eight shadows of one color march from left to right. They do not chase you and they do not take a heart if they touch you. Kill the whole line and you get 50 coins. If one walks off the right side, you do not get the bonus.</p>
+            <p>On waves 10, 20, 30, and so on, up to 90, eight shadows of one color march from left to right. They do not chase you and they do not take a heart if they touch you. Kill the whole line and you get 5 coins. If one walks off the right side, you do not get the bonus.</p>
         </div>
 
         <div class="how-block">
@@ -3135,9 +3135,9 @@ function killEnemy(idx, color, isBossKill) {
     if (e.parade && game.paradeAlive > 0) {
         game.paradeAlive--;
         if (game.paradeAlive === 0) {
-            game.coins += 50;
+            game.coins += 5;
             localStorage.setItem('ss_coins', game.coins.toString());
-            addFloatingText(W / 2, H * 0.4, '🎉 PARADE BONUS +50 COINS!', '#ffd700');
+            addFloatingText(W / 2, H * 0.4, '🎉 PARADE BONUS +5 COINS!', '#ffd700');
             createConfetti(W / 2, H * 0.4, 40);
         }
     }
@@ -3610,7 +3610,7 @@ function updateWaves(dt) {
                 });
                 game.paradeAlive++;
             }
-            showWaveBanner('🎉 SHADOW PARADE!', 'Wipe the whole line for +50 coins!');
+            showWaveBanner('🎉 SHADOW PARADE!', 'Wipe the whole line for +5 coins!');
         }
         recordSplit(game.wave);          // speedrun split (10/25/50)
         if (game.wave === CP_WAVE) saveCheckpoint();   // 🚩 checkpoint at wave 50
