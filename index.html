@@ -2552,6 +2552,7 @@ function spawnEnemy(isBoss) {
 }
 
 function updateEnemies(dt) {
+    if (game.paused || heartQuestionActive || questionHold) return;
     for (let i = enemies.length - 1; i >= 0; i--) {
         const e = enemies[i];
         e.wobble += dt * 2;
@@ -3438,10 +3439,22 @@ function activateMegaMode() {
 // ═══════════════════════════════════════════════════════════════
 // ─── Extra-heart question (every 10 waves) ───
 let heartQuestionActive = false;
+let questionHold = false;
+function holdForQuestion() {
+    if (questionHold) return;
+    questionHold = true;
+    game._pausedBeforeQuestion = !!game.paused;
+    game.paused = true;
+}
+function releaseQuestion() {
+    if (!questionHold) return;
+    questionHold = false;
+    game.paused = !!game._pausedBeforeQuestion;
+}
 function askHeartQuestion() {
     if (heartQuestionActive || game.heartsClaimed >= 5) return;
     heartQuestionActive = true;
-    game.paused = true;
+    holdForQuestion();
     const box = document.getElementById('heart-question');
     box.classList.add('active');
     document.getElementById('hq-text').textContent = 'Do you want an extra heart now or later?';
@@ -3459,7 +3472,7 @@ function answerHeart(yes) {
         createConfetti(W / 2, H / 2, 25);
     }
     updateHUD();
-    game.paused = false;   // resume play either way
+    releaseQuestion();
 }
 
 
@@ -5374,6 +5387,7 @@ function spawnNegotiator() {
 function showNegotiatorUI(deal) {
     const wrap = document.getElementById('negotiator-ui');
     if (!wrap) return;
+    holdForQuestion();
     document.getElementById('neg-deal-text').textContent =
         '🤝 "Spare me and I drop ' + deal + ' coins — I return next wave stronger."';
     document.getElementById('neg-accept-btn').textContent = '🤝 SPARE (' + deal + ' coins)';
@@ -5382,6 +5396,7 @@ function showNegotiatorUI(deal) {
 function hideNegotiatorUI() {
     const wrap = document.getElementById('negotiator-ui');
     if (wrap) wrap.classList.remove('active');
+    releaseQuestion();
 }
 // COOPERATE path
 function negotiatorSpare() {
@@ -5983,6 +5998,7 @@ function showInstructions() {
 
 function togglePause() {
     if (game.state !== 'playing') return;
+    if (questionHold || heartQuestionActive) return;
     game.paused = !game.paused;
     document.getElementById('pause-btn').textContent = game.paused ? '▶' : 'II';
 }
