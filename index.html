@@ -196,9 +196,9 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
 }
 #hud-username .hud-val { color: #80a0ff; font-size: 16px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #lives-icons { display: flex; gap: 4px; padding-top: 4px; }
-.life-icon { width: 14px; height: 14px; border-radius: 50%;
-    background: radial-gradient(circle, #ff6699, #ff2b5e);
-    box-shadow: 0 0 8px rgba(255,40,80,0.6); }
+.life-icon { width: 18px; height: 16px; background: none; border-radius: 0; box-shadow: none; }
+.life-icon svg { width: 18px; height: 16px; display: block; }
+.life-icon.broken { opacity: 0.95; }
 
 #combo-display { display: none !important; }
 #combo-display.active { display: none !important; }
@@ -4261,9 +4261,15 @@ function updateHUD() {
 
     const livesDiv = document.getElementById('lives-icons');
     livesDiv.innerHTML = '';
-    for (let i = 0; i < game.lives; i++) {
+    if (game.lives > (game.heartsShown || 0)) game.heartsShown = game.lives;
+    const heartTotal = Math.max(game.heartsShown || 0, game.lives, 0);
+    const fullHeart = '<svg viewBox="0 0 24 22" aria-hidden="true"><path fill="#ff2b5e" d="M12 20.4C12 20.4 2.4 14 2.4 8.4 2.4 5.3 4.6 3.3 7.4 3.3c1.9 0 3.4 1 4.6 2.5 1.2-1.5 2.7-2.5 4.6-2.5 2.8 0 5 2 5 5.1 0 5.6-9.6 12-9.6 12z"/></svg>';
+    const brokenHeart = '<svg viewBox="0 0 24 22" aria-hidden="true"><path fill="#ff2b5e" d="M12 20.4C12 20.4 2.4 14 2.4 8.4 2.4 5.3 4.6 3.3 7.4 3.3c1.9 0 3.4 1 4.6 2.5V7.6L10.2 10l1.8 1.8-2.2 2.4 2.2 2.2z"/><path fill="#c41848" d="M12 6.2c1.2-1.5 2.7-2.5 4.6-2.5 2.8 0 5 2 5 5.1 0 5.6-9.6 12-9.6 12V16.4l2.2-2.2-2.2-2.4 1.8-1.8L12 7.6z"/><path fill="none" stroke="#2a0814" stroke-width="1.3" stroke-linejoin="round" d="M12 6.4 L10.2 9.2 L12.4 11.2 L9.8 14 L12 16.6"/></svg>';
+    for (let i = 0; i < heartTotal; i++) {
         const d = document.createElement('div');
-        d.className = 'life-icon';
+        const lost = i >= game.lives;
+        d.className = 'life-icon' + (lost ? ' broken' : '');
+        d.innerHTML = lost ? brokenHeart : fullHeart;
         livesDiv.appendChild(d);
     }
 }
@@ -4292,6 +4298,7 @@ function saveRunSnapshot() {
             wave: game.wave, lives: game.lives, score: game.score, kills: game.kills,
             coins: game.coins, playTime: game.playTime, maxCombo: game.maxCombo,
             heartsClaimed: game.heartsClaimed || 0,
+            heartsShown: game.heartsShown || game.lives,
             waveEnemyCount: game.waveEnemyCount,
             enemiesKilledThisWave: game.enemiesKilledThisWave
         }));
@@ -4332,6 +4339,7 @@ function restoreScreen() {
         if (run) {
             game.wave = run.wave || 1;
             game.lives = run.lives;
+            game.heartsShown = run.heartsShown || run.lives;
             game.score = run.score || 0;
             game.kills = run.kills || 0;
             if (run.coins != null) game.coins = run.coins;
@@ -4355,6 +4363,7 @@ function startGame() {
     game.resumedFromCp = false;
     if (heartQuestionActive) { heartQuestionActive = false; document.getElementById('heart-question').classList.remove('active'); }
     game.score = 0; game.wave = 1; game.kills = 0; game.lives = diff().lives;
+    game.heartsShown = game.lives;
     game.combo = 0; game.maxCombo = 0; game.comboTimer = 0;
     game.waveEnemyCount = 6; game.enemiesKilledThisWave = 0;
     game.spawnTimer = 1; game.bossTimer = 20;
