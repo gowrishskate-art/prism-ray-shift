@@ -3691,12 +3691,12 @@ function updateCoins(dt) {
         // Collect
         const d = Math.hypot(crystal.x - c.x, crystal.y - c.y);
         if (d < c.size + crystal.size * 0.6) {
-            game.coins += c.value;
-            trackStat('coinsCollected', c.value);
+            game.coins += 1;
+            trackStat('coinsCollected', 1);
             localStorage.setItem('ss_coins', game.coins.toString());
             sfxGem();
             createExplosion(c.x, c.y, '#ffd700', 15);
-            addFloatingText(c.x, c.y - 15, '+1 🪙', '#ffd700');
+            showWaveBanner('+1 coin', '');
             game.coinEntities.splice(i, 1);
             continue;
         }
@@ -5159,7 +5159,7 @@ function trackWeeklyKill() {
         game.coins += 20;
         localStorage.setItem('ss_coins', game.coins.toString());
         setTimeout(function() {
-            showWaveBanner('🎯 WEEKLY CHALLENGE DONE!', '+20 coins! ' + WEEKLY_TARGET + ' shadows destroyed');
+            showWaveBanner('Weekly challenge done', WEEKLY_TARGET + ' shadows this week');
             createConfetti(W/2, H*0.35, 40);
         }, 600);
     }
