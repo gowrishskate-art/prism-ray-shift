@@ -3667,7 +3667,7 @@ function updateWaves(dt) {
 // ═══════════════════════════════════════════════════════════════
 function maybeDropCoin(x, y) {
     game.coinKillCount++;
-    if (game.coinKillCount >= 30) {
+    if (game.coinKillCount >= 30 && game.coinEntities.length === 0) {
         game.coinKillCount = 0;
         game.coinEntities.push({
             x: x, y: y,
@@ -3690,13 +3690,15 @@ function updateCoins(dt) {
 
         // Collect
         const d = Math.hypot(crystal.x - c.x, crystal.y - c.y);
-        if (d < c.size + crystal.size * 0.6) {
-            game.coins += 1;
+        if (!c.taken && d < c.size + crystal.size * 0.6) {
+            c.taken = true;
+            game.coins = (parseInt(game.coins, 10) || 0) + 1;
             trackStat('coinsCollected', 1);
-            localStorage.setItem('ss_coins', game.coins.toString());
+            localStorage.setItem('ss_coins', String(game.coins));
+            var coinHud = document.querySelector('#hud-coins .hud-val');
+            if (coinHud) coinHud.textContent = String(game.coins);
             sfxGem();
             createExplosion(c.x, c.y, '#ffd700', 15);
-            showWaveBanner('+1 coin', '');
             game.coinEntities.splice(i, 1);
             continue;
         }
@@ -5156,8 +5158,6 @@ function trackWeeklyKill() {
     if (!data.claimed && data.kills >= WEEKLY_TARGET) {
         data.claimed = true;
         localStorage.setItem('ss_weekly', JSON.stringify(data));
-        game.coins += 20;
-        localStorage.setItem('ss_coins', game.coins.toString());
         setTimeout(function() {
             showWaveBanner('Weekly challenge done', WEEKLY_TARGET + ' shadows this week');
             createConfetti(W/2, H*0.35, 40);
