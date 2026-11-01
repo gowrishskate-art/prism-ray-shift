@@ -4454,6 +4454,8 @@ function startGame() {
 }
 
 function endGame() {
+    if (game.state === 'gameover') return;
+    var coinsAtEnd = parseInt(game.coins, 10) || 0;
     consumeCheckpointOnEnd();
     hideNegotiatorUI();
     if (game.wagerActive && !game.victory) wagerLost();
@@ -4482,6 +4484,10 @@ function endGame() {
             createConfetti(W/2, H/2, 40);
         }, 800);
     }
+    // Finishing a game must not add coins. Pickups during play are the only coin gain.
+    game.coins = coinsAtEnd;
+    localStorage.setItem('ss_coins', String(game.coins));
+    try { localStorage.removeItem('ss_run'); } catch (e) {}
     // Add this game's score to total points (persistent)
     SHOP_DATA.totalPoints += game.score;
     localStorage.setItem('ss_totalPoints', SHOP_DATA.totalPoints.toString());
